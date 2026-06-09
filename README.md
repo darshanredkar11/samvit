@@ -118,6 +118,94 @@ Fetches all unread messages. `read --mark-read false` peeks without consuming.
 
 ---
 
+## Harness workers
+
+Build agents that auto-connect to Samvit, claim tasks from the queue, and persist memories without any boilerplate:
+
+```python
+from samvit.harness import SamvitWorker
+import asyncio
+
+class ReviewWorker(SamvitWorker):
+    async def execute(self, task, context=None):
+        # context = top-5 relevant memories auto-loaded before this call
+        result = await my_llm_review(task["description"])
+        await self.remember(f"Reviewed {task['title']}: {result}")
+        return {"verdict": result}
+
+asyncio.run(ReviewWorker("rahul", "antigravity").run(tags=["review"]))
+```
+
+**What you get for free:** token persistence (`~/.samvit/credentials.json`, chmod 600), retry-with-backoff on startup, graceful SIGTERM shutdown, memory context injected before each task.
+
+### Dispatcher — route tasks to the right worker
+
+```python
+from samvit.dispatcher import SamvitDispatcher
+
+dispatcher = SamvitDispatcher()
+
+@dispatcher.worker("review")
+class ReviewWorker(SamvitWorker): ...
+
+@dispatcher.worker("backend")
+class BackendWorker(SamvitWorker): ...
+
+asyncio.run(dispatcher.run())  # polls queue, spawns right worker per task
+```
+
+### Claude Code hooks — memory wires automatically
+
+Add to `~/.claude/settings.json` (see `hooks/settings.json.template`):
+
+```json
+{
+  "hooks": {
+    "PreToolUse":  [{"matcher":".*","hooks":[{"type":"command","command":"python -m samvit.hooks pre-tool"}]}],
+    "PostToolUse": [{"matcher":"Write|Edit|Bash","hooks":[{"type":"command","command":"python -m samvit.hooks post-tool"}]}],
+    "Stop":        [{"hooks":[{"type":"command","command":"python -m samvit.hooks stop"}]}]
+  }
+}
+```
+
+Every Claude Code session now auto-recalls relevant memories before tool calls and auto-remembers significant outputs. Zero manual `remember` calls needed.
+
+---
+
+## Hermes Agent integration
+
+[Hermes Agent](https://github.com/nousresearch/hermes-agent) (180k+ GitHub stars) is a self-improving agent framework. Samvit integrates at three points:
+
+**1. Shared skill pool** — Hermes normally stores skills per-machine. Point it at Samvit instead so every agent on the team shares one skill pool:
+
+```json
+// ~/.hermes/config.json
+{
+  "memory": {
+    "backend": "external",
+    "url": "http://localhost:8765/v1/hermes/memory"
+  }
+}
+```
+
+**2. Task queue replaces crons** — Instead of fixed cron schedules per machine, Hermes tasks land in Samvit's queue. Dynamic priority, no double-execution:
+
+```python
+from samvit.integrations.hermes import HermesCronBridge
+bridge = HermesCronBridge()
+await bridge.sync_to_samvit()  # reads ~/.hermes/config.json → creates Samvit tasks
+```
+
+**3. Skill auto-publish** — When Hermes writes a new skill, it publishes instantly to all agents:
+
+```python
+from samvit.integrations.hermes import HermesSkillWatcher
+watcher = HermesSkillWatcher()
+await watcher.run()  # watches ~/.hermes/skills/*.md, publishes via remember(key="skill.{name}")
+```
+
+---
+
 ## A day in the life
 
 ```
