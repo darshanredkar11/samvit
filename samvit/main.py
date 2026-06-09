@@ -29,7 +29,7 @@ from fastapi.responses import JSONResponse
 from mcp.server.fastmcp import FastMCP, Context
 from pydantic import BaseModel
 
-from samvit import auth, cleanup, db, embeddings, events
+from samvit import auth, cleanup, db, embeddings, events, rag, codegraph
 from samvit.tools import memory, messaging, tasks
 
 load_dotenv()
@@ -312,6 +312,105 @@ async def say(
         return _mcp_error(400, str(e))
     except Exception as e:
         log.error("say error: %s", e)
+        return _mcp_error(500, "Internal error")
+
+
+# ── RAG + Code Graph tools ────────────────────────────────────────────────────
+
+@mcp.tool(description="Ingest a document (PDF, markdown, text, code) — chunk, embed, and store for RAG search. Obsidian [[wikilinks]] are indexed as a knowledge graph.")
+async def ingest(
+    content: str,
+    filename: str,
+    ctx: Context,
+    description: str | None = None,
+    namespace: str = "global",
+) -> dict:
+    agent = _agent()
+    try:
+        return await rag.ingest(agent, content, filename, description, namespace)
+    except ValueError as e:
+        return _mcp_error(400, str(e))
+    except Exception as e:
+        log.error("ingest error: %s", e)
+        return _mcp_error(500, "Internal error")
+
+
+@mcp.tool(description="Semantic search across all ingested documents. Returns the most relevant chunks with source attribution. Use instead of reading full files.")
+async def search_docs(
+    query: str,
+    ctx: Context,
+    filename_filter: str | None = None,
+    namespace: str = "global",
+    limit: int = 5,
+) -> dict:
+    agent = _agent()
+    try:
+        return await rag.search_docs(agent, query, filename_filter, namespace, limit)
+    except ValueError as e:
+        return _mcp_error(400, str(e))
+    except Exception as e:
+        log.error("search_docs error: %s", e)
+        return _mcp_error(500, "Internal error")
+
+
+@mcp.tool(description="Index a codebase into the knowledge graph — parses all source files, extracts functions/classes/imports/calls. Run once; all agents benefit forever.")
+async def index_code(
+    path: str,
+    repo_id: str,
+    ctx: Context,
+    extensions: list[str] | None = None,
+) -> dict:
+    agent = _agent()
+    try:
+        return await codegraph.index_repo(agent, path, repo_id, extensions)
+    except ValueError as e:
+        return _mcp_error(400, str(e))
+    except Exception as e:
+        log.error("index_code error: %s", e)
+        return _mcp_error(500, "Internal error")
+
+
+@mcp.tool(description="Semantic search over code symbols (functions, classes, methods) by meaning. Returns name, file, line, signature, and docstring. No file reading needed.")
+async def explore_code(
+    query: str,
+    repo_id: str,
+    ctx: Context,
+    limit: int = 10,
+    node_types: list[str] | None = None,
+) -> dict:
+    try:
+        return await codegraph.explore_code(repo_id, query, limit, node_types)
+    except ValueError as e:
+        return _mcp_error(400, str(e))
+    except Exception as e:
+        log.error("explore_code error: %s", e)
+        return _mcp_error(500, "Internal error")
+
+
+@mcp.tool(description="Find all callers of a function across the codebase. Answers 'what calls verify_token()?' instantly without grep.")
+async def who_calls(
+    function_name: str,
+    repo_id: str,
+    ctx: Context,
+) -> dict:
+    try:
+        return await codegraph.who_calls(repo_id, function_name)
+    except Exception as e:
+        log.error("who_calls error: %s", e)
+        return _mcp_error(500, "Internal error")
+
+
+@mcp.tool(description="Return the dependency subgraph for a symbol — what it calls, what calls it, what it imports. Returns nodes and edges for graph visualisation.")
+async def graph_symbol(
+    symbol_name: str,
+    repo_id: str,
+    ctx: Context,
+    depth: int = 2,
+) -> dict:
+    try:
+        return await codegraph.graph_symbol(repo_id, symbol_name, depth)
+    except Exception as e:
+        log.error("graph_symbol error: %s", e)
         return _mcp_error(500, "Internal error")
 
 
