@@ -1,0 +1,177 @@
+"""
+say  — send a message to an agent or broadcast
+read — fetch unread messages for the calling agent
+
+Decisions applied:
+  #4  say to unknown handle → 404 (LookupError)
+  #9  body size capped at 64 KB
+  #11 message_reads join table (no read_by UUID[] array)
+  #13 Redpanda publish failure is logged, not raised
+"""
+
+from __future__ import annotations
+
+import logging
+
+from samvit import db, events
+
+log = logging.getLogger(__name__)
+
+MAX_BODY_BYTES = 64 * 1024   # Decision #9: 64 KB
+DEFAULT_READ_LIMIT = 20
+MAX_READ_LIMIT = 200
+
+
+# ── say ───────────────────────────────────────────────────────────────────────
+
+async def say(
+    agent: dict,
+    body: str,
+    to: str | None = None,
+    topic: str | None = None,
+    metadata: dict | None = None,
+) -> dict:
+    """
+    Send a directed message (to=handle) or broadcast (to=None).
+    Decision #4: unknown handle → LookupError (mapped to 404 in main.py).
+    Decision #9: body > 64 KB → ValueError (mapped to 400).
+    """
+    if not body or not body.strip():
+        raise ValueError("body must not be empty")
+
+    if len(body.encode("utf-8")) > MAX_BODY_BYTES:
+        raise ValueError(
+            f"body exceeds maximum size of {MAX_BODY_BYTES // 1024} KB"
+        )
+
+    if metadata is None:
+        metadata = {}
+
+    to_agent_id: str | None = None
+
+    async with db.pool().acquire() as conn:
+        # Decision #4: validate recipient handle
+        if to:
+            row = await conn.fetchrow(
+                "SELECT id FROM agents WHERE handle = $1", to.lower().strip()
+            )
+            if not row:
+                raise LookupError(f"Agent '{to}' not found")
+            to_agent_id = str(row["id"])
+
+        message_id = await conn.fetchval(
+            """
+            INSERT INTO messages (from_agent, to_agent, topic, body, metadata)
+            VALUES ($1, $2, $3, $4, $5)
+            RETURNING id
+            """,
+            agent["id"],
+            to_agent_id,
+            topic,
+            body.strip(),
+            metadata,
+        )
+
+    log.debug("say: from=%s to=%s topic=%s id=%s", agent["handle"], to, topic, message_id)
+
+    # Decision #13: publish to Redpanda; failure is non-fatal
+    redpanda_topic = f"messages.{to}" if to else "messages.broadcast"
+    await events.publish(redpanda_topic, {
+        "message_id": str(message_id),
+        "from": agent["handle"],
+        "to": to,
+        "topic": topic,
+        "body": body.strip(),
+    })
+
+    return {"message_id": str(message_id)}
+
+
+# ── read ──────────────────────────────────────────────────────────────────────
+
+async def read(
+    agent: dict,
+    topic: str | None = None,
+    from_handle: str | None = None,
+    limit: int = DEFAULT_READ_LIMIT,
+    mark_read: bool = True,
+) -> dict:
+    """
+    Return unread messages for the calling agent (directed + broadcast).
+    Decision #11: uses message_reads join table, not a UUID[] array.
+    mark_read=False: peek without consuming (Decision §6.6).
+    """
+    if limit <= 0:
+        raise ValueError("limit must be > 0")
+    limit = min(limit, MAX_READ_LIMIT)
+
+    async with db.pool().acquire() as conn:
+        # Build the query dynamically based on optional filters
+        params: list = [agent["id"], limit]
+        filters = [
+            # Directed to me OR broadcast — but NOT already read by me
+            """
+            (m.to_agent = $1 OR m.to_agent IS NULL)
+            AND NOT EXISTS (
+                SELECT 1 FROM message_reads mr
+                 WHERE mr.message_id = m.id
+                   AND mr.agent_id = $1
+            )
+            """
+        ]
+
+        if topic:
+            params.append(topic)
+            filters.append(f"m.topic = ${len(params)}")
+
+        if from_handle:
+            params.append(from_handle.lower().strip())
+            filters.append(
+                f"EXISTS (SELECT 1 FROM agents a WHERE a.id = m.from_agent AND a.handle = ${len(params)})"
+            )
+
+        where = " AND ".join(filters)
+
+        rows = await conn.fetch(
+            f"""
+            SELECT
+                m.id,
+                m.body,
+                m.topic,
+                m.metadata,
+                m.created_at,
+                a.handle AS from_handle
+              FROM messages m
+              JOIN agents a ON a.id = m.from_agent
+             WHERE {where}
+             ORDER BY m.created_at ASC
+             LIMIT $2
+            """,
+            *params,
+        )
+
+        # Decision #11: mark as read via join table (atomic with fetch in same conn)
+        if mark_read and rows:
+            message_ids = [r["id"] for r in rows]
+            await conn.executemany(
+                """
+                INSERT INTO message_reads (message_id, agent_id)
+                VALUES ($1, $2)
+                ON CONFLICT DO NOTHING
+                """,
+                [(mid, agent["id"]) for mid in message_ids],
+            )
+
+    return {
+        "messages": [
+            {
+                "id":       str(r["id"]),
+                "from":     r["from_handle"],
+                "body":     r["body"],
+                "topic":    r["topic"],
+                "metadata": dict(r["metadata"]),
+                "sent_at":  r["created_at"].isoformat(),
+            }
+            for r in rows
+        ]
+    }

@@ -1,0 +1,59 @@
+version: "3.9"
+
+# Credentials from environment; defaults are for local dev only.
+# For production: create a .env file or use Docker secrets.
+# Decision: never hard-code credentials in compose.
+
+services:
+  samvit:
+    build: .
+    ports:
+      - "8765:8765"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-samvit}:${POSTGRES_PASSWORD:-samvit}@postgres:5432/${POSTGRES_DB:-samvit}
+      REDPANDA_BROKERS: redpanda:9092
+      SAMVIT_ADMIN_SECRET: ${SAMVIT_ADMIN_SECRET:-change-me-in-production}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-samvit}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-samvit}
+      POSTGRES_DB: ${POSTGRES_DB:-samvit}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-samvit}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redpanda:
+    image: redpandadata/redpanda:latest
+    command:
+      - redpanda
+      - start
+      - --smp 1
+      - --memory 512M
+      - --overprovisioned
+      - --kafka-addr PLAINTEXT://0.0.0.0:9092
+      - --advertise-kafka-addr PLAINTEXT://redpanda:9092
+      # Allow auto topic creation (Decision: no pre-declaration needed)
+      - --set redpanda.auto_create_topics_enabled=true
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health | grep -q healthy"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+volumes:
+  pgdata:
