@@ -3,970 +3,1144 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Samvit — The coordination layer for mixed AI teams</title>
-<meta name="description" content="Shared memory, task queue, and async messaging for teams of AI agents. Single Docker image. No cloud. Apache 2.0."/>
+<title>Samvit — Shared intelligence for AI teams</title>
+<meta name="description" content="Shared memory, task queue, RAG, and code graph for teams of AI agents. 1 Docker command. No cloud. Apache 2.0."/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#050508;
-  --bg2:#080810;
-  --surface:#0d0d18;
-  --surface2:#11111e;
-  --border:#1a1a2e;
-  --border2:#222236;
-  --p:#8b5cf6;
-  --p2:#7c3aed;
-  --p3:#a78bfa;
-  --teal:#2dd4bf;
-  --teal2:#14b8a6;
-  --pink:#ec4899;
-  --text:#f0f0ff;
-  --text2:#b0b0cc;
-  --text3:#6060a0;
-  --code:#0e0e1a;
+  --bg:#040407;--surface:#0a0a12;--surface2:#0f0f1a;
+  --border:rgba(255,255,255,.06);--border2:rgba(255,255,255,.1);
+  --p:#8b5cf6;--p2:#7c3aed;--p3:#a78bfa;--p4:#c4b5fd;
+  --t:#2dd4bf;--t2:#14b8a6;
+  --pk:#ec4899;
+  --text:#f4f4ff;--text2:#9090b8;--text3:#4a4a72;
+  --mono:'JetBrains Mono',monospace;
+  --code:#080810;
 }
 html{scroll-behavior:smooth}
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;overflow-x:hidden}
 
-/* ── NOISE TEXTURE ── */
-body::before{
-  content:'';position:fixed;inset:0;
-  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
-  pointer-events:none;z-index:0;opacity:.4
-}
+/* ━━━━━━━━━━━━━━━━━━━━━━ LOGO SVG MARK ━━━━━━━━━━━━━━━━━━━━━━ */
+.logo-mark svg{display:block}
 
-/* ── NAV ── */
+/* ━━━━━━━━━━━━━━━━━━━━━━ NAV ━━━━━━━━━━━━━━━━━━━━━━ */
 nav{
-  position:fixed;top:0;left:0;right:0;z-index:100;
+  position:fixed;top:0;left:0;right:0;z-index:200;
   display:flex;align-items:center;justify-content:space-between;
-  padding:.9rem 2rem;
-  background:rgba(5,5,8,.8);
+  padding:.85rem 2.5rem;
+  background:rgba(4,4,7,.85);
   backdrop-filter:blur(20px) saturate(180%);
-  border-bottom:1px solid rgba(255,255,255,.04)
+  border-bottom:1px solid var(--border);
 }
-.logo{display:flex;align-items:center;gap:.6rem;font-weight:700;font-size:1.1rem;letter-spacing:-.03em;text-decoration:none;color:var(--text)}
-.logo-mark{
-  width:28px;height:28px;border-radius:7px;
-  background:linear-gradient(135deg,var(--p),var(--teal));
-  display:flex;align-items:center;justify-content:center;
-  font-size:.75rem;font-weight:800;color:#fff
-}
-.nav-links{display:flex;gap:1.8rem;list-style:none}
-.nav-links a{color:var(--text3);text-decoration:none;font-size:.85rem;font-weight:500;transition:color .2s}
-.nav-links a:hover{color:var(--text)}
-.nav-right{display:flex;align-items:center;gap:.8rem}
-.btn-ghost{color:var(--text2);text-decoration:none;font-size:.85rem;font-weight:500;padding:.4rem .9rem;border-radius:6px;transition:color .2s}
+.nav-logo{display:flex;align-items:center;gap:.65rem;text-decoration:none;color:var(--text)}
+.nav-name{font-weight:800;font-size:1.05rem;letter-spacing:-.03em}
+.nav-links{display:flex;gap:1.6rem;list-style:none}
+.nav-links a{color:var(--text3);text-decoration:none;font-size:.82rem;font-weight:500;transition:color .2s}
+.nav-links a:hover{color:var(--text2)}
+.nav-right{display:flex;align-items:center;gap:.75rem}
+.btn-ghost{color:var(--text2);text-decoration:none;font-size:.82rem;font-weight:500;padding:.38rem .85rem;border-radius:6px;transition:color .2s}
 .btn-ghost:hover{color:var(--text)}
 .btn-nav{
   background:linear-gradient(135deg,var(--p),var(--p2));
-  color:#fff;text-decoration:none;font-size:.85rem;font-weight:600;
-  padding:.45rem 1.1rem;border-radius:7px;
-  transition:opacity .2s,transform .15s;
-  box-shadow:0 0 20px rgba(139,92,246,.3)
+  color:#fff;text-decoration:none;font-size:.82rem;font-weight:600;
+  padding:.42rem 1.1rem;border-radius:7px;
+  box-shadow:0 0 20px rgba(139,92,246,.3);
+  transition:transform .2s,box-shadow .2s
 }
-.btn-nav:hover{opacity:.9;transform:translateY(-2px)}
+.btn-nav:hover{transform:translateY(-2px);box-shadow:0 0 30px rgba(139,92,246,.5)}
 
-/* ── HERO ── */
+/* ━━━━━━━━━━━━━━━━━━━━━━ HERO ━━━━━━━━━━━━━━━━━━━━━━ */
 .hero{
   min-height:100vh;display:flex;flex-direction:column;
   align-items:center;justify-content:center;
-  padding:8rem 1.5rem 6rem;text-align:center;
-  position:relative;
+  padding:7rem 1.5rem 5rem;text-align:center;
+  position:relative;overflow:hidden
 }
-
-/* Glow orbs */
-.orb{position:absolute;border-radius:50%;filter:blur(120px);pointer-events:none}
-.orb1{width:700px;height:700px;background:rgba(139,92,246,.12);top:-15%;left:50%;transform:translateX(-50%)}
-.orb2{width:400px;height:400px;background:rgba(45,212,191,.08);bottom:10%;right:-10%}
-.orb3{width:300px;height:300px;background:rgba(236,72,153,.06);bottom:5%;left:-5%}
-
 /* Animated grid */
 .hero-grid{
   position:absolute;inset:0;
-  background-image:linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);
-  background-size:50px 50px;
-  mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 40%,transparent 100%);
-  pointer-events:none
+  background-image:
+    linear-gradient(rgba(139,92,246,.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(139,92,246,.04) 1px,transparent 1px);
+  background-size:60px 60px;
+  mask-image:radial-gradient(ellipse 90% 80% at 50% 40%,black 30%,transparent 100%);
+  pointer-events:none;
+  animation:gridPan 20s linear infinite
 }
+@keyframes gridPan{0%{background-position:0 0}100%{background-position:60px 60px}}
 
-.hero-content{position:relative;z-index:1;max-width:860px}
+/* Glows */
+.glow{position:absolute;border-radius:50%;filter:blur(100px);pointer-events:none;animation:glowPulse 6s ease-in-out infinite}
+.glow1{width:600px;height:600px;background:rgba(139,92,246,.1);top:-20%;left:50%;transform:translateX(-50%);animation-delay:0s}
+.glow2{width:350px;height:350px;background:rgba(45,212,191,.07);bottom:5%;right:-5%;animation-delay:-2s}
+.glow3{width:250px;height:250px;background:rgba(236,72,153,.05);bottom:10%;left:-2%;animation-delay:-4s}
+@keyframes glowPulse{0%,100%{opacity:.6;transform:scale(1) translateX(-50%)}50%{opacity:1;transform:scale(1.1) translateX(-50%)}}
+.glow2,.glow3{transform:none!important}
+@keyframes glowPulse2{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.15)}}
+.glow2{animation-name:glowPulse2}
+.glow3{animation-name:glowPulse2;animation-delay:-3s}
+
+.hero-inner{position:relative;z-index:1;max-width:900px;width:100%}
 
 .eyebrow{
   display:inline-flex;align-items:center;gap:.5rem;
-  background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.25);
-  color:var(--p3);border-radius:100px;padding:.3rem 1rem;
-  font-size:.78rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
-  margin-bottom:2rem;
-  animation:fadeUp .6s ease both
+  background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.2);
+  color:var(--p3);border-radius:100px;
+  padding:.28rem 1rem;font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+  margin-bottom:1.8rem;
+  animation:fadeUp .5s ease both
 }
-.eyebrow-dot{width:6px;height:6px;background:var(--teal);border-radius:50%;animation:pulse 2s ease infinite}
-
-@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
-@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.eyebrow-dot{width:5px;height:5px;background:var(--t);border-radius:50%;animation:blink 2s ease infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 
 h1{
-  font-size:clamp(2.8rem,7vw,5rem);font-weight:900;
-  line-height:1.05;letter-spacing:-.04em;
-  margin-bottom:1.5rem;
-  animation:fadeUp .6s .1s ease both
+  font-size:clamp(3rem,7.5vw,5.6rem);font-weight:900;
+  line-height:1.04;letter-spacing:-.05em;
+  margin-bottom:1.4rem;
+  animation:fadeUp .5s .08s ease both
 }
-.h1-line1{display:block;color:var(--text)}
-.h1-line2{
-  display:block;
-  background:linear-gradient(135deg,var(--p3) 0%,var(--teal) 50%,var(--p3) 100%);
-  background-size:200% auto;
+.h1-white{color:var(--text)}
+.h1-grad{
+  background:linear-gradient(120deg,var(--p3) 0%,var(--t) 40%,var(--p3) 80%);
+  background-size:200%;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  animation:shimmer 4s linear infinite, fadeUp .6s .1s ease both;
+  animation:shimmer 5s linear infinite
 }
 @keyframes shimmer{to{background-position:200% center}}
 
 .hero-sub{
-  font-size:clamp(1rem,2vw,1.2rem);color:var(--text2);
-  max-width:580px;margin:0 auto 2.5rem;line-height:1.7;
-  animation:fadeUp .6s .2s ease both
+  color:var(--text2);font-size:clamp(1rem,2vw,1.18rem);
+  max-width:560px;margin:0 auto 2.4rem;line-height:1.75;
+  animation:fadeUp .5s .16s ease both
 }
 
 .hero-ctas{
-  display:flex;gap:.85rem;flex-wrap:wrap;justify-content:center;
-  margin-bottom:3.5rem;
-  animation:fadeUp .6s .3s ease both
+  display:flex;gap:.85rem;justify-content:center;flex-wrap:wrap;
+  margin-bottom:4rem;
+  animation:fadeUp .5s .24s ease both
 }
 .btn-primary{
   display:inline-flex;align-items:center;gap:.5rem;
   background:linear-gradient(135deg,var(--p),var(--p2));
   color:#fff;text-decoration:none;
-  padding:.8rem 1.8rem;border-radius:9px;
-  font-weight:700;font-size:1rem;
-  box-shadow:0 0 40px rgba(139,92,246,.4);
+  padding:.82rem 2rem;border-radius:10px;
+  font-weight:700;font-size:.98rem;
+  box-shadow:0 0 40px rgba(139,92,246,.35);
   transition:transform .2s,box-shadow .2s
 }
-.btn-primary:hover{transform:translateY(-2px);box-shadow:0 0 60px rgba(139,92,246,.5)}
-.btn-primary svg{width:16px;height:16px}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 0 60px rgba(139,92,246,.55)}
 .btn-outline{
   display:inline-flex;align-items:center;gap:.5rem;
   color:var(--text2);text-decoration:none;
-  padding:.8rem 1.6rem;border-radius:9px;
-  font-weight:600;font-size:1rem;
+  padding:.82rem 1.7rem;border-radius:10px;
+  font-weight:600;font-size:.98rem;
   border:1px solid var(--border2);
   transition:border-color .2s,color .2s,transform .2s
 }
 .btn-outline:hover{border-color:var(--p);color:var(--text);transform:translateY(-2px)}
 
-/* ── TERMINAL ── */
-.terminal{
-  background:var(--code);border:1px solid var(--border2);
-  border-radius:14px;overflow:hidden;max-width:700px;width:100%;
-  margin:0 auto;text-align:left;
-  box-shadow:0 0 0 1px rgba(255,255,255,.03),0 40px 80px rgba(0,0,0,.6);
-  animation:fadeUp .6s .4s ease both
-}
-.term-bar{
-  background:rgba(255,255,255,.03);border-bottom:1px solid var(--border);
-  padding:.7rem 1rem;display:flex;align-items:center;gap:.5rem
-}
-.term-dot{width:12px;height:12px;border-radius:50%}
-.td1{background:#ff5f57}.td2{background:#ffbd2e}.td3{background:#28c840}
-.term-title{margin-left:.5rem;font-size:.78rem;color:var(--text3);font-family:'JetBrains Mono',monospace}
-.term-body{padding:1.4rem 1.6rem;font-family:'JetBrains Mono',monospace;font-size:.82rem;line-height:1.9}
-.term-line{display:flex;gap:.75rem;margin-bottom:.1rem}
-.term-prompt{color:var(--p3);flex-shrink:0}
-.tc{color:var(--text3)}   /* comment */
-.tk{color:var(--teal)}    /* tool/keyword */
-.ts{color:#a3e635}        /* string */
-.ta{color:#f9a03f}        /* agent */
-.tr{color:var(--p3)}      /* result */
-.term-cursor{display:inline-block;width:8px;height:14px;background:var(--p3);border-radius:1px;animation:blink 1.2s step-end infinite;vertical-align:middle;margin-left:2px}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
 
-/* ── SOCIAL PROOF ── */
-.logos-bar{
-  padding:2.5rem 1.5rem;
-  border-top:1px solid var(--border);border-bottom:1px solid var(--border);
-  text-align:center;overflow:hidden
-}
-.logos-label{font-size:.75rem;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:1.5rem;font-weight:500}
-.logos-scroll{display:flex;gap:3rem;align-items:center;justify-content:center;flex-wrap:wrap}
-.logo-pill{
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:8px;padding:.5rem 1.2rem;
-  font-size:.82rem;font-weight:600;color:var(--text3);
-  display:flex;align-items:center;gap:.5rem;
-  transition:border-color .2s,color .2s
-}
-.logo-pill:hover{border-color:var(--border2);color:var(--text2)}
-.logo-pill span{font-size:1rem}
-
-/* ── SECTION COMMON ── */
-.section{padding:6rem 1.5rem;max-width:1140px;margin:0 auto}
-.section-label{
-  font-size:.72rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
-  color:var(--p3);margin-bottom:.75rem
-}
-h2{
-  font-size:clamp(1.9rem,4vw,2.8rem);font-weight:800;
-  letter-spacing:-.03em;line-height:1.15;margin-bottom:1rem
-}
-.section-sub{color:var(--text2);max-width:500px;font-size:1.05rem;line-height:1.7;margin-bottom:3.5rem}
-
-/* ── PROBLEM ── */
-.problem-grid{
-  display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1px;
-  background:var(--border);border-radius:16px;overflow:hidden
-}
-.problem-card{
-  background:var(--surface);padding:2rem;
-  transition:background .2s
-}
-.problem-card:hover{background:var(--surface2)}
-.pc-icon{font-size:1.8rem;margin-bottom:1rem}
-.pc-title{font-size:1rem;font-weight:700;margin-bottom:.5rem}
-.pc-body{color:var(--text2);font-size:.9rem;line-height:1.6}
-
-/* ── FEATURES ── */
-.features-list{display:flex;flex-direction:column;gap:6rem}
-.feature{display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center}
-.feature.flip .feature-text{order:2}.feature.flip .feature-demo{order:1}
-.feature-tag{
-  display:inline-flex;align-items:center;gap:.4rem;
-  font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
-  margin-bottom:1rem
-}
-.tag-mem{color:var(--p3)}.tag-task{color:var(--teal)}.tag-msg{color:var(--pink)}
-.feature h3{font-size:clamp(1.4rem,3vw,2rem);font-weight:800;letter-spacing:-.03em;margin-bottom:.9rem}
-.feature p{color:var(--text2);font-size:.97rem;line-height:1.7;margin-bottom:1.2rem}
-.feature-bullets{list-style:none;display:flex;flex-direction:column;gap:.5rem}
-.feature-bullets li{
-  display:flex;align-items:flex-start;gap:.7rem;
-  color:var(--text2);font-size:.9rem;line-height:1.5
-}
-.feature-bullets li::before{content:'✦';font-size:.6rem;color:var(--p3);flex-shrink:0;margin-top:.3rem}
-
-/* Feature demo panels */
-.feature-demo{
-  background:var(--code);border:1px solid var(--border2);
-  border-radius:16px;padding:0;overflow:hidden;
-  box-shadow:0 30px 60px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.02);
+/* ━━━━━━━━━━━━━━━━━━━━━━ AGENT FLOW DIAGRAM ━━━━━━━━━━━━━━━━━━━━━━ */
+.flow-diagram{
+  width:100%;max-width:800px;margin:0 auto;
+  animation:fadeUp .5s .32s ease both;
   position:relative
 }
-.demo-header{
-  background:rgba(255,255,255,.02);border-bottom:1px solid var(--border);
-  padding:.7rem 1rem;display:flex;align-items:center;gap:.4rem
+.flow-svg{width:100%;height:auto}
+
+/* Agent boxes */
+.agent-box{
+  animation:agentFloat 4s ease-in-out infinite;
 }
-.demo-dot{width:10px;height:10px;border-radius:50%}
-.dd1{background:#ff5f57}.dd2{background:#ffbd2e}.dd3{background:#28c840}
-.demo-tab{margin-left:.6rem;font-size:.72rem;color:var(--text3);font-family:'JetBrains Mono',monospace}
-.demo-body{padding:1.2rem 1.4rem;font-family:'JetBrains Mono',monospace;font-size:.79rem;line-height:1.85}
-.dc{color:#3d3d5c}         /* comment */
-.dk{color:var(--p3)}       /* keyword/tool */
-.ds{color:#a3e635}         /* string */
-.dm{color:var(--teal)}     /* meta / arrow */
-.da{color:#f9a03f}         /* agent name */
-.dn{color:var(--pink)}     /* numbers */
-.demo-glow{
-  position:absolute;bottom:0;left:0;right:0;height:60px;
-  background:linear-gradient(transparent,var(--code));
-  pointer-events:none
+.ab1{animation-delay:0s}
+.ab2{animation-delay:.8s}
+.ab3{animation-delay:1.6s}
+.ab4{animation-delay:2.4s}
+@keyframes agentFloat{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-4px)}
 }
 
-/* ── ARCHITECTURE ── */
-.arch-wrap{
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:20px;padding:3rem;overflow:hidden
+/* Animated data packets traveling along paths */
+.packet{
+  animation:travelPath 3s ease-in-out infinite;
+  opacity:0
 }
-.arch-diagram{
-  font-family:'JetBrains Mono',monospace;font-size:.78rem;
-  line-height:2;color:var(--text3);overflow-x:auto;
-  margin-bottom:2.5rem
+.p1{animation-delay:.2s}
+.p2{animation-delay:.9s}
+.p3{animation-delay:1.7s}
+.p4{animation-delay:2.5s}
+@keyframes travelPath{
+  0%{opacity:0;offset-distance:0%}
+  10%{opacity:1}
+  90%{opacity:1}
+  100%{opacity:0;offset-distance:100%}
 }
-.arch-diagram .ah{color:var(--p3)}
-.arch-diagram .at{color:var(--teal)}
-.arch-diagram .ab{color:var(--text2)}
-.stack-pills{display:flex;flex-wrap:wrap;gap:.7rem}
-.stack-pill{
-  background:var(--bg2);border:1px solid var(--border2);
-  border-radius:100px;padding:.35rem .9rem;
-  font-size:.8rem;color:var(--text2);font-weight:500
-}
-.stack-pill b{color:var(--text);font-weight:600}
 
-/* ── STATS ── */
-.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1px;background:var(--border);border-radius:16px;overflow:hidden;margin-bottom:6rem}
-.stat-card{background:var(--surface);padding:2rem;text-align:center}
-.stat-n{font-size:2.4rem;font-weight:900;letter-spacing:-.04em;background:linear-gradient(135deg,var(--p3),var(--teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.stat-l{font-size:.82rem;color:var(--text3);margin-top:.3rem;font-weight:500}
+/* Center hub pulse */
+.hub-ring{
+  animation:hubPulse 2.5s ease-in-out infinite;
+  transform-origin:center;
+}
+.hr1{animation-delay:0s}
+.hr2{animation-delay:.6s}
+.hr3{animation-delay:1.2s}
+@keyframes hubPulse{
+  0%{opacity:.5;transform:scale(1)}
+  50%{opacity:.1;transform:scale(1.8)}
+  100%{opacity:0;transform:scale(2.4)}
+}
 
-/* ── CTO ── */
-.cto-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem}
-.cto-card{
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:14px;padding:1.8rem;
-  transition:border-color .25s,transform .25s;
+/* Connection lines glow */
+.conn-line{
+  stroke-dasharray:6 3;
+  animation:dashFlow 2s linear infinite;
+}
+@keyframes dashFlow{to{stroke-dashoffset:-18}}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━ NUMBERS BANNER ━━━━━━━━━━━━━━━━━━━━━━ */
+.numbers{
+  padding:3rem 1.5rem;
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  overflow:hidden;
+}
+.numbers-inner{
+  max-width:1100px;margin:0 auto;
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+  gap:0;
+}
+.num-item{
+  text-align:center;padding:1.5rem 1rem;
+  border-right:1px solid var(--border);
+}
+.num-item:last-child{border-right:none}
+.num-val{
+  font-size:clamp(2.2rem,5vw,3.4rem);font-weight:900;
+  letter-spacing:-.04em;line-height:1;
+  background:linear-gradient(135deg,var(--p3),var(--t));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  display:block;margin-bottom:.35rem;
+}
+.num-lbl{font-size:.78rem;color:var(--text3);font-weight:500;line-height:1.4}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━ BEFORE / AFTER ━━━━━━━━━━━━━━━━━━━━━━ */
+.ba-section{padding:6rem 1.5rem;max-width:1100px;margin:0 auto}
+.ba-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:3rem}
+.ba-card{
+  border-radius:16px;padding:2rem;
   position:relative;overflow:hidden
 }
-.cto-card::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:2px;
-  background:linear-gradient(90deg,var(--p),var(--teal));
-  transform:scaleX(0);transform-origin:left;transition:transform .3s
+.ba-before{
+  background:rgba(239,68,68,.04);
+  border:1px solid rgba(239,68,68,.15);
 }
-.cto-card:hover{border-color:rgba(139,92,246,.3);transform:translateY(-3px)}
-.cto-card:hover::before{transform:scaleX(1)}
-.cto-icon{font-size:1.6rem;margin-bottom:.9rem}
-.cto-card h3{font-size:1.05rem;font-weight:700;margin-bottom:.5rem}
-.cto-card p{color:var(--text2);font-size:.88rem;line-height:1.6}
-
-/* ── TIMELINE ── */
-.timeline{position:relative;padding-left:2.5rem}
-.timeline::before{content:'';position:absolute;left:0;top:.5rem;bottom:.5rem;width:2px;background:linear-gradient(to bottom,var(--p),var(--teal),var(--p))}
-.tl-block{padding-bottom:2.5rem;position:relative}
-.tl-block::before{
-  content:'';position:absolute;left:-2.95rem;top:.45rem;
-  width:12px;height:12px;border-radius:50%;
-  background:linear-gradient(135deg,var(--p),var(--teal));
-  box-shadow:0 0 12px rgba(139,92,246,.5)
+.ba-after{
+  background:rgba(139,92,246,.05);
+  border:1px solid rgba(139,92,246,.2);
 }
-.tl-time{font-size:.72rem;font-weight:700;color:var(--p3);letter-spacing:.12em;text-transform:uppercase;margin-bottom:.6rem}
-.tl-code{
-  background:var(--code);border:1px solid var(--border);
-  border-radius:10px;padding:1rem 1.3rem;
-  font-family:'JetBrains Mono',monospace;font-size:.8rem;line-height:1.9
+.ba-label{
+  font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  margin-bottom:1.2rem;display:flex;align-items:center;gap:.5rem
 }
-
-/* ── SETUP ── */
-.setup-grid{display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:start}
-.steps-list{display:flex;flex-direction:column;gap:0}
-.step-item{display:flex;gap:1.3rem;padding-bottom:2rem}
-.step-num{
-  flex-shrink:0;width:32px;height:32px;
-  background:rgba(139,92,246,.15);border:1px solid rgba(139,92,246,.3);
+.ba-before .ba-label{color:rgba(239,68,68,.7)}
+.ba-after  .ba-label{color:var(--p3)}
+.ba-row{
+  display:flex;align-items:flex-start;gap:.75rem;
+  margin-bottom:.85rem;
+  animation:baRowIn .4s ease both
+}
+.ba-icon{font-size:.9rem;flex-shrink:0;margin-top:.1rem}
+.ba-text{font-size:.88rem;line-height:1.55}
+.ba-before .ba-text{color:rgba(239,68,68,.7)}
+.ba-after  .ba-text{color:var(--text2)}
+.ba-divider{
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.8rem;color:var(--p3);font-weight:900;
+  position:relative;
+}
+.vs-circle{
+  width:52px;height:52px;
+  background:linear-gradient(135deg,var(--p),var(--t));
   border-radius:50%;display:flex;align-items:center;justify-content:center;
-  font-weight:700;font-size:.8rem;color:var(--p3)
+  font-size:.85rem;font-weight:800;color:#fff;
+  box-shadow:0 0 30px rgba(139,92,246,.4);
+  animation:vsRotate 8s linear infinite
 }
-.step-content h3{font-size:.95rem;font-weight:700;margin-bottom:.35rem}
-.step-content p{color:var(--text2);font-size:.85rem;line-height:1.6}
-.code-block{
-  background:var(--code);border:1px solid var(--border2);
-  border-radius:12px;padding:1.2rem 1.4rem;
-  font-family:'JetBrains Mono',monospace;font-size:.79rem;
-  line-height:1.8;overflow-x:auto;color:var(--text2)
-}
-.code-block .cc{color:#3d3d5c}
-.code-block .ck{color:var(--teal)}
-.code-block .cs{color:#a3e635}
-.code-block .cp{color:var(--p3)}
-.code-block .cn{color:var(--text)}
+@keyframes vsRotate{to{box-shadow:0 0 30px rgba(45,212,191,.4),0 0 60px rgba(139,92,246,.2)}}
 
-/* ── OSS BANNER ── */
-.oss-banner{
-  max-width:1140px;margin:0 auto 6rem;padding:0 1.5rem
+/* ━━━━━━━━━━━━━━━━━━━━━━ SECTION SHARED ━━━━━━━━━━━━━━━━━━━━━━ */
+.section{padding:6rem 1.5rem;max-width:1100px;margin:0 auto}
+.sec-label{
+  font-size:.7rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--p3);margin-bottom:.7rem
 }
-.oss-inner{
-  background:linear-gradient(135deg,rgba(139,92,246,.1) 0%,rgba(45,212,191,.07) 100%);
-  border:1px solid rgba(139,92,246,.2);border-radius:20px;
-  padding:4rem;text-align:center;position:relative;overflow:hidden
+h2{
+  font-size:clamp(1.9rem,4vw,2.9rem);font-weight:800;
+  letter-spacing:-.04em;line-height:1.12;margin-bottom:.9rem
 }
-.oss-inner::before{
-  content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;
-  background:radial-gradient(circle at 50% 50%,rgba(139,92,246,.06) 0%,transparent 60%);
+.sec-sub{color:var(--text2);max-width:480px;font-size:1.02rem;line-height:1.72;margin-bottom:3rem}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━ TOOL GRID ━━━━━━━━━━━━━━━━━━━━━━ */
+.tools-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+  gap:1px;
+  background:var(--border);
+  border-radius:20px;overflow:hidden;
+  margin-bottom:3rem
+}
+.tool-card{
+  background:var(--surface);padding:1.6rem;
+  transition:background .2s;cursor:default;
+  position:relative;overflow:hidden
+}
+.tool-card::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(139,92,246,.05),transparent);
+  opacity:0;transition:opacity .25s
+}
+.tool-card:hover{background:var(--surface2)}
+.tool-card:hover::after{opacity:1}
+.tool-tag{
+  display:inline-block;font-size:.65rem;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;
+  padding:.15rem .5rem;border-radius:4px;margin-bottom:.8rem
+}
+.tag-mem{background:rgba(139,92,246,.15);color:var(--p3)}
+.tag-tsk{background:rgba(45,212,191,.12);color:var(--t)}
+.tag-msg{background:rgba(236,72,153,.1);color:var(--pk)}
+.tag-rag{background:rgba(251,146,60,.1);color:#fb923c}
+.tag-cg {background:rgba(34,211,238,.1);color:#22d3ee}
+.tool-name{font-size:1.05rem;font-weight:700;margin-bottom:.35rem;font-family:var(--mono)}
+.tool-desc{font-size:.83rem;color:var(--text2);line-height:1.55}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━ ANIMATED TERMINAL ━━━━━━━━━━━━━━━━━━━━━━ */
+.term-wrap{
+  background:var(--code);border:1px solid rgba(255,255,255,.07);
+  border-radius:16px;overflow:hidden;
+  box-shadow:0 40px 80px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.02);
+}
+.term-bar{
+  background:rgba(255,255,255,.03);border-bottom:1px solid rgba(255,255,255,.06);
+  padding:.65rem 1rem;display:flex;align-items:center;gap:.4rem
+}
+.tdot{width:11px;height:11px;border-radius:50%}
+.td1{background:#ff5f57}.td2{background:#febc2e}.td3{background:#28c840}
+.term-tab{margin-left:.5rem;font-family:var(--mono);font-size:.72rem;color:var(--text3)}
+.term-body{padding:1.2rem 1.5rem;font-family:var(--mono);font-size:.8rem;line-height:2}
+.tl{display:flex;gap:.7rem}
+.tp{color:var(--p3)}
+.tc{color:var(--text3)}
+.tk{color:var(--t)}
+.ts{color:#a3e635}
+.ta{color:#fb923c}
+.tr{color:var(--p3)}
+.tcursor{
+  display:inline-block;width:7px;height:13px;
+  background:var(--p3);border-radius:1px;
+  animation:cur .9s step-end infinite;vertical-align:middle
+}
+@keyframes cur{0%,100%{opacity:1}50%{opacity:0}}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━ CTO SECTION ━━━━━━━━━━━━━━━━━━━━━━ */
+.cto-section{
+  background:var(--surface);
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  padding:6rem 1.5rem;
+}
+.cto-inner{max-width:1100px;margin:0 auto}
+.cto-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem;margin-top:3rem}
+.cto-card{
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:14px;padding:1.8rem;
+  position:relative;overflow:hidden;
+  transition:border-color .25s,transform .25s
+}
+.cto-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1.5px;
+  background:linear-gradient(90deg,var(--p),var(--t));
+  transform:scaleX(0);transform-origin:left;transition:transform .35s
+}
+.cto-card:hover{border-color:rgba(139,92,246,.25);transform:translateY(-3px)}
+.cto-card:hover::before{transform:scaleX(1)}
+.cto-icon{font-size:1.5rem;margin-bottom:.9rem}
+.cto-card h3{font-size:1rem;font-weight:700;margin-bottom:.5rem}
+.cto-card p{color:var(--text2);font-size:.87rem;line-height:1.62}
+.cto-metric{
+  display:inline-flex;align-items:center;gap:.3rem;
+  background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.2);
+  color:var(--p3);border-radius:6px;padding:.15rem .55rem;
+  font-size:.72rem;font-weight:700;font-family:var(--mono);
+  margin-top:.75rem
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━ PRODUCTIVITY TIMELINE ━━━━━━━━━━━━━━━━━━━━━━ */
+.timeline{border-left:2px solid rgba(139,92,246,.2);padding-left:2rem;margin-top:2rem}
+.tl-item{position:relative;padding-bottom:2rem}
+.tl-item::before{
+  content:'';position:absolute;left:-2.42rem;top:.35rem;
+  width:10px;height:10px;border-radius:50%;
+  background:linear-gradient(135deg,var(--p),var(--t));
+  box-shadow:0 0 10px rgba(139,92,246,.5)
+}
+.tl-time{font-size:.68rem;font-weight:700;color:var(--p3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.4rem}
+.tl-content{
+  background:var(--code);border:1px solid var(--border);
+  border-radius:10px;padding:.9rem 1.2rem;
+  font-family:var(--mono);font-size:.78rem;line-height:1.9
+}
+.ag{color:#fb923c;font-weight:500}
+.cmd{color:var(--t)}
+.res{color:var(--p3)}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━ SETUP STEPS ━━━━━━━━━━━━━━━━━━━━━━ */
+.setup-section{padding:6rem 1.5rem;max-width:1100px;margin:0 auto}
+.steps{display:flex;flex-direction:column;gap:1.5rem;max-width:680px}
+.step{display:flex;gap:1.3rem;align-items:flex-start}
+.step-n{
+  flex-shrink:0;width:34px;height:34px;
+  background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.25);
+  border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:.8rem;color:var(--p3)
+}
+.step-body h3{font-size:.95rem;font-weight:700;margin-bottom:.3rem}
+.step-body p{color:var(--text2);font-size:.85rem;margin-bottom:.6rem}
+.code-snip{
+  background:var(--code);border:1px solid var(--border);
+  border-radius:9px;padding:.9rem 1.1rem;
+  font-family:var(--mono);font-size:.77rem;line-height:1.8;color:var(--text2)
+}
+.code-snip .ck{color:var(--t)}.code-snip .cs{color:#a3e635}
+.code-snip .cc{color:var(--text3)}.code-snip .cp{color:var(--p3)}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━ OSS BANNER ━━━━━━━━━━━━━━━━━━━━━━ */
+.oss{max-width:1100px;margin:0 auto 6rem;padding:0 1.5rem}
+.oss-box{
+  background:linear-gradient(135deg,rgba(139,92,246,.07),rgba(45,212,191,.05));
+  border:1px solid rgba(139,92,246,.15);
+  border-radius:20px;padding:4rem;text-align:center;position:relative;overflow:hidden
+}
+.oss-box::before{
+  content:'';position:absolute;top:-40%;left:-40%;width:180%;height:180%;
+  background:radial-gradient(circle at 50% 50%,rgba(139,92,246,.04),transparent 60%);
   pointer-events:none
 }
-.oss-inner h2{margin-bottom:1rem}
-.oss-inner p{color:var(--text2);max-width:480px;margin:0 auto 2rem;line-height:1.7}
-.oss-tags{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;margin-bottom:2rem}
+.oss-box h2{margin-bottom:.9rem}
+.oss-box p{color:var(--text2);max-width:460px;margin:0 auto 2rem;line-height:1.7}
+.oss-tags{display:flex;flex-wrap:wrap;gap:.55rem;justify-content:center;margin-bottom:2.2rem}
 .oss-tag{
-  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
-  border-radius:100px;padding:.3rem .85rem;
-  font-size:.78rem;color:var(--text2);font-weight:500
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);
+  border-radius:100px;padding:.28rem .8rem;font-size:.75rem;color:var(--text2)
 }
 
-/* ── FOOTER ── */
+/* ━━━━━━━━━━━━━━━━━━━━━━ FOOTER ━━━━━━━━━━━━━━━━━━━━━━ */
 footer{
-  border-top:1px solid var(--border);padding:2.5rem 2rem;
-  display:flex;align-items:center;justify-content:space-between;
-  flex-wrap:wrap;gap:1.5rem
+  border-top:1px solid var(--border);padding:2rem 2.5rem;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem
 }
-.foot-left{display:flex;align-items:center;gap:.7rem}
-.foot-logo{font-weight:700;font-size:.95rem}
+.foot-left{display:flex;align-items:center;gap:.6rem}
+.foot-logo-wrap{display:flex;align-items:center;gap:.5rem}
+.foot-name{font-weight:700;font-size:.9rem}
 .foot-sep{color:var(--text3)}
-.foot-tagline{color:var(--text3);font-size:.82rem}
-.foot-links{display:flex;gap:1.5rem}
-.foot-links a{color:var(--text3);text-decoration:none;font-size:.82rem;transition:color .2s}
-.foot-links a:hover{color:var(--text)}
+.foot-tag{color:var(--text3);font-size:.8rem}
+.foot-links{display:flex;gap:1.4rem}
+.foot-links a{color:var(--text3);text-decoration:none;font-size:.8rem;transition:color .2s}
+.foot-links a:hover{color:var(--text2)}
 
-/* ── SCROLL REVEAL ── */
-.reveal{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}
+/* ━━━━━━━━━━━━━━━━━━━━━━ SCROLL REVEAL ━━━━━━━━━━━━━━━━━━━━━━ */
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .55s ease,transform .55s ease}
 .reveal.visible{opacity:1;transform:none}
+.reveal-left{opacity:0;transform:translateX(-20px);transition:opacity .55s ease,transform .55s ease}
+.reveal-left.visible{opacity:1;transform:none}
+.reveal-right{opacity:0;transform:translateX(20px);transition:opacity .55s ease,transform .55s ease}
+.reveal-right.visible{opacity:1;transform:none}
 
-/* ── RESPONSIVE ── */
+/* ━━━━━━━━━━━━━━━━━━━━━━ RESPONSIVE ━━━━━━━━━━━━━━━━━━━━━━ */
 @media(max-width:768px){
-  .nav-links,.nav-right .btn-ghost{display:none}
-  .feature,.setup-grid{grid-template-columns:1fr}
-  .feature.flip .feature-text,.feature.flip .feature-demo{order:unset}
+  .nav-links{display:none}
+  .ba-grid{grid-template-columns:1fr}
+  .ba-divider{display:none}
+  nav{padding:.85rem 1.2rem}
 }
 </style>
 </head>
 <body>
 
-<!-- NAV -->
+<!-- ══════════════════════════════════════════════════════ NAV -->
 <nav>
-  <a href="#" class="logo">
-    <div class="logo-mark">S</div>
-    samvit
+  <a href="#" class="nav-logo">
+    <!-- LOGO: 4 agents orbiting a central hub — "unified coordination" -->
+    <div class="logo-mark">
+      <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="lg1" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#a78bfa"/>
+            <stop offset="100%" stop-color="#2dd4bf"/>
+          </radialGradient>
+          <radialGradient id="lg2" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#8b5cf6"/>
+            <stop offset="100%" stop-color="#14b8a6"/>
+          </radialGradient>
+          <filter id="glow">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="1.5" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <!-- Outer ring -->
+        <circle cx="17" cy="17" r="15.5" stroke="url(#lg1)" stroke-width=".6" opacity=".25"/>
+        <!-- Connection lines (dashed, animated) -->
+        <line x1="17" y1="4.5" x2="17" y2="12.5" stroke="url(#lg1)" stroke-width="1" stroke-dasharray="2 1.5" opacity=".7">
+          <animate attributeName="stroke-dashoffset" from="0" to="-7" dur="1.5s" repeatCount="indefinite"/>
+        </line>
+        <line x1="29.5" y1="17" x2="21.5" y2="17" stroke="url(#lg1)" stroke-width="1" stroke-dasharray="2 1.5" opacity=".7">
+          <animate attributeName="stroke-dashoffset" from="0" to="-7" dur="1.8s" repeatCount="indefinite"/>
+        </line>
+        <line x1="17" y1="29.5" x2="17" y2="21.5" stroke="url(#lg1)" stroke-width="1" stroke-dasharray="2 1.5" opacity=".7">
+          <animate attributeName="stroke-dashoffset" from="0" to="-7" dur="1.3s" repeatCount="indefinite"/>
+        </line>
+        <line x1="4.5" y1="17" x2="12.5" y2="17" stroke="url(#lg1)" stroke-width="1" stroke-dasharray="2 1.5" opacity=".7">
+          <animate attributeName="stroke-dashoffset" from="0" to="-7" dur="2s" repeatCount="indefinite"/>
+        </line>
+        <!-- Diagonal connections (cross) -->
+        <line x1="8" y1="8" x2="13" y2="13" stroke="#8b5cf6" stroke-width=".5" opacity=".2"/>
+        <line x1="26" y1="8" x2="21" y2="13" stroke="#2dd4bf" stroke-width=".5" opacity=".2"/>
+        <line x1="8" y1="26" x2="13" y2="21" stroke="#2dd4bf" stroke-width=".5" opacity=".2"/>
+        <line x1="26" y1="26" x2="21" y2="21" stroke="#8b5cf6" stroke-width=".5" opacity=".2"/>
+        <!-- Agent nodes (top, right, bottom, left) -->
+        <circle cx="17" cy="4" r="3" fill="#8b5cf6" opacity=".9">
+          <animate attributeName="r" values="3;3.4;3" dur="2s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="30" cy="17" r="3" fill="#2dd4bf" opacity=".85">
+          <animate attributeName="r" values="3;3.4;3" dur="2.3s" begin=".5s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="17" cy="30" r="3" fill="#8b5cf6" opacity=".9">
+          <animate attributeName="r" values="3;3.4;3" dur="2.1s" begin="1s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="4" cy="17" r="3" fill="#2dd4bf" opacity=".85">
+          <animate attributeName="r" values="3;3.4;3" dur="1.9s" begin="1.5s" repeatCount="indefinite"/>
+        </circle>
+        <!-- Central hub pulse rings -->
+        <circle cx="17" cy="17" r="5" fill="none" stroke="url(#lg1)" stroke-width=".8" opacity=".15">
+          <animate attributeName="r" values="5;9;5" dur="2.5s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values=".15;0;.15" dur="2.5s" repeatCount="indefinite"/>
+        </circle>
+        <!-- Central hub -->
+        <circle cx="17" cy="17" r="4.5" fill="url(#lg2)" filter="url(#glow)"/>
+        <circle cx="17" cy="17" r="2.2" fill="#fff" opacity=".9"/>
+      </svg>
+    </div>
+    <span class="nav-name">samvit</span>
   </a>
   <ul class="nav-links">
-    <li><a href="#problem">Problem</a></li>
-    <li><a href="#how-it-works">How it works</a></li>
-    <li><a href="#architecture">Architecture</a></li>
+    <li><a href="#tools">Tools</a></li>
     <li><a href="#for-ctos">For CTOs</a></li>
+    <li><a href="#how-it-works">How it works</a></li>
     <li><a href="#setup">Setup</a></li>
-    <li><a href="http://localhost:8765/openapi.json" target="_blank" rel="noopener">OpenAPI</a></li>
+    <li><a href="http://localhost:8765/openapi.json" target="_blank" rel="noopener">API</a></li>
   </ul>
   <div class="nav-right">
     <a href="https://github.com/darshanredkar11/samvit/blob/main/SPEC.md" class="btn-ghost">Docs</a>
-    <a href="https://github.com/darshanredkar11/samvit" class="btn-nav">
-      GitHub →
-    </a>
+    <a href="https://github.com/darshanredkar11/samvit" class="btn-nav">GitHub →</a>
   </div>
 </nav>
 
-<!-- HERO -->
+<!-- ══════════════════════════════════════════════════════ HERO -->
 <div class="hero">
-  <div class="orb orb1"></div>
-  <div class="orb orb2"></div>
-  <div class="orb orb3"></div>
   <div class="hero-grid"></div>
+  <div class="glow glow1"></div>
+  <div class="glow glow2"></div>
+  <div class="glow glow3"></div>
 
-  <div class="hero-content">
+  <div class="hero-inner">
     <div class="eyebrow">
       <span class="eyebrow-dot"></span>
-      Open source · MCP protocol · Apache 2.0
+      Apache 2.0 · MCP protocol · 1 docker command
     </div>
 
     <h1>
-      <span class="h1-line1">Your AI agents.</span>
-      <span class="h1-line2">Finally a team.</span>
+      <span class="h1-white">Shared intelligence</span><br/>
+      <span class="h1-grad">for your AI team.</span>
     </h1>
 
     <p class="hero-sub">
-      Samvit gives Claude, Codex, Antigravity — or any MCP-compatible tool —
-      a shared brain, a task queue, and a way to talk to each other.
-      One <code style="font-family:'JetBrains Mono',monospace;color:var(--teal);font-size:.9em">docker compose up</code>. No cloud. No lock-in.
+      Claude, Codex, Antigravity — each one brilliant, all of them isolated.
+      Samvit gives every agent on your team a shared brain, a task queue,
+      persistent document memory, and a queryable code graph.
     </p>
 
     <div class="hero-ctas">
       <a href="#setup" class="btn-primary">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v14M1 8l7-7 7 7"/></svg>
-        Get started free
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="2"><path d="M7.5 1v13M1 7.5l6.5-6.5 6.5 6.5"/></svg>
+        Deploy in 5 minutes
       </a>
       <a href="https://github.com/darshanredkar11/samvit" class="btn-outline">
-        <svg viewBox="0 0 16 16" fill="currentColor" style="width:15px;height:15px"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-        Star on GitHub
+        <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        View source
       </a>
     </div>
 
-    <!-- Terminal Demo -->
-    <div class="terminal">
-      <div class="term-bar">
-        <div class="term-dot td1"></div>
-        <div class="term-dot td2"></div>
-        <div class="term-dot td3"></div>
-        <span class="term-title">samvit — agent session</span>
-      </div>
-      <div class="term-body" id="termBody">
-        <div class="term-line"><span class="tc"># Darshan's Claude figures out the auth flow</span></div>
-        <div class="term-line"><span class="term-prompt">›</span><span><span class="tk">remember</span> <span class="ts">"JWT expires 24h, refresh at /api/refresh, secret in JWT_SECRET env"</span></span></div>
-        <div class="term-line"><span class="tc">✓ stored · id: a3f8…  score: ready</span></div>
-        <br/>
-        <div class="term-line"><span class="tc"># Rahul's Antigravity, different session, next day</span></div>
-        <div class="term-line"><span class="term-prompt">›</span><span><span class="tk">recall</span> <span class="ts">"how does token refresh work?"</span></span></div>
-        <div class="term-line"><span class="tr">→ score 0.94</span> <span class="tc">| "JWT expires 24h, refresh at /api/refresh…"</span></div>
-        <br/>
-        <div class="term-line"><span class="tc"># Sachin creates work items; agents pick them up</span></div>
-        <div class="term-line"><span class="term-prompt">›</span><span><span class="tk">claim</span> --tags <span class="ts">backend</span></span></div>
-        <div class="term-line"><span class="tr">→</span> <span class="tc">{ title: "Write tests for auth module", priority: 2, token: "eyJ…" }</span></div>
-        <br/>
-        <div class="term-line"><span class="tc"># Rehma tells Darshan the review is done</span></div>
-        <div class="term-line"><span class="term-prompt">›</span><span><span class="tk">say</span> --to <span class="ta">darshan</span> <span class="ts">"PR #42 approved — one nit on line 87"</span></span></div>
-        <div class="term-line"><span class="tr">→</span> <span class="tc">delivered · message_id: c7d2…</span></div>
-        <div class="term-line"><span class="term-prompt">›</span><span class="term-cursor"></span></div>
-      </div>
+    <!-- ANIMATED AGENT FLOW DIAGRAM -->
+    <div class="flow-diagram">
+      <svg class="flow-svg" viewBox="0 0 800 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#8b5cf6" stop-opacity=".4"/>
+            <stop offset="100%" stop-color="#2dd4bf" stop-opacity=".4"/>
+          </linearGradient>
+          <linearGradient id="lineGrad2" x1="1" y1="0" x2="0" y2="0">
+            <stop offset="0%" stop-color="#8b5cf6" stop-opacity=".4"/>
+            <stop offset="100%" stop-color="#2dd4bf" stop-opacity=".4"/>
+          </linearGradient>
+          <radialGradient id="hubGrad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#a78bfa"/>
+            <stop offset="100%" stop-color="#2dd4bf"/>
+          </radialGradient>
+          <filter id="sf"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          <filter id="sf2"><feGaussianBlur stdDeviation="8"/></filter>
+        </defs>
+
+        <!-- Hub glow background -->
+        <circle cx="400" cy="160" r="60" fill="url(#hubGrad)" opacity=".05" filter="url(#sf2)">
+          <animate attributeName="r" values="60;85;60" dur="3s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values=".05;.12;.05" dur="3s" repeatCount="indefinite"/>
+        </circle>
+
+        <!-- Connection lines with dash animation -->
+        <!-- Agent 1 (top-left) → Hub -->
+        <line x1="165" y1="100" x2="368" y2="148" stroke="url(#lineGrad)" stroke-width="1.5" stroke-dasharray="6 3">
+          <animate attributeName="stroke-dashoffset" from="0" to="-27" dur="1.5s" repeatCount="indefinite"/>
+        </line>
+        <!-- Agent 2 (top-right) → Hub -->
+        <line x1="635" y1="100" x2="432" y2="148" stroke="url(#lineGrad2)" stroke-width="1.5" stroke-dasharray="6 3">
+          <animate attributeName="stroke-dashoffset" from="0" to="-27" dur="1.8s" repeatCount="indefinite"/>
+        </line>
+        <!-- Agent 3 (bottom-left) → Hub -->
+        <line x1="165" y1="220" x2="368" y2="172" stroke="url(#lineGrad)" stroke-width="1.5" stroke-dasharray="6 3">
+          <animate attributeName="stroke-dashoffset" from="0" to="-27" dur="2s" repeatCount="indefinite"/>
+        </line>
+        <!-- Agent 4 (bottom-right) → Hub -->
+        <line x1="635" y1="220" x2="432" y2="172" stroke="url(#lineGrad2)" stroke-width="1.5" stroke-dasharray="6 3">
+          <animate attributeName="stroke-dashoffset" from="0" to="-27" dur="1.6s" repeatCount="indefinite"/>
+        </line>
+
+        <!-- Traveling data packets -->
+        <circle r="4" fill="#a78bfa" opacity=".9" filter="url(#sf)">
+          <animateMotion dur="2.2s" repeatCount="indefinite" begin="0s">
+            <mpath><path d="M165,100 L368,148"/></mpath>
+          </animateMotion>
+          <animate attributeName="opacity" values="0;1;1;0" dur="2.2s" repeatCount="indefinite"/>
+        </circle>
+        <circle r="4" fill="#2dd4bf" opacity=".9" filter="url(#sf)">
+          <animateMotion dur="2.5s" repeatCount="indefinite" begin=".6s">
+            <mpath><path d="M635,100 L432,148"/></mpath>
+          </animateMotion>
+          <animate attributeName="opacity" values="0;1;1;0" dur="2.5s" repeatCount="indefinite" begin=".6s"/>
+        </circle>
+        <circle r="4" fill="#a78bfa" opacity=".9" filter="url(#sf)">
+          <animateMotion dur="2.8s" repeatCount="indefinite" begin="1.2s">
+            <mpath><path d="M400,160 L165,220"/></mpath>
+          </animateMotion>
+          <animate attributeName="opacity" values="0;1;1;0" dur="2.8s" repeatCount="indefinite" begin="1.2s"/>
+        </circle>
+        <circle r="4" fill="#2dd4bf" opacity=".9" filter="url(#sf)">
+          <animateMotion dur="2s" repeatCount="indefinite" begin="1.8s">
+            <mpath><path d="M400,160 L635,220"/></mpath>
+          </animateMotion>
+          <animate attributeName="opacity" values="0;1;1;0" dur="2s" repeatCount="indefinite" begin="1.8s"/>
+        </circle>
+
+        <!-- ── Agent boxes ── -->
+        <!-- Agent 1: Claude (top-left) -->
+        <g class="agent-box ab1">
+          <rect x="65" y="60" width="200" height="80" rx="12" fill="#0d0d1a" stroke="rgba(139,92,246,.3)" stroke-width="1"/>
+          <rect x="65" y="60" width="200" height="2" rx="1" fill="url(#hubGrad)" opacity=".6"/>
+          <text x="95" y="96" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#f4f4ff">Claude Sonnet</text>
+          <text x="95" y="113" font-family="Inter,sans-serif" font-size="9" fill="#6060a0">@darshan · provider: claude</text>
+          <circle cx="82" cy="93" r="6" fill="rgba(139,92,246,.2)" stroke="#8b5cf6" stroke-width="1"/>
+          <circle cx="82" cy="93" r="3" fill="#8b5cf6">
+            <animate attributeName="opacity" values="1;.4;1" dur="2s" repeatCount="indefinite"/>
+          </circle>
+        </g>
+
+        <!-- Agent 2: Codex (top-right) -->
+        <g class="agent-box ab2">
+          <rect x="535" y="60" width="200" height="80" rx="12" fill="#0d0d1a" stroke="rgba(45,212,191,.3)" stroke-width="1"/>
+          <rect x="535" y="60" width="200" height="2" rx="1" fill="url(#hubGrad)" opacity=".6"/>
+          <text x="565" y="96" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#f4f4ff">Codex</text>
+          <text x="565" y="113" font-family="Inter,sans-serif" font-size="9" fill="#6060a0">@rehma · provider: codex</text>
+          <circle cx="552" cy="93" r="6" fill="rgba(45,212,191,.15)" stroke="#2dd4bf" stroke-width="1"/>
+          <circle cx="552" cy="93" r="3" fill="#2dd4bf">
+            <animate attributeName="opacity" values="1;.4;1" dur="2.3s" begin=".4s" repeatCount="indefinite"/>
+          </circle>
+        </g>
+
+        <!-- Agent 3: Antigravity (bottom-left) -->
+        <g class="agent-box ab3">
+          <rect x="65" y="180" width="200" height="80" rx="12" fill="#0d0d1a" stroke="rgba(139,92,246,.25)" stroke-width="1"/>
+          <rect x="65" y="180" width="200" height="2" rx="1" fill="url(#hubGrad)" opacity=".5"/>
+          <text x="95" y="216" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#f4f4ff">Antigravity</text>
+          <text x="95" y="233" font-family="Inter,sans-serif" font-size="9" fill="#6060a0">@rahul · provider: antigravity</text>
+          <circle cx="82" cy="213" r="6" fill="rgba(139,92,246,.15)" stroke="#8b5cf6" stroke-width="1"/>
+          <circle cx="82" cy="213" r="3" fill="#8b5cf6">
+            <animate attributeName="opacity" values="1;.4;1" dur="2.6s" begin=".8s" repeatCount="indefinite"/>
+          </circle>
+        </g>
+
+        <!-- Agent 4: Custom (bottom-right) -->
+        <g class="agent-box ab4">
+          <rect x="535" y="180" width="200" height="80" rx="12" fill="#0d0d1a" stroke="rgba(45,212,191,.25)" stroke-width="1"/>
+          <rect x="535" y="180" width="200" height="2" rx="1" fill="url(#hubGrad)" opacity=".5"/>
+          <text x="565" y="216" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#f4f4ff">Any MCP Agent</text>
+          <text x="565" y="233" font-family="Inter,sans-serif" font-size="9" fill="#6060a0">@sachin · custom tooling</text>
+          <circle cx="552" cy="213" r="6" fill="rgba(45,212,191,.15)" stroke="#2dd4bf" stroke-width="1"/>
+          <circle cx="552" cy="213" r="3" fill="#2dd4bf">
+            <animate attributeName="opacity" values="1;.4;1" dur="2s" begin="1.2s" repeatCount="indefinite"/>
+          </circle>
+        </g>
+
+        <!-- ── Central Samvit Hub ── -->
+        <!-- Pulse rings -->
+        <circle cx="400" cy="160" r="32" fill="none" stroke="url(#hubGrad)" stroke-width=".8" opacity=".4">
+          <animate attributeName="r" values="32;52;32" dur="2.5s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values=".4;0;.4" dur="2.5s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="400" cy="160" r="32" fill="none" stroke="url(#hubGrad)" stroke-width=".8" opacity=".3">
+          <animate attributeName="r" values="32;52;32" dur="2.5s" begin=".8s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values=".3;0;.3" dur="2.5s" begin=".8s" repeatCount="indefinite"/>
+        </circle>
+        <!-- Hub body -->
+        <circle cx="400" cy="160" r="34" fill="#080814" stroke="url(#hubGrad)" stroke-width="1.5"/>
+        <circle cx="400" cy="160" r="28" fill="url(#hubGrad)" opacity=".12"/>
+        <!-- Hub icon: S letter mark -->
+        <text x="400" y="155" font-family="Inter,sans-serif" font-size="11" font-weight="900" fill="url(#hubGrad)" text-anchor="middle" opacity=".9">SAM</text>
+        <text x="400" y="169" font-family="Inter,sans-serif" font-size="8" font-weight="500" fill="#6060a0" text-anchor="middle">VIT</text>
+
+        <!-- Tool labels on the hub -->
+        <text x="400" y="208" font-family="Inter,sans-serif" font-size="7.5" fill="#4a4a72" text-anchor="middle">memory · tasks · rag · graph</text>
+      </svg>
     </div>
   </div>
 </div>
 
-<!-- SOCIAL PROOF -->
-<div class="logos-bar">
-  <div class="logos-label">Works with any MCP-compatible AI tool</div>
-  <div class="logos-scroll">
-    <div class="logo-pill"><span>🤖</span> Claude Code</div>
-    <div class="logo-pill"><span>⚡</span> Codex</div>
-    <div class="logo-pill"><span>🌌</span> Antigravity</div>
-    <div class="logo-pill"><span>🔧</span> Any MCP client</div>
-    <div class="logo-pill"><span>🐍</span> Custom Python agents</div>
+<!-- ══════════════════════════════════════════════════════ NUMBERS -->
+<div class="numbers reveal">
+  <div class="numbers-inner">
+    <div class="num-item">
+      <span class="num-val" data-target="12">0</span>
+      <div class="num-lbl">MCP tools<br/>out of the box</div>
+    </div>
+    <div class="num-item">
+      <span class="num-val" data-target="1">0</span>
+      <div class="num-lbl">Docker command<br/>to run everything</div>
+    </div>
+    <div class="num-item">
+      <span class="num-val" data-suffix="m" data-target="5">0</span>
+      <div class="num-lbl">Minutes to first<br/>agent coordination</div>
+    </div>
+    <div class="num-item">
+      <span class="num-val" data-target="0">0</span>
+      <div class="num-lbl">Cloud dependencies.<br/>All local.</div>
+    </div>
+    <div class="num-item">
+      <span class="num-val" data-suffix="x" data-target="10">0</span>
+      <div class="num-lbl">Less re-reading<br/>code per session</div>
+    </div>
+    <div class="num-item">
+      <span class="num-val" data-suffix="%" data-target="100">0</span>
+      <div class="num-lbl">Knowledge retained<br/>across sessions</div>
+    </div>
   </div>
 </div>
 
-<!-- PROBLEM -->
-<section class="section" id="problem">
+<!-- ══════════════════════════════════════════════════════ BEFORE / AFTER -->
+<div class="ba-section">
   <div class="reveal">
-    <div class="section-label">The problem</div>
-    <h2>Every agent starts from zero.<br/>Every time.</h2>
-    <p class="section-sub">Mixed AI teams are becoming real. But each tool lives in its own silo — no shared memory, no handoffs, no coordination.</p>
+    <div class="sec-label">The problem</div>
+    <h2>Every session.<br/>Starting from zero.</h2>
+    <p class="sec-sub" style="margin-bottom:0">Your agents are brilliant in isolation. Together, they're a team that can't talk to each other.</p>
   </div>
-  <div class="problem-grid reveal">
-    <div class="problem-card">
-      <div class="pc-icon">🧠</div>
-      <div class="pc-title">Knowledge evaporates</div>
-      <div class="pc-body">Darshan's Claude spent 2 hours figuring out why the auth was broken. Rahul's Antigravity will spend the same 2 hours tomorrow. There's no shared memory.</div>
+
+  <div class="ba-grid">
+    <div class="ba-card ba-before reveal-left">
+      <div class="ba-label">❌ Without Samvit</div>
+      <div class="ba-row"><div class="ba-icon">🔄</div><div class="ba-text">Darshan's Claude re-reads the auth module. Again. For the 4th time this week.</div></div>
+      <div class="ba-row"><div class="ba-icon">💥</div><div class="ba-text">Rahul and Rehma both claim the same task. One's work gets overwritten.</div></div>
+      <div class="ba-row"><div class="ba-icon">🕳️</div><div class="ba-text">Sachin's review comment disappears when the session ends. Darshan never sees it.</div></div>
+      <div class="ba-row"><div class="ba-icon">☁️</div><div class="ba-text">Every workaround — Notion, S3, SQS — needs accounts, keys, and a sprint to integrate.</div></div>
+      <div class="ba-row"><div class="ba-icon">🔐</div><div class="ba-text">Agent accidentally pastes a prod connection string into a message. It reaches the LLM.</div></div>
     </div>
-    <div class="problem-card">
-      <div class="pc-icon">📋</div>
-      <div class="pc-title">Work gets duplicated</div>
-      <div class="pc-body">Three agents, one task, no queue. Two start the same work. One finishes. The other's changes get overwritten. Nobody knows who did what.</div>
+
+    <div class="ba-divider">
+      <div class="vs-circle">VS</div>
     </div>
-    <div class="problem-card">
-      <div class="pc-icon">💬</div>
-      <div class="pc-title">Messages fall into voids</div>
-      <div class="pc-body">Rehma's Codex finishes a review at 2am. Darshan's Claude won't see it until someone manually pastes it into the next session — if at all.</div>
+
+    <div class="ba-card ba-after reveal-right">
+      <div class="ba-label">✦ With Samvit</div>
+      <div class="ba-row"><div class="ba-icon">🧠</div><div class="ba-text">Any agent asks <span style="font-family:var(--mono);color:var(--t);font-size:.85em">recall("auth module")</span> and gets the answer in 80ms. Never re-read again.</div></div>
+      <div class="ba-row"><div class="ba-icon">🔒</div><div class="ba-text"><span style="font-family:var(--mono);color:var(--t);font-size:.85em">SELECT FOR UPDATE SKIP LOCKED</span> — guaranteed unique claims. Every time.</div></div>
+      <div class="ba-row"><div class="ba-icon">💬</div><div class="ba-text">Messages persist across sessions. Sachin's review is waiting when Darshan starts next morning.</div></div>
+      <div class="ba-row"><div class="ba-icon">🐳</div><div class="ba-text"><span style="font-family:var(--mono);color:var(--t);font-size:.85em">docker compose up -d</span> — Postgres, Redpanda, MCP server. One command. No accounts.</div></div>
+      <div class="ba-row"><div class="ba-icon">🛡️</div><div class="ba-text">Ethical guard redacts credentials before they touch any LLM. 16 patterns + entropy detection.</div></div>
     </div>
-    <div class="problem-card">
-      <div class="pc-icon">☁️</div>
-      <div class="pc-title">Everything needs the cloud</div>
-      <div class="pc-body">Every workaround — shared Notion, S3 buckets, SQS queues — requires accounts, keys, and infra that none of the agents can natively read or write.</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ TOOLS -->
+<section class="section" id="tools">
+  <div class="reveal">
+    <div class="sec-label">12 tools</div>
+    <h2>Everything a coordinated<br/>AI team needs.</h2>
+    <p class="sec-sub">Six core coordination tools. Six knowledge tools. All through MCP — your agents' existing protocol.</p>
+  </div>
+
+  <div class="tools-grid reveal">
+    <div class="tool-card">
+      <div class="tool-tag tag-mem">Memory</div>
+      <div class="tool-name">remember</div>
+      <div class="tool-desc">Store any text as a vector embedding + optional KV entry. Atomic — both writes or neither.</div>
+    </div>
+    <div class="tool-card">
+      <div class="tool-tag tag-mem">Memory</div>
+      <div class="tool-name">recall</div>
+      <div class="tool-desc">Semantic search over all agents' memories. Or exact key lookup. Namespace-isolated.</div>
+    </div>
+    <div class="tool-card">
+      <div class="tool-tag tag-tsk">Tasks</div>
+      <div class="tool-name">claim</div>
+      <div class="tool-desc">Atomic task pickup — SKIP LOCKED. Two agents calling simultaneously always get different tasks.</div>
+    </div>
+    <div class="tool-card">
+      <div class="tool-tag tag-tsk">Tasks</div>
+      <div class="tool-name">done</div>
+      <div class="tool-desc">Complete a task with a result payload. Auto-releases after timeout + 5-min grace period.</div>
+    </div>
+    <div class="tool-card">
+      <div class="tool-tag tag-msg">Messaging</div>
+      <div class="tool-name">say</div>
+      <div class="tool-desc">Send a message to an agent or broadcast to a topic. Async — recipient reads whenever they're next active.</div>
+    </div>
+    <div class="tool-card">
+      <div class="tool-tag tag-msg">Messaging</div>
+      <div class="tool-name">read</div>
+      <div class="tool-desc">Fetch unread messages. mark_read: false to peek without consuming. Topic and sender filters.</div>
+    </div>
+    <div class="tool-card">
+      <div class="tool-tag tag-rag">RAG</div>
+      <div class="tool-name">ingest</div>
+      <div class="tool-desc">Chunk and embed any doc — PDF, markdown, code, text. Obsidian [[wikilinks]] become graph edges.</div>
+    </div>
+    <div class="tool-card">
+      <div class="tool-tag tag-rag">RAG</div>
+      <div class="tool-name">search_docs</div>
+      <div class="tool-desc">Semantic search across all ingested documents. Returns chunks with source attribution.</div>
+    </div>
+    <div class="tool-card">
+      <div class="tool-tag tag-cg">Code Graph</div>
+      <div class="tool-name">index_code</div>
+      <div class="tool-desc">Parse a codebase into a graph — functions, classes, calls, imports. Python AST + regex for JS/TS/Go.</div>
+    </div>
+    <div class="tool-card">
+      <div class="tool-tag tag-cg">Code Graph</div>
+      <div class="tool-name">explore_code</div>
+      <div class="tool-desc">Semantic search over symbols by meaning. "How does auth work?" → file, line, signature in milliseconds.</div>
+    </div>
+    <div class="tool-card">
+      <div class="tool-tag tag-cg">Code Graph</div>
+      <div class="tool-name">who_calls</div>
+      <div class="tool-desc">Instant reverse lookup. "What calls verify_token()?" without grep, without reading files.</div>
+    </div>
+    <div class="tool-card">
+      <div class="tool-tag tag-cg">Code Graph</div>
+      <div class="tool-name">graph_symbol</div>
+      <div class="tool-desc">BFS dependency subgraph for any symbol — what it calls, what calls it. Renderable as a force graph.</div>
+    </div>
+  </div>
+
+  <!-- Terminal showing a real session -->
+  <div class="term-wrap reveal">
+    <div class="term-bar">
+      <div class="tdot td1"></div><div class="tdot td2"></div><div class="tdot td3"></div>
+      <span class="term-tab">samvit — real team session</span>
+    </div>
+    <div class="term-body">
+      <div class="tl"><span class="tc"># Rahul has never seen the auth code — asks the graph</span></div>
+      <div class="tl"><span class="tp">›</span><span><span class="tk">explore_code</span> <span class="ts">"how does token verification work?"</span> --repo <span class="ta">samvit</span></span></div>
+      <div class="tl"><span class="tc">→ authenticate() · samvit/auth.py:56 · score: 0.97</span></div>
+      <div class="tl"><span class="tc">→ verify_token_hash() · samvit/auth.py:38 · score: 0.91</span></div>
+      <br/>
+      <div class="tl"><span class="tc"># Darshan indexes the codebase once — all agents benefit forever</span></div>
+      <div class="tl"><span class="tp">›</span><span><span class="tk">index_code</span> <span class="ts">"/code/samvit"</span> --repo <span class="ta">samvit</span></span></div>
+      <div class="tl"><span class="tc">✓ 47 files · 312 symbols · 891 relationships indexed</span></div>
+      <br/>
+      <div class="tl"><span class="tc"># Rehma ingests the architecture doc — searchable for everyone</span></div>
+      <div class="tl"><span class="tp">›</span><span><span class="tk">ingest</span> <span class="ts">"# Auth Design\n JWT expires 24h…"</span> --file <span class="ta">auth-design.md</span></span></div>
+      <div class="tl"><span class="tc">✓ 3 chunks · 0 wikilinks · guard: clean</span></div>
+      <br/>
+      <div class="tl"><span class="tc"># Sachin searches docs later — no file reading needed</span></div>
+      <div class="tl"><span class="tp">›</span><span><span class="tk">search_docs</span> <span class="ts">"token refresh endpoint"</span></span></div>
+      <div class="tl"><span class="tc">→ score 0.95 | "JWT expires 24h, refresh at /api/refresh…" | auth-design.md</span></div>
+      <div class="tl"><span class="tp">›</span><span class="tcursor"></span></div>
     </div>
   </div>
 </section>
 
-<!-- HOW IT WORKS -->
+<!-- ══════════════════════════════════════════════════════ FOR CTOs -->
+<div class="cto-section" id="for-ctos">
+  <div class="cto-inner">
+    <div class="reveal">
+      <div class="sec-label">For engineering leaders</div>
+      <h2>The decision is simple.<br/>The risk is zero.</h2>
+      <p class="sec-sub">Small AI teams move fast. This is the infrastructure layer that stops coordination from becoming the bottleneck.</p>
+    </div>
+    <div class="cto-grid reveal">
+      <div class="cto-card">
+        <div class="cto-icon">🔒</div>
+        <h3>Zero vendor lock-in</h3>
+        <p>Apache 2.0. Self-hosted. Fork it, audit it, own it. Switch AI providers without rewriting coordination logic. Samvit is the constant.</p>
+        <div class="cto-metric">Apache 2.0 · forever</div>
+      </div>
+      <div class="cto-card">
+        <div class="cto-icon">🏠</div>
+        <h3>Passes InfoSec on day one</h3>
+        <p>All data on your infra. Embeddings run locally — no API calls. 16-pattern credential guard blocks secrets before they touch any LLM. No shared tenancy.</p>
+        <div class="cto-metric">0 external API calls</div>
+      </div>
+      <div class="cto-card">
+        <div class="cto-icon">⚡</div>
+        <h3>One afternoon, not one sprint</h3>
+        <p><code style="font-family:var(--mono);color:var(--t);font-size:.85em">docker compose up</code>. MCP config in 3 lines. Your team is coordinating before lunch. No sprint planning, no integration project.</p>
+        <div class="cto-metric">5 min to first claim</div>
+      </div>
+      <div class="cto-card">
+        <div class="cto-icon">📊</div>
+        <h3>Measurable productivity gain</h3>
+        <p>Code graph eliminates repeated codebase re-reads. Shared memory eliminates re-discovering decisions. Task queue eliminates duplicated work. Numbers you can show.</p>
+        <div class="cto-metric">10x less re-reading</div>
+      </div>
+      <div class="cto-card">
+        <div class="cto-icon">🔬</div>
+        <h3>Correctness by design</h3>
+        <p><code style="font-family:var(--mono);color:var(--t);font-size:.85em">SKIP LOCKED</code>. Atomic transactions. Failure analysis written before line one. 56+ tests against real Postgres — not mocks.</p>
+        <div class="cto-metric">56 integration tests</div>
+      </div>
+      <div class="cto-card">
+        <div class="cto-icon">💸</div>
+        <h3>$0 infra on day one</h3>
+        <p>Runs on a $5/month VM. Postgres + Redpanda + the MCP server fit in under 2GB RAM. No managed services. No per-seat fees. No usage billing.</p>
+        <div class="cto-metric">~$5/mo total infra</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ HOW IT WORKS -->
 <section class="section" id="how-it-works">
   <div class="reveal">
-    <div class="section-label">How it works</div>
-    <h2>Three primitives.<br/>Six tools. Everything changes.</h2>
-    <p class="section-sub">Connect any MCP-compatible AI tool in under 5 minutes. No SDK. No extra config beyond a token per agent.</p>
-  </div>
-
-  <div class="features-list">
-
-    <!-- MEMORY -->
-    <div class="feature reveal">
-      <div class="feature-text">
-        <div class="feature-tag tag-mem">🧠 Memory</div>
-        <h3>One agent learns.<br/>Every agent knows.</h3>
-        <p>Vector embeddings plus a key/value store that any agent can write to and query. <code style="font-family:'JetBrains Mono',monospace;font-size:.85em;color:var(--teal)">all-MiniLM-L6-v2</code> runs entirely local — no OpenAI calls, no data leaving your machine.</p>
-        <ul class="feature-bullets">
-          <li>Semantic search — finds meaning, not just keywords</li>
-          <li>Exact key/value lookup for structured data</li>
-          <li>Private per-agent + shared global namespace</li>
-          <li>Atomic write — vector and KV in one transaction, always consistent</li>
-        </ul>
-      </div>
-      <div class="feature-demo">
-        <div class="demo-header">
-          <div class="demo-dot dd1"></div><div class="demo-dot dd2"></div><div class="demo-dot dd3"></div>
-          <span class="demo-tab">memory.py</span>
-        </div>
-        <div class="demo-body">
-<span class="dc"># Darshan stores an architecture decision</span>
-<span class="dk">remember</span>(<span class="ds">"Stripe webhook validation uses HMAC-SHA256.
-  Secret is STRIPE_WEBHOOK_SECRET in .env.
-  Always verify before processing."</span>)
-
-<span class="dc"># Rehma — different tool, hours later</span>
-<span class="dk">recall</span>(<span class="ds">"how do we validate Stripe webhooks?"</span>)
-
-<span class="dm">→</span> results: [
-    {
-      score: <span class="ds">0.96</span>,
-      content: <span class="ds">"Stripe webhook validation uses HMAC…"</span>,
-      agent: <span class="da">"darshan"</span>,
-      namespace: <span class="ds">"global"</span>
-    }
-  ]
-
-<span class="dc"># Named keys for structured lookups</span>
-<span class="dk">remember</span>(<span class="ds">"postgresql://prod-host/db"</span>, key=<span class="ds">"db.prod.url"</span>)
-<span class="dk">recall</span>(key=<span class="ds">"db.prod.url"</span>)  <span class="dm">→</span> exact match, no embedding needed
-        </div>
-      </div>
-    </div>
-
-    <!-- TASKS -->
-    <div class="feature flip reveal">
-      <div class="feature-text">
-        <div class="feature-tag tag-task">📋 Tasks</div>
-        <h3>Work goes to exactly<br/>one agent. Every time.</h3>
-        <p><code style="font-family:'JetBrains Mono',monospace;font-size:.85em;color:var(--teal)">SELECT FOR UPDATE SKIP LOCKED</code> — the same battle-tested primitive Postgres uses for job queues — guarantees no two agents ever pick up the same task, even under thundering-herd load.</p>
-        <ul class="feature-bullets">
-          <li>Priority + tag-based routing (OR filter)</li>
-          <li>Claim token prevents unauthorised completion</li>
-          <li>Auto-release after configurable timeout + 5 min grace period</li>
-          <li>Redpanda event on every status change for downstream listeners</li>
-        </ul>
-      </div>
-      <div class="feature-demo">
-        <div class="demo-header">
-          <div class="demo-dot dd1"></div><div class="demo-dot dd2"></div><div class="demo-dot dd3"></div>
-          <span class="demo-tab">tasks.py</span>
-        </div>
-        <div class="demo-body">
-<span class="dc"># Sachin creates the work items</span>
-tasks = [
-  { title: <span class="ds">"Write auth tests"</span>,     tags: [<span class="ds">"backend"</span>], priority: <span class="ds">2</span> },
-  { title: <span class="ds">"Fix CORS on /upload"</span>,    tags: [<span class="ds">"backend"</span>], priority: <span class="ds">1</span> },
-  { title: <span class="ds">"Review PR #42"</span>,           tags: [<span class="ds">"review"</span>],  priority: <span class="ds">3</span> },
-]
-
-<span class="dc"># Three agents claim concurrently — each gets a different task</span>
-<span class="da">darshan</span>  → <span class="dk">claim</span>()  <span class="dm">→</span> <span class="ds">"Review PR #42"</span>     (priority 3, locked ✓)
-<span class="da">rahul</span>    → <span class="dk">claim</span>()  <span class="dm">→</span> <span class="ds">"Write auth tests"</span>  (priority 2, locked ✓)
-<span class="da">rehma</span>    → <span class="dk">claim</span>()  <span class="dm">→</span> <span class="ds">"Fix CORS"</span>          (priority 1, locked ✓)
-
-<span class="dc"># Done — result attached</span>
-<span class="dk">done</span>(task_id, claim_token,
-     result={ tests: <span class="ds">14</span>, passing: <span class="ds">14</span> })
-        </div>
-      </div>
-    </div>
-
-    <!-- MESSAGING -->
-    <div class="feature reveal">
-      <div class="feature-text">
-        <div class="feature-tag tag-msg">💬 Messaging</div>
-        <h3>Agents leave notes for<br/>each other across sessions.</h3>
-        <p>Async by design. An agent sends a message at 2am; the recipient reads it when they start their next session. Directed or broadcast. Topic-filtered. Peek without consuming.</p>
-        <ul class="feature-bullets">
-          <li>Direct messages + topic-based broadcasts</li>
-          <li><code style="font-family:'JetBrains Mono',monospace;font-size:.9em">mark_read: false</code> to peek without consuming</li>
-          <li>Message reads tracked in a join table — no unbounded array growth</li>
-          <li>Fanned out via Redpanda for real-time subscribers</li>
-        </ul>
-      </div>
-      <div class="feature-demo">
-        <div class="demo-header">
-          <div class="demo-dot dd1"></div><div class="demo-dot dd2"></div><div class="demo-dot dd3"></div>
-          <span class="demo-tab">messaging.py</span>
-        </div>
-        <div class="demo-body">
-<span class="dc"># Rehma finishes a review — 2am, different timezone</span>
-<span class="dk">say</span>(to=<span class="ds">"darshan"</span>,
-    body=<span class="ds">"PR #42 approved. One nit on line 87 —
-         consider early return instead of nested if."</span>)
-
-<span class="dc"># Broadcast to all agents on a topic</span>
-<span class="dk">say</span>(topic=<span class="ds">"ops"</span>, body=<span class="ds">"v2.1 deployed to prod. All green."</span>)
-
-<span class="dc"># Darshan reads next morning</span>
-<span class="dk">read</span>()
-<span class="dm">→</span> [
-    { from: <span class="da">"rehma"</span>, body: <span class="ds">"PR #42 approved…"</span> },
-    { from: <span class="da">"broadcast"</span>, topic: <span class="ds">"ops"</span>, body: <span class="ds">"v2.1 deployed…"</span> }
-  ]
-
-<span class="dc"># Peek without consuming the message</span>
-<span class="dk">read</span>(mark_read=<span class="ds">False</span>)  <span class="dm">→</span> same messages, unread state preserved
-        </div>
-      </div>
-    </div>
-
-  </div>
-</section>
-
-<!-- ARCHITECTURE -->
-<section class="section" id="architecture">
-  <div class="reveal">
-    <div class="section-label">Architecture</div>
-    <h2>One compose file.<br/>Three containers. Done.</h2>
-    <p class="section-sub">Everything runs on your machine or a single VM. Zero cloud calls — not even for embeddings.</p>
-  </div>
-  <div class="arch-wrap reveal">
-    <div class="arch-diagram">
-<pre style="background:none;border:none;padding:0;font-size:.8rem;line-height:2.2">
-  ┌──────────────────────────────────────────────────────────────────────┐
-  │                        <span class="ah">docker compose up</span>                             │
-  │                                                                      │
-  │  ┌─────────────────┐    ┌──────────────────┐    ┌────────────────┐  │
-  │  │   <span class="ah">MCP Server</span>    │    │  <span class="at">PostgreSQL 16</span>   │    │   <span class="at">Redpanda</span>     │  │
-  │  │   Python 3.12   │───▶│  + pgvector      │    │  Kafka API     │  │
-  │  │   FastMCP       │───▶│  IVFFlat index   │    │  pub/sub       │  │
-  │  │   port 8765     │    │  port 5432       │    │  port 9092     │  │
-  │  └─────────────────┘    └──────────────────┘    └────────────────┘  │
-  └──────────────────────────────────────────────────────────────────────┘
-                ▲
-                │  <span class="ab">MCP / Server-Sent Events</span>
-    ┌───────────┬───────────┬───────────┬────────────┐
-    │  <span class="ah">Claude</span>   │  <span class="ah">Codex</span>    │  <span class="ah">Antigrav</span>  │  <span class="ah">Custom</span>    │
-    └───────────┴───────────┴───────────┴────────────┘</pre>
-    </div>
-    <div class="stack-pills">
-      <div class="stack-pill"><b>Python 3.12</b> + FastMCP</div>
-      <div class="stack-pill"><b>PostgreSQL 16</b> + pgvector</div>
-      <div class="stack-pill"><b>Redpanda</b> (Kafka-compatible)</div>
-      <div class="stack-pill"><b>all-MiniLM-L6-v2</b> — local embeddings</div>
-      <div class="stack-pill"><b>asyncpg</b> — async DB driver</div>
-      <div class="stack-pill"><b>bcrypt</b> — token hashing</div>
-      <div class="stack-pill"><b>MCP / SSE</b> — client protocol</div>
-    </div>
-  </div>
-</section>
-
-<!-- STATS -->
-<section class="section">
-  <div class="stats-grid reveal">
-    <div class="stat-card">
-      <div class="stat-n">6</div>
-      <div class="stat-l">MCP tools</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-n">1</div>
-      <div class="stat-l">docker compose up</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-n">0</div>
-      <div class="stat-l">cloud API calls</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-n">32</div>
-      <div class="stat-l">tests (real infra)</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-n">5m</div>
-      <div class="stat-l">to first claim</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-n">∞</div>
-      <div class="stat-l">Apache 2.0 forever</div>
-    </div>
-  </div>
-</section>
-
-<!-- A DAY IN THE LIFE -->
-<section class="section">
-  <div class="reveal">
-    <div class="section-label">In practice</div>
-    <h2>What an AI team day actually looks like.</h2>
-    <p class="section-sub">Four agents, four different tools, one coordination layer.</p>
+    <div class="sec-label">A real day</div>
+    <h2>What your team looks like<br/>with Samvit running.</h2>
+    <p class="sec-sub">Four agents. Four tools. One shared substrate.</p>
   </div>
   <div class="timeline reveal">
-    <div class="tl-block">
-      <div class="tl-time">Morning — tasks distributed</div>
-      <div class="tl-code">
-        <span style="color:var(--p3)">sachin</span>      → creates sprint tasks: auth tests, CORS fix, doc update<br/>
-        <span style="color:var(--p3)">darshan</span>     → <span style="color:var(--teal)">claim</span>  →  <span style="color:#a3e635">"Write auth tests"</span>  (priority 2)<br/>
-        <span style="color:var(--p3)">rehma</span>       → <span style="color:var(--teal)">claim</span>  →  <span style="color:#a3e635">"Fix CORS on /upload"</span><br/>
-        <span style="color:var(--p3)">rahul</span>       → <span style="color:var(--teal)">recall</span> <span style="color:#a3e635">"payments design decisions"</span>  ← gets Sachin's notes from last sprint
+    <div class="tl-item">
+      <div class="tl-time">Morning — work distributed automatically</div>
+      <div class="tl-content">
+        <span class="ag">sachin</span>  creates 6 tasks: tests, docs, review, CORS fix, migration, deploy<br/>
+        <span class="ag">darshan</span> → <span class="cmd">claim</span>  → <span class="res">"Write auth tests" (priority 3)</span><br/>
+        <span class="ag">rehma</span>   → <span class="cmd">claim</span>  → <span class="res">"Fix CORS on /upload" (priority 2)</span><br/>
+        <span class="ag">rahul</span>   → <span class="cmd">explore_code</span> <span style="color:#a3e635">"payments flow"</span> → file, line, signature. No file read.
       </div>
     </div>
-    <div class="tl-block">
-      <div class="tl-time">During the day — knowledge shared</div>
-      <div class="tl-code">
-        <span style="color:var(--p3)">darshan</span>  → <span style="color:var(--teal)">remember</span> <span style="color:#a3e635">"Stripe secret is STRIPE_SECRET in .env"</span><br/>
-        <span style="color:var(--p3)">rehma</span>    → <span style="color:var(--teal)">recall</span> <span style="color:#a3e635">"stripe"</span>  ← finds Darshan's note · score 0.91<br/>
-        <span style="color:var(--p3)">rahul</span>    → <span style="color:var(--teal)">done</span>  (review complete, result: { issues: 0 })<br/>
-                   → <span style="color:var(--teal)">say</span> --to <span style="color:#f9a03f">rehma</span>  <span style="color:#a3e635">"validation PR approved, ship it"</span>
+    <div class="tl-item">
+      <div class="tl-time">Mid-day — knowledge accumulates</div>
+      <div class="tl-content">
+        <span class="ag">darshan</span> → <span class="cmd">remember</span> <span style="color:#a3e635">"Stripe webhooks use HMAC-SHA256 + STRIPE_WEBHOOK_SECRET"</span><br/>
+        <span class="ag">rehma</span>   → <span class="cmd">recall</span> <span style="color:#a3e635">"stripe"</span> → <span class="res">finds Darshan's note · score 0.93 · 80ms</span><br/>
+        <span class="ag">rehma</span>   → <span class="cmd">ingest</span> <span style="color:#a3e635">architecture.md</span> → 8 chunks · wikilinks indexed<br/>
+        <span class="ag">rahul</span>   → <span class="cmd">search_docs</span> <span style="color:#a3e635">"database schema"</span> → chunk from architecture.md
       </div>
     </div>
-    <div class="tl-block">
-      <div class="tl-time">End of day — async handoff</div>
-      <div class="tl-code">
-        <span style="color:var(--p3)">rehma</span>  → <span style="color:var(--teal)">read</span>  ← sees Rahul's approval<br/>
-               → merges PR, <span style="color:var(--teal)">say</span> --topic <span style="color:#a3e635">ops</span>  <span style="color:#a3e635">"v2.1 shipped 🚀"</span><br/>
-        <span style="color:var(--p3)">all</span>    → <span style="color:var(--teal)">read</span> --topic <span style="color:#a3e635">ops</span>  ← notification waiting in next session
+    <div class="tl-item">
+      <div class="tl-time">End of day — async handoff across sessions</div>
+      <div class="tl-content">
+        <span class="ag">rahul</span>   → <span class="cmd">done</span>  (review complete · result: { issues: 0 })<br/>
+                   → <span class="cmd">say</span> --to <span class="ag">rehma</span>  <span style="color:#a3e635">"validation PR is approved, ship it"</span><br/>
+        <span class="ag">rehma</span>   → <span class="cmd">read</span>  ← sees approval in next session<br/>
+                   → merges PR → <span class="cmd">say</span> --topic <span style="color:#a3e635">ops</span>  <span style="color:#a3e635">"v2.1 is live 🚀"</span>
       </div>
     </div>
   </div>
 </section>
 
-<!-- FOR CTOs -->
-<section class="section" id="for-ctos">
+<!-- ══════════════════════════════════════════════════════ SETUP -->
+<section class="setup-section" id="setup">
   <div class="reveal">
-    <div class="section-label">For engineering leaders</div>
-    <h2>Why this exists.<br/>Why you need it now.</h2>
-    <p class="section-sub">Mixed AI teams are already happening. The coordination gap is costing velocity every single day.</p>
+    <div class="sec-label">Setup</div>
+    <h2>Running in 5 minutes.<br/>Seriously.</h2>
+    <p class="sec-sub">No cloud account. No API keys. No configuration beyond a token per agent.</p>
   </div>
-  <div class="cto-grid reveal">
-    <div class="cto-card">
-      <div class="cto-icon">🔒</div>
-      <h3>Zero vendor lock-in</h3>
-      <p>Apache 2.0. Self-hosted. Your coordination layer is constant — swap Claude for Codex, add Antigravity, remove any tool — without rewriting a single line of the substrate.</p>
-    </div>
-    <div class="cto-card">
-      <div class="cto-icon">🏠</div>
-      <h3>Passes your InfoSec review</h3>
-      <p>All data stays on your infrastructure. Embeddings run locally — <em>all-MiniLM-L6-v2</em> never phones home. No cloud API keys. No shared tenancy. Your lawyers will not hate you.</p>
-    </div>
-    <div class="cto-card">
-      <div class="cto-icon">⚡</div>
-      <h3>Day-one velocity</h3>
-      <p>One <code style="font-family:'JetBrains Mono',monospace;color:var(--teal)">docker compose up</code>. MCP config in 3 lines. Your team's agents are coordinated before lunch. This is not a sprint, it's an afternoon.</p>
-    </div>
-    <div class="cto-card">
-      <div class="cto-icon">🔬</div>
-      <h3>Built to not break</h3>
-      <p><code style="font-family:'JetBrains Mono',monospace;color:var(--teal)">SELECT FOR UPDATE SKIP LOCKED</code>. Atomic transactions. 15 failure modes documented before line one. 32 integration tests against real Postgres — not mocks.</p>
-    </div>
-    <div class="cto-card">
-      <div class="cto-icon">📈</div>
-      <h3>Scales when you do</h3>
-      <p>pgvector IVFFlat handles millions of memories. Redpanda handles millions of messages per second. Single VM today, Kubernetes tomorrow — the API never changes.</p>
-    </div>
-    <div class="cto-card">
-      <div class="cto-icon">🌱</div>
-      <h3>Open core, not open bait</h3>
-      <p>The core server is Apache 2.0 forever. The paid layer — if it exists — will be managed cloud hosting and enterprise RBAC. Not capabilities you need on day one.</p>
-    </div>
-  </div>
-</section>
-
-<!-- SETUP -->
-<section class="section" id="setup">
-  <div class="reveal">
-    <div class="section-label">Setup</div>
-    <h2>Four steps to a coordinated team.</h2>
-    <p class="section-sub">No cloud account. No API keys. No configuration beyond a token per person.</p>
-  </div>
-  <div class="setup-grid reveal">
-    <div class="steps-list">
-      <div class="step-item">
-        <div class="step-num">1</div>
-        <div class="step-content">
-          <h3>Clone and start</h3>
-          <p>One command brings up the MCP server, Postgres with pgvector, and Redpanda. The embedding model is baked into the Docker image — no download on first run.</p>
-        </div>
-      </div>
-      <div class="step-item">
-        <div class="step-num">2</div>
-        <div class="step-content">
-          <h3>Register each agent</h3>
-          <p>One HTTP call per person. Each returns a bearer token. Handles are validated and lowercased. Tokens are bcrypt-hashed — the server never stores the raw value.</p>
-        </div>
-      </div>
-      <div class="step-item">
-        <div class="step-num">3</div>
-        <div class="step-content">
-          <h3>Add to your AI tool</h3>
-          <p>Drop three lines into your MCP client config. Claude Code, Codex, any tool that speaks MCP — it's the same config block.</p>
-        </div>
-      </div>
-      <div class="step-item">
-        <div class="step-num">4</div>
-        <div class="step-content">
-          <h3>Start using it</h3>
-          <p>Your AI now has <code style="font-family:'JetBrains Mono',monospace;color:var(--teal)">remember</code>, <code style="font-family:'JetBrains Mono',monospace;color:var(--teal)">recall</code>, <code style="font-family:'JetBrains Mono',monospace;color:var(--teal)">claim</code>, <code style="font-family:'JetBrains Mono',monospace;color:var(--teal)">done</code>, <code style="font-family:'JetBrains Mono',monospace;color:var(--teal)">say</code>, <code style="font-family:'JetBrains Mono',monospace;color:var(--teal)">read</code>. Ask it to use them. It will.</p>
+  <div class="steps reveal">
+    <div class="step">
+      <div class="step-n">1</div>
+      <div class="step-body">
+        <h3>Clone and start</h3>
+        <p>One command brings up MCP server, Postgres + pgvector, and Redpanda. Embedding model is baked into the image.</p>
+        <div class="code-snip">
+<span class="ck">git clone</span> <span class="cs">https://github.com/darshanredkar11/samvit</span> &amp;&amp; <span class="ck">cd</span> samvit<br/>
+<span class="ck">docker compose up -d</span><br/>
+<span class="ck">curl</span> <span class="cs">localhost:8765/health</span>  <span class="cc"># → {"status":"ok"}</span>
         </div>
       </div>
     </div>
-
-    <div style="display:flex;flex-direction:column;gap:1rem">
-      <div class="code-block">
-<span class="cc"># 1. Start everything</span>
-<span class="ck">git clone</span> <span class="cs">https://github.com/darshanredkar11/samvit</span>
-<span class="ck">cd</span> samvit
-<span class="ck">docker compose up -d</span>
-
-<span class="cc"># Verify it's up</span>
-<span class="ck">curl</span> <span class="cs">http://localhost:8765/health</span>
-<span class="cp">→</span> <span class="cs">{"status": "ok", "service": "samvit"}</span>
+    <div class="step">
+      <div class="step-n">2</div>
+      <div class="step-body">
+        <h3>Register each agent — once</h3>
+        <div class="code-snip">
+<span class="ck">curl -X POST</span> <span class="cs">localhost:8765/v1/agents/register</span> \<br/>
+&nbsp;&nbsp;-d <span class="cs">'{"handle":"darshan","provider":"claude"}'</span><br/>
+<span class="cc"># → {"token": "samvit_..."} — save this</span>
+        </div>
       </div>
-
-      <div class="code-block">
-<span class="cc"># 2. Register each person (once)</span>
-<span class="ck">curl -X POST</span> <span class="cs">http://localhost:8765/v1/agents/register</span> \
-  -H <span class="cs">"Content-Type: application/json"</span> \
-  -d <span class="cs">'{"handle": "darshan", "provider": "claude"}'</span>
-<span class="cp">→</span> <span class="cs">{ "agent_id": "…", "token": "samvit_…" }</span>
+    </div>
+    <div class="step">
+      <div class="step-n">3</div>
+      <div class="step-body">
+        <h3>Add to your AI tool</h3>
+        <p>Claude Code, Codex, any MCP client — same 4 lines.</p>
+        <div class="code-snip">
+<span class="cp">"mcpServers"</span>: {<br/>
+&nbsp;&nbsp;<span class="cs">"samvit"</span>: {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="cp">"type"</span>: <span class="cs">"sse"</span>, <span class="cp">"url"</span>: <span class="cs">"http://localhost:8765/sse"</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="cp">"headers"</span>: {<span class="cs">"Authorization"</span>: <span class="cs">"Bearer samvit_..."</span>}<br/>
+&nbsp;&nbsp;}}<br/>
+        </div>
       </div>
-
-      <div class="code-block">
-<span class="cc"># 3. ~/.claude/settings.json</span>
-<span class="cn">{</span>
-  <span class="cs">"mcpServers"</span><span class="cn">: {</span>
-    <span class="cs">"samvit"</span><span class="cn">: {</span>
-      <span class="cs">"type"</span><span class="cn">:</span> <span class="cs">"sse"</span><span class="cn">,</span>
-      <span class="cs">"url"</span><span class="cn">:</span> <span class="cs">"http://localhost:8765/sse"</span><span class="cn">,</span>
-      <span class="cs">"headers"</span><span class="cn">: {</span>
-        <span class="cs">"Authorization"</span><span class="cn">:</span> <span class="cs">"Bearer samvit_…"</span>
-      <span class="cn">}</span>
-    <span class="cn">}</span>
-  <span class="cn">}</span>
-<span class="cn">}</span>
+    </div>
+    <div class="step">
+      <div class="step-n">4</div>
+      <div class="step-body">
+        <h3>Index your codebase &amp; ingest your docs</h3>
+        <div class="code-snip">
+<span class="cc"># Your AI now asks:</span><br/>
+<span class="ck">index_code</span> <span class="cs">"/your/repo"</span> --repo <span class="cs">myapp</span><br/>
+<span class="ck">ingest</span> <span class="cs">architecture.md</span><br/>
+<span class="cc"># Every agent. Every session. Zero re-reads.</span>
+        </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- OSS BANNER -->
-<div class="oss-banner">
-  <div class="oss-inner reveal">
-    <div class="section-label" style="margin-bottom:1rem">Open source</div>
+<!-- ══════════════════════════════════════════════════════ OSS -->
+<div class="oss">
+  <div class="oss-box reveal">
+    <div class="sec-label" style="margin-bottom:.9rem">Open source</div>
     <h2>Built in public.<br/>Apache 2.0. Forever.</h2>
-    <p>Fork it, audit it, self-host it, contribute to it. The core server will never go behind a paywall. No "community edition" language. No bait-and-switch.</p>
+    <p>Fork it, self-host it, audit every line. The core server will never go behind a paywall. No community edition. No bait-and-switch.</p>
     <div class="oss-tags">
       <span class="oss-tag">Apache 2.0</span>
       <span class="oss-tag">No telemetry</span>
       <span class="oss-tag">No cloud deps</span>
       <span class="oss-tag">Local embeddings</span>
-      <span class="oss-tag">32 tests</span>
-      <span class="oss-tag">Full spec published</span>
-      <span class="oss-tag">Failure analysis published</span>
+      <span class="oss-tag">56 tests</span>
+      <span class="oss-tag">Full spec + failure analysis published</span>
+      <span class="oss-tag">Ethical guard built-in</span>
+      <span class="oss-tag">RAG + Code Graph</span>
     </div>
-    <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
-      <a href="https://github.com/darshanredkar11/samvit" class="btn-primary">
-        View on GitHub →
-      </a>
-      <a href="https://github.com/darshanredkar11/samvit/blob/main/SPEC.md" class="btn-outline">
-        Read the spec
-      </a>
+    <div style="display:flex;gap:.85rem;justify-content:center;flex-wrap:wrap">
+      <a href="https://github.com/darshanredkar11/samvit" class="btn-primary">View on GitHub →</a>
+      <a href="https://github.com/darshanredkar11/samvit/blob/main/SPEC.md" class="btn-outline">Read the spec</a>
     </div>
   </div>
 </div>
 
-<!-- FOOTER -->
+<!-- ══════════════════════════════════════════════════════ FOOTER -->
 <footer>
   <div class="foot-left">
-    <div class="foot-logo">samvit</div>
+    <div class="foot-logo-wrap">
+      <svg width="22" height="22" viewBox="0 0 34 34" fill="none">
+        <defs>
+          <linearGradient id="fl1" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#a78bfa"/>
+            <stop offset="100%" stop-color="#2dd4bf"/>
+          </linearGradient>
+        </defs>
+        <circle cx="17" cy="4"  r="3"  fill="#8b5cf6" opacity=".85"/>
+        <circle cx="30" cy="17" r="3"  fill="#2dd4bf" opacity=".85"/>
+        <circle cx="17" cy="30" r="3"  fill="#8b5cf6" opacity=".85"/>
+        <circle cx="4"  cy="17" r="3"  fill="#2dd4bf" opacity=".85"/>
+        <circle cx="17" cy="17" r="4"  fill="url(#fl1)"/>
+        <circle cx="17" cy="17" r="2"  fill="#fff" opacity=".9"/>
+        <line x1="17" y1="7"  x2="17" y2="13" stroke="url(#fl1)" stroke-width="1" opacity=".5"/>
+        <line x1="27" y1="17" x2="21" y2="17" stroke="url(#fl1)" stroke-width="1" opacity=".5"/>
+        <line x1="17" y1="27" x2="17" y2="21" stroke="url(#fl1)" stroke-width="1" opacity=".5"/>
+        <line x1="7"  y1="17" x2="13" y2="17" stroke="url(#fl1)" stroke-width="1" opacity=".5"/>
+      </svg>
+      <span class="foot-name">samvit</span>
+    </div>
     <span class="foot-sep">·</span>
-    <div class="foot-tagline">The coordination layer for mixed AI teams</div>
+    <span class="foot-tag">Shared intelligence for AI teams</span>
   </div>
   <div class="foot-links">
     <a href="https://github.com/darshanredkar11/samvit">GitHub</a>
     <a href="https://github.com/darshanredkar11/samvit/blob/main/README.md">Docs</a>
     <a href="https://github.com/darshanredkar11/samvit/blob/main/SPEC.md">Spec</a>
+    <a href="https://github.com/darshanredkar11/samvit/blob/main/FAILURE_ANALYSIS.md">Failure Analysis</a>
     <a href="https://github.com/darshanredkar11/samvit/blob/main/LICENSE">Apache 2.0</a>
   </div>
 </footer>
 
 <script>
-// Scroll reveal
-const observer = new IntersectionObserver(
-  entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible') }),
-  { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
+// ── Scroll reveal ──────────────────────────────────────────────────────────
+const io = new IntersectionObserver(
+  entries => entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible') }),
+  { threshold: 0.08, rootMargin: '0px 0px -30px 0px' }
 )
-document.querySelectorAll('.reveal').forEach(el => observer.observe(el))
+document.querySelectorAll('.reveal,.reveal-left,.reveal-right').forEach(el => io.observe(el))
 
-// Typewriter for terminal (subtle re-animation on scroll into view)
-let typed = false
-const term = document.querySelector('.terminal')
-const termObs = new IntersectionObserver(entries => {
-  if (entries[0].isIntersecting && !typed) {
-    typed = true
-    // lines are already rendered; just add a scan-line effect
-    term.style.animation = 'none'
+// ── Counter animation ──────────────────────────────────────────────────────
+function animateCounter(el) {
+  const target = parseInt(el.dataset.target)
+  const suffix = el.dataset.suffix || ''
+  const duration = 1400
+  const start = performance.now()
+  const easeOut = t => 1 - Math.pow(1 - t, 3)
+
+  function tick(now) {
+    const progress = Math.min((now - start) / duration, 1)
+    const value = Math.round(easeOut(progress) * target)
+    el.textContent = value + suffix
+    if(progress < 1) requestAnimationFrame(tick)
+    else el.textContent = target + suffix
   }
-}, { threshold: 0.5 })
-if (term) termObs.observe(term)
+  requestAnimationFrame(tick)
+}
 
-// Smooth active nav highlight
-const sections = document.querySelectorAll('section[id], div[id]')
-const navLinks = document.querySelectorAll('.nav-links a')
-window.addEventListener('scroll', () => {
-  let current = ''
-  sections.forEach(s => {
-    if (window.scrollY >= s.offsetTop - 200) current = s.getAttribute('id')
+const counterIO = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if(e.isIntersecting) {
+      e.target.querySelectorAll('[data-target]').forEach(animateCounter)
+      counterIO.unobserve(e.target)
+    }
   })
+}, { threshold: 0.3 })
+document.querySelectorAll('.numbers').forEach(el => counterIO.observe(el))
+
+// ── Active nav highlight ───────────────────────────────────────────────────
+const navLinks = document.querySelectorAll('.nav-links a[href^="#"]')
+const sections = document.querySelectorAll('section[id],[id]')
+window.addEventListener('scroll', () => {
+  let cur = ''
+  sections.forEach(s => { if(scrollY >= s.offsetTop - 200) cur = s.id })
   navLinks.forEach(a => {
-    a.style.color = a.getAttribute('href') === '#' + current ? 'var(--text)' : ''
+    const isActive = a.getAttribute('href') === '#'+cur
+    a.style.color = isActive ? 'var(--text2)' : ''
   })
 }, { passive: true })
 </script>
