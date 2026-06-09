@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import logging
 
-from samvit import db, events
+from samvit import db, events, guard
 
 log = logging.getLogger(__name__)
 
@@ -46,6 +46,9 @@ async def say(
 
     if metadata is None:
         metadata = {}
+
+    # ── Ethical guard: scan message body before storing ──────────────────────
+    body = await guard.apply(body.strip(), agent["id"], "input", "say")
 
     to_agent_id: str | None = None
 
@@ -162,16 +165,23 @@ async def read(
                 [(mid, agent["id"]) for mid in message_ids],
             )
 
+    # ── Ethical guard: scan output before delivering to LLM ─────────────────
+    cleaned = []
+    for r in rows:
+        clean_body = await guard.apply(r["body"], agent["id"], "output", "read",
+                                       check_entropy=False)
+        cleaned.append((r, clean_body))
+
     return {
         "messages": [
             {
                 "id":       str(r["id"]),
                 "from":     r["from_handle"],
-                "body":     r["body"],
+                "body":     clean_body,
                 "topic":    r["topic"],
                 "metadata": dict(r["metadata"]),
                 "sent_at":  r["created_at"].isoformat(),
             }
-            for r in rows
+            for r, clean_body in cleaned
         ]
     }

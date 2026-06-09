@@ -153,6 +153,48 @@ class AdminResetRequest(BaseModel):
     admin_secret: str
 
 
+@app.get("/v1/guard/violations")
+async def guard_violations(limit: int = 50):
+    """
+    Return recent guard violations for the authenticated agent.
+    Useful for auditing what was blocked/redacted in your sessions.
+    """
+    agent = _agent()
+    async with db.pool().acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT id, direction, tool, pattern_name, category, severity, snippet, created_at
+              FROM guard_violations
+             WHERE agent_id = $1
+             ORDER BY created_at DESC
+             LIMIT $2
+            """,
+            agent["id"], min(limit, 200),
+        )
+    return {
+        "violations": [
+            {
+                "id":           str(r["id"]),
+                "direction":    r["direction"],
+                "tool":         r["tool"],
+                "pattern":      r["pattern_name"],
+                "category":     r["category"],
+                "severity":     r["severity"],
+                "snippet":      r["snippet"],
+                "at":           r["created_at"].isoformat(),
+            }
+            for r in rows
+        ]
+    }
+
+
+@app.get("/v1/guard/status")
+async def guard_status():
+    """Return current guard mode — no auth required (it's not sensitive)."""
+    from samvit.guard import mode
+    return {"mode": mode().value, "patterns": len(__import__("samvit.guard", fromlist=["PATTERNS"]).PATTERNS)}
+
+
 @app.post("/v1/admin/agents/{handle}/reset")
 async def admin_reset(handle: str, req: AdminResetRequest):
     """Decision #12: admin recovery for lost tokens."""

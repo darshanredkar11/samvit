@@ -17,7 +17,8 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from samvit import db, embeddings
+from samvit import db, embeddings, guard
+from samvit.guard import GuardError
 
 log = logging.getLogger(__name__)
 
@@ -44,6 +45,9 @@ async def remember(
 
     if metadata is None:
         metadata = {}
+
+    # ── Ethical guard: scan input before embedding or storing ────────────────
+    content = await guard.apply(content, agent["id"], "input", "remember")
 
     # Embed first — if this fails we haven't touched the DB
     vector = await embeddings.embed(content)
@@ -191,18 +195,25 @@ async def _vector_recall(
             limit,
         )
 
+    # ── Ethical guard: scan output before returning to LLM ──────────────────
+    cleaned_rows = []
+    for r in rows:
+        clean_content = await guard.apply(r["content"], agent["id"], "output", "recall",
+                                          check_entropy=False)
+        cleaned_rows.append((r, clean_content))
+
     return {
         "results": [
             {
                 "id": str(r["id"]),
-                "content": r["content"],
+                "content": clean_content,
                 "score": round(float(r["score"]), 4),
                 "agent": r["handle"],
                 "namespace": namespace,
                 "metadata": dict(r["metadata"]),
                 "created_at": r["created_at"].isoformat(),
             }
-            for r in rows
+            for r, clean_content in cleaned_rows
         ]
     }
 

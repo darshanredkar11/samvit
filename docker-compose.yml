@@ -13,6 +13,8 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-samvit}:${POSTGRES_PASSWORD:-samvit}@postgres:5432/${POSTGRES_DB:-samvit}
       REDPANDA_BROKERS: redpanda:9092
       SAMVIT_ADMIN_SECRET: ${SAMVIT_ADMIN_SECRET:-change-me-in-production}
+      # Ethical guard mode: redact | block | warn | off  (default: redact)
+      SAMVIT_GUARD_MODE: ${SAMVIT_GUARD_MODE:-redact}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     depends_on:
       postgres:
