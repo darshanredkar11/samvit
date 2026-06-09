@@ -5,6 +5,9 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.12%2B-blue)](pyproject.toml)
 [![MCP](https://img.shields.io/badge/protocol-MCP-purple)](https://modelcontextprotocol.io)
+[![Website](https://img.shields.io/badge/website-live-brightgreen)](https://darshanredkar11.github.io/samvit/)
+
+**[🌐 Website](https://darshanredkar11.github.io/samvit/) · [📖 Spec](SPEC.md) · [🔍 Failure Analysis](FAILURE_ANALYSIS.md) · [📄 OpenAPI](http://localhost:8765/openapi.json)**
 
 Samvit gives teams of AI agents — Claude, Codex, Antigravity, or any MCP-compatible tool — a shared substrate they're missing today:
 
@@ -261,6 +264,17 @@ The core server is Apache 2.0 forever.
 ## Contributing
 
 PRs welcome. Open an issue first for anything beyond a small fix.
+
+---
+
+## Validation
+
+An independent audit (Antigravity GPT-OSS 120B, 2026-06-09) reviewed the full codebase against SPEC.md v0.2 and found **no issues**. Full report: [FAILURE_ANALYSIS.md](FAILURE_ANALYSIS.md).
+
+Post-audit, three implementation bugs were identified and fixed before the initial push:
+- `auth.py` — missing `import asyncpg`
+- `tasks.py` — invalid `UPDATE…JOIN` replaced with CTE pattern
+- `tests/` — rewrote to call tool functions directly (FastMCP has no REST routes)
 
 ---
 
