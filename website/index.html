@@ -539,6 +539,7 @@ footer{
   </a>
   <ul class="nav-links">
     <li><a href="#tools">Tools</a></li>
+    <li><a href="#integrations">Integrations</a></li>
     <li><a href="#for-ctos">For CTOs</a></li>
     <li><a href="#how-it-works">How it works</a></li>
     <li><a href="#setup">Setup</a></li>
@@ -569,9 +570,9 @@ footer{
     </h1>
 
     <p class="hero-sub">
-      Claude, Codex, Antigravity — each one brilliant, all of them isolated.
+      Claude, Codex, Antigravity, Hermes — each one brilliant, all of them isolated.
       Samvit gives every agent on your team a shared brain, a task queue,
-      persistent document memory, and a queryable code graph.
+      persistent document memory, a queryable code graph, and native Hermes integration.
     </p>
 
     <div class="hero-ctas">
@@ -904,6 +905,16 @@ footer{
       <div class="tool-name">graph_symbol</div>
       <div class="tool-desc">BFS dependency subgraph for any symbol — what it calls, what calls it. Renderable as a force graph.</div>
     </div>
+    <div class="tool-card">
+      <div class="tool-tag" style="background:rgba(251,191,36,.1);color:#fbbf24">Harness</div>
+      <div class="tool-name">SamvitWorker</div>
+      <div class="tool-desc">Base class for harness workers. Auto-registers, loads token, retries on startup. Override execute() — done.</div>
+    </div>
+    <div class="tool-card">
+      <div class="tool-tag" style="background:rgba(251,191,36,.1);color:#fbbf24">Harness</div>
+      <div class="tool-name">SamvitDispatcher</div>
+      <div class="tool-desc">Routes tasks to typed workers. @dispatcher.worker("review") registers a class. Per-type concurrency cap.</div>
+    </div>
   </div>
 
   <!-- Terminal showing a real session -->
@@ -1081,6 +1092,169 @@ footer{
   </div>
 </section>
 
+<!-- ══════════════════════════════════════════════════════ INTEGRATIONS -->
+<section class="section" id="integrations">
+  <div class="reveal">
+    <div class="sec-label">Integrations</div>
+    <h2>Works with the tools<br/>your team already uses.</h2>
+    <p class="sec-sub">Native support for Hermes Agent's skill system, Claude Code hooks, and a harness pattern that any framework can plug into.</p>
+  </div>
+
+  <!-- Hermes integration card -->
+  <div class="reveal" style="
+    background:linear-gradient(135deg,rgba(139,92,246,.06) 0%,rgba(251,191,36,.04) 100%);
+    border:1px solid rgba(139,92,246,.2);border-radius:20px;
+    padding:2.5rem;margin-bottom:1.5rem;overflow:hidden;position:relative">
+    <div style="position:absolute;top:-40px;right:-40px;width:200px;height:200px;
+      background:radial-gradient(circle,rgba(251,191,36,.06),transparent 70%);pointer-events:none"></div>
+
+    <div style="display:flex;align-items:flex-start;gap:1.5rem;flex-wrap:wrap">
+      <div style="flex:1;min-width:280px">
+        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem">
+          <div style="
+            background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.25);
+            border-radius:10px;padding:.5rem .9rem;
+            font-size:.8rem;font-weight:800;color:#fbbf24;letter-spacing:.04em">
+            Hermes Agent
+          </div>
+          <div style="font-size:.72rem;color:#5050a0;font-weight:500">180k+ GitHub stars · NousResearch</div>
+        </div>
+        <h3 style="font-size:1.4rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.7rem">
+          Hermes learns alone.<br/>
+          <span style="background:linear-gradient(120deg,#a78bfa,#2dd4bf);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Samvit makes it a team.</span>
+        </h3>
+        <p style="color:#8888b8;font-size:.9rem;line-height:1.7;margin-bottom:1.2rem">
+          Hermes writes reusable skills when it solves hard problems — but those skills stay on one machine.
+          Point Hermes at Samvit's memory backend and every agent on the team gets every skill, instantly.
+        </p>
+        <div style="display:flex;flex-direction:column;gap:.5rem">
+          <div style="display:flex;align-items:flex-start;gap:.6rem;font-size:.85rem">
+            <span style="color:#a78bfa;flex-shrink:0;margin-top:.1rem">✦</span>
+            <span style="color:#9090b8"><strong style="color:#e0e0f8">Shared skill pool</strong> — Hermes skills published to Samvit via <code style="font-family:'JetBrains Mono',monospace;color:#2dd4bf;font-size:.85em">remember(key="skill.{name}")</code>, searchable by all agents</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:.6rem;font-size:.85rem">
+            <span style="color:#a78bfa;flex-shrink:0;margin-top:.1rem">✦</span>
+            <span style="color:#9090b8"><strong style="color:#e0e0f8">Task queue replaces crons</strong> — Hermes cron definitions → Samvit tasks, dynamic priority, zero double-execution</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:.6rem;font-size:.85rem">
+            <span style="color:#a78bfa;flex-shrink:0;margin-top:.1rem">✦</span>
+            <span style="color:#9090b8"><strong style="color:#e0e0f8">Skill auto-publish</strong> — file watcher on <code style="font-family:'JetBrains Mono',monospace;color:#2dd4bf;font-size:.85em">~/.hermes/skills/</code>, broadcasts via <code style="font-family:'JetBrains Mono',monospace;color:#2dd4bf;font-size:.85em">say(topic="skills")</code></span>
+          </div>
+        </div>
+      </div>
+
+      <div style="flex:1;min-width:280px">
+        <div style="background:#070710;border:1px solid rgba(255,255,255,.07);border-radius:12px;overflow:hidden">
+          <div style="background:rgba(255,255,255,.03);border-bottom:1px solid rgba(255,255,255,.06);
+                      padding:.55rem 1rem;font-family:'JetBrains Mono',monospace;font-size:.7rem;color:#4a4a72">
+            ~/.hermes/config.json
+          </div>
+          <div style="padding:1.1rem 1.3rem;font-family:'JetBrains Mono',monospace;font-size:.77rem;line-height:1.9;color:#8888b8">
+<span style="color:#6060a0">{</span><br/>
+&nbsp;&nbsp;<span style="color:#a78bfa">"memory"</span><span style="color:#6060a0">: {</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#a78bfa">"backend"</span><span style="color:#6060a0">:</span> <span style="color:#a3e635">"external"</span><span style="color:#6060a0">,</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#a78bfa">"url"</span><span style="color:#6060a0">:</span> <span style="color:#a3e635">"http://localhost:8765/v1/hermes/memory"</span><br/>
+&nbsp;&nbsp;<span style="color:#6060a0">},</span><br/>
+&nbsp;&nbsp;<span style="color:#a78bfa">"crons"</span><span style="color:#6060a0">: [</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6060a0">{</span> <span style="color:#a78bfa">"name"</span><span style="color:#6060a0">:</span> <span style="color:#a3e635">"daily-review"</span><span style="color:#6060a0">,</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#a78bfa">"task"</span><span style="color:#6060a0">:</span> <span style="color:#a3e635">"Review PR queue"</span> <span style="color:#6060a0">}</span><br/>
+&nbsp;&nbsp;<span style="color:#6060a0">]</span><br/>
+<span style="color:#6060a0">}</span><br/>
+<br/>
+<span style="color:#3d3d5c"># Hermes now uses Samvit for memory.</span><br/>
+<span style="color:#3d3d5c"># Cron → Samvit task queue.</span><br/>
+<span style="color:#3d3d5c"># Skills shared across all agents.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Harness + Hooks cards -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.2rem" class="reveal">
+
+    <!-- Harness worker -->
+    <div style="background:#0a0a14;border:1px solid rgba(255,255,255,.07);border-radius:16px;overflow:hidden">
+      <div style="background:rgba(251,191,36,.06);border-bottom:1px solid rgba(251,191,36,.1);
+                  padding:.85rem 1.3rem;display:flex;align-items:center;gap:.6rem">
+        <div style="width:8px;height:8px;border-radius:50%;background:#fbbf24"></div>
+        <span style="font-size:.72rem;font-weight:700;color:#fbbf24;letter-spacing:.08em;text-transform:uppercase">Harness Workers</span>
+      </div>
+      <div style="padding:1.3rem">
+        <p style="color:#9090b8;font-size:.86rem;line-height:1.65;margin-bottom:1rem">
+          Subclass <code style="font-family:'JetBrains Mono',monospace;color:#fbbf24;font-size:.9em">SamvitWorker</code> and override <code style="font-family:'JetBrains Mono',monospace;color:#fbbf24;font-size:.9em">execute()</code>.
+          Auto-registers, persists tokens, retries on startup, injects context memories before each task.
+        </p>
+        <div style="background:#070710;border:1px solid rgba(255,255,255,.06);border-radius:9px;
+                    padding:.9rem 1.1rem;font-family:'JetBrains Mono',monospace;font-size:.75rem;line-height:1.85;color:#8888b8">
+<span style="color:#3d3d5c">class</span> <span style="color:#fbbf24">ReviewWorker</span>(<span style="color:#a78bfa">SamvitWorker</span>):<br/>
+&nbsp;&nbsp;<span style="color:#3d3d5c">async def</span> <span style="color:#2dd4bf">execute</span>(self, task, context):<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#3d3d5c"># context = top memories auto-loaded</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;result = <span style="color:#3d3d5c">await</span> review(task[<span style="color:#a3e635">"description"</span>])<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#3d3d5c">await</span> self.<span style="color:#2dd4bf">remember</span>(f<span style="color:#a3e635">"Reviewed: {result}"</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#3d3d5c">return</span> {<span style="color:#a3e635">"verdict"</span>: result}<br/>
+<br/>
+asyncio.run(<span style="color:#fbbf24">ReviewWorker</span>(<span style="color:#a3e635">"rahul"</span>, <span style="color:#a3e635">"antigravity"</span>).run())
+        </div>
+      </div>
+    </div>
+
+    <!-- Dispatcher -->
+    <div style="background:#0a0a14;border:1px solid rgba(255,255,255,.07);border-radius:16px;overflow:hidden">
+      <div style="background:rgba(251,191,36,.06);border-bottom:1px solid rgba(251,191,36,.1);
+                  padding:.85rem 1.3rem;display:flex;align-items:center;gap:.6rem">
+        <div style="width:8px;height:8px;border-radius:50%;background:#fbbf24"></div>
+        <span style="font-size:.72rem;font-weight:700;color:#fbbf24;letter-spacing:.08em;text-transform:uppercase">Task Dispatcher</span>
+      </div>
+      <div style="padding:1.3rem">
+        <p style="color:#9090b8;font-size:.86rem;line-height:1.65;margin-bottom:1rem">
+          Route Samvit tasks to the right worker class automatically.
+          Each type gets its own concurrency cap. <code style="font-family:'JetBrains Mono',monospace;color:#fbbf24;font-size:.9em">@dispatcher.worker</code> decorator pattern.
+        </p>
+        <div style="background:#070710;border:1px solid rgba(255,255,255,.06);border-radius:9px;
+                    padding:.9rem 1.1rem;font-family:'JetBrains Mono',monospace;font-size:.75rem;line-height:1.85;color:#8888b8">
+d = <span style="color:#a78bfa">SamvitDispatcher</span>()<br/>
+<br/>
+@d.worker(<span style="color:#a3e635">"review"</span>)<br/>
+<span style="color:#3d3d5c">class</span> <span style="color:#fbbf24">ReviewWorker</span>(<span style="color:#a78bfa">SamvitWorker</span>): ...<br/>
+<br/>
+@d.worker(<span style="color:#a3e635">"backend"</span>)<br/>
+<span style="color:#3d3d5c">class</span> <span style="color:#fbbf24">BackendWorker</span>(<span style="color:#a78bfa">SamvitWorker</span>): ...<br/>
+<br/>
+asyncio.run(d.run()) <span style="color:#3d3d5c"># polls + routes forever</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Claude Code hooks -->
+    <div style="background:#0a0a14;border:1px solid rgba(255,255,255,.07);border-radius:16px;overflow:hidden">
+      <div style="background:rgba(139,92,246,.07);border-bottom:1px solid rgba(139,92,246,.12);
+                  padding:.85rem 1.3rem;display:flex;align-items:center;gap:.6rem">
+        <div style="width:8px;height:8px;border-radius:50%;background:#a78bfa"></div>
+        <span style="font-size:.72rem;font-weight:700;color:#a78bfa;letter-spacing:.08em;text-transform:uppercase">Claude Code Hooks</span>
+      </div>
+      <div style="padding:1.3rem">
+        <p style="color:#9090b8;font-size:.86rem;line-height:1.65;margin-bottom:1rem">
+          3 lines in <code style="font-family:'JetBrains Mono',monospace;color:#a78bfa;font-size:.9em">settings.json</code> and memory wires itself.
+          Pre-tool injects relevant memories. Post-tool auto-remembers writes. Stop persists the session summary.
+        </p>
+        <div style="background:#070710;border:1px solid rgba(255,255,255,.06);border-radius:9px;
+                    padding:.9rem 1.1rem;font-family:'JetBrains Mono',monospace;font-size:.72rem;line-height:1.85;color:#8888b8">
+<span style="color:#3d3d5c">"hooks"</span>: {<br/>
+&nbsp;<span style="color:#a78bfa">"PreToolUse"</span>:  [<span style="color:#3d3d5c">{"matcher":".*",</span><br/>
+&nbsp;&nbsp;&nbsp;<span style="color:#3d3d5c">"hooks":[{"type":"command",</span><br/>
+&nbsp;&nbsp;&nbsp;<span style="color:#a3e635">"command":"python -m samvit.hooks pre-tool"</span><span style="color:#3d3d5c">}]}],</span><br/>
+&nbsp;<span style="color:#a78bfa">"PostToolUse"</span>: [...<span style="color:#a3e635">"post-tool"</span>...],<br/>
+&nbsp;<span style="color:#a78bfa">"Stop"</span>:        [...<span style="color:#a3e635">"stop"</span>...]<br/>
+}<br/>
+<span style="color:#3d3d5c"># Memory auto-wires. Zero manual calls.</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
 <!-- ══════════════════════════════════════════════════════ OSS -->
 <div class="oss">
   <div class="oss-box reveal">
@@ -1096,6 +1270,9 @@ footer{
       <span class="oss-tag">Full spec + failure analysis published</span>
       <span class="oss-tag">Ethical guard built-in</span>
       <span class="oss-tag">RAG + Code Graph</span>
+      <span class="oss-tag">Hermes Agent integration</span>
+      <span class="oss-tag">Harness workers + dispatcher</span>
+      <span class="oss-tag">Claude Code hooks</span>
     </div>
     <div style="display:flex;gap:.85rem;justify-content:center;flex-wrap:wrap">
       <a href="https://github.com/darshanredkar11/samvit" class="btn-primary">View on GitHub →</a>
