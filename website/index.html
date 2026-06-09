@@ -585,148 +585,270 @@ footer{
       </a>
     </div>
 
-    <!-- ANIMATED AGENT FLOW DIAGRAM -->
-    <div class="flow-diagram">
-      <svg class="flow-svg" viewBox="0 0 800 320" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stop-color="#8b5cf6" stop-opacity=".4"/>
-            <stop offset="100%" stop-color="#2dd4bf" stop-opacity=".4"/>
-          </linearGradient>
-          <linearGradient id="lineGrad2" x1="1" y1="0" x2="0" y2="0">
-            <stop offset="0%" stop-color="#8b5cf6" stop-opacity=".4"/>
-            <stop offset="100%" stop-color="#2dd4bf" stop-opacity=".4"/>
-          </linearGradient>
-          <radialGradient id="hubGrad" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stop-color="#a78bfa"/>
-            <stop offset="100%" stop-color="#2dd4bf"/>
-          </radialGradient>
-          <filter id="sf"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-          <filter id="sf2"><feGaussianBlur stdDeviation="8"/></filter>
-        </defs>
+    <!-- STORY ANIMATION: Before → Samvit → After -->
+    <div class="story-wrap">
+      <style>
+      .story-wrap{width:100%;max-width:760px;margin:0 auto;animation:fadeUp .5s .32s ease both}
+      .story-stage{
+        background:var(--code);border:1px solid rgba(255,255,255,.07);
+        border-radius:16px;overflow:hidden;
+        box-shadow:0 30px 70px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.02);
+        position:relative;
+      }
+      /* Phase label bar */
+      .story-bar{
+        background:rgba(255,255,255,.03);border-bottom:1px solid rgba(255,255,255,.06);
+        padding:.6rem 1.1rem;display:flex;align-items:center;justify-content:space-between;
+      }
+      .story-dots{display:flex;gap:.35rem}
+      .sd{width:10px;height:10px;border-radius:50%}
+      .sd1{background:#ff5f57}.sd2{background:#febc2e}.sd3{background:#28c840}
+      .story-phase{
+        font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+        padding:.2rem .7rem;border-radius:100px;
+        transition:all .6s ease;
+      }
+      .phase-before{background:rgba(239,68,68,.12);color:rgba(239,68,68,.8)}
+      .phase-after {background:rgba(45,212,191,.12);color:#2dd4bf}
+      /* Main canvas */
+      .story-canvas{padding:1.4rem 1.6rem;min-height:260px;position:relative;overflow:hidden}
+      /* Agent row */
+      .agent-row{
+        display:flex;align-items:center;gap:.9rem;
+        padding:.55rem .9rem;border-radius:9px;margin-bottom:.6rem;
+        border:1px solid rgba(255,255,255,.05);
+        background:rgba(255,255,255,.02);
+        position:relative;overflow:hidden;
+        font-family:var(--mono,monospace);font-size:.76rem;
+      }
+      .ag-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+      .ag-name{color:var(--text,#f4f4ff);font-weight:600;min-width:70px}
+      .ag-action{color:var(--text2,#9090b8);flex:1}
+      .ag-badge{
+        font-size:.65rem;padding:.15rem .45rem;border-radius:4px;font-weight:700;
+        flex-shrink:0;
+      }
+      /* Before states */
+      .badge-lost{background:rgba(239,68,68,.15);color:rgba(239,68,68,.9)}
+      .badge-dupe{background:rgba(251,146,60,.15);color:#fb923c}
+      .badge-void{background:rgba(107,114,128,.15);color:#9ca3af}
+      /* After states */
+      .badge-saved{background:rgba(45,212,191,.15);color:#2dd4bf}
+      .badge-claimed{background:rgba(139,92,246,.15);color:#a78bfa}
+      .badge-delivered{background:rgba(163,230,53,.15);color:#a3e635}
+      /* Knowledge bubble that floats then vanishes (before) */
+      .kb{
+        position:absolute;right:55px;top:50%;transform:translateY(-50%);
+        background:rgba(139,92,246,.15);border:1px solid rgba(139,92,246,.25);
+        color:#a78bfa;font-size:.65rem;padding:.2rem .55rem;border-radius:6px;
+        white-space:nowrap;
+      }
+      /* Flow line when Samvit present */
+      .flow-line{
+        position:absolute;left:0;top:50%;height:1px;width:0%;
+        background:linear-gradient(90deg,rgba(139,92,246,.6),rgba(45,212,191,.6));
+        transition:width 1.2s ease;
+      }
+      /* Samvit hub row */
+      .samvit-hub{
+        display:flex;align-items:center;justify-content:center;gap:.7rem;
+        padding:.7rem;
+        background:linear-gradient(135deg,rgba(139,92,246,.08),rgba(45,212,191,.05));
+        border:1px solid rgba(139,92,246,.2);
+        border-radius:10px;margin:.6rem 0;
+        font-size:.75rem;font-weight:700;
+        transition:all .5s ease;
+      }
+      .hub-dot{
+        width:10px;height:10px;border-radius:50%;
+        background:linear-gradient(135deg,#8b5cf6,#2dd4bf);
+        box-shadow:0 0 8px rgba(139,92,246,.6);
+        animation:hubBeat 2s ease-in-out infinite;
+      }
+      @keyframes hubBeat{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.3);opacity:.7}}
+      .hub-label{color:#a78bfa;letter-spacing:.06em}
+      .hub-tools{color:rgba(96,96,160,.9);font-size:.65rem;font-weight:400;font-family:var(--mono,monospace)}
+      /* collision sparks */
+      .spark{
+        position:absolute;right:12px;top:50%;transform:translateY(-50%);
+        color:#ef4444;font-size:.9rem;
+        animation:sparkFlash .8s ease-in-out infinite;
+      }
+      @keyframes sparkFlash{0%,100%{opacity:1;transform:translateY(-50%) scale(1)}50%{opacity:.3;transform:translateY(-50%) scale(1.4)}}
+      /* knowledge ripple (after) */
+      .ripple{
+        position:absolute;left:0;top:0;right:0;bottom:0;
+        background:linear-gradient(90deg,transparent,rgba(139,92,246,.06),transparent);
+        animation:rippleSlide 2.5s ease-in-out infinite;
+        pointer-events:none;
+      }
+      @keyframes rippleSlide{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+      /* bottom caption */
+      .story-caption{
+        text-align:center;padding:.75rem 1rem;
+        border-top:1px solid rgba(255,255,255,.05);
+        font-size:.75rem;color:rgba(96,96,160,.8);
+        display:flex;align-items:center;justify-content:center;gap:.5rem;
+      }
+      .caption-indicator{
+        display:inline-flex;gap:.3rem;align-items:center;
+      }
+      .ci{width:6px;height:6px;border-radius:50%;background:rgba(96,96,160,.3);transition:background .4s}
+      .ci.active{background:#a78bfa}
+      </style>
 
-        <!-- Hub glow background -->
-        <circle cx="400" cy="160" r="60" fill="url(#hubGrad)" opacity=".05" filter="url(#sf2)">
-          <animate attributeName="r" values="60;85;60" dur="3s" repeatCount="indefinite"/>
-          <animate attributeName="opacity" values=".05;.12;.05" dur="3s" repeatCount="indefinite"/>
-        </circle>
+      <div class="story-stage">
+        <div class="story-bar">
+          <div class="story-dots">
+            <div class="sd sd1"></div><div class="sd sd2"></div><div class="sd sd3"></div>
+          </div>
+          <div class="story-phase phase-before" id="storyPhaseLabel">Before Samvit</div>
+          <div style="font-size:.68rem;color:var(--text3);font-family:var(--mono)">live demo</div>
+        </div>
 
-        <!-- Connection lines with dash animation -->
-        <!-- Agent 1 (top-left) → Hub -->
-        <line x1="165" y1="100" x2="368" y2="148" stroke="url(#lineGrad)" stroke-width="1.5" stroke-dasharray="6 3">
-          <animate attributeName="stroke-dashoffset" from="0" to="-27" dur="1.5s" repeatCount="indefinite"/>
-        </line>
-        <!-- Agent 2 (top-right) → Hub -->
-        <line x1="635" y1="100" x2="432" y2="148" stroke="url(#lineGrad2)" stroke-width="1.5" stroke-dasharray="6 3">
-          <animate attributeName="stroke-dashoffset" from="0" to="-27" dur="1.8s" repeatCount="indefinite"/>
-        </line>
-        <!-- Agent 3 (bottom-left) → Hub -->
-        <line x1="165" y1="220" x2="368" y2="172" stroke="url(#lineGrad)" stroke-width="1.5" stroke-dasharray="6 3">
-          <animate attributeName="stroke-dashoffset" from="0" to="-27" dur="2s" repeatCount="indefinite"/>
-        </line>
-        <!-- Agent 4 (bottom-right) → Hub -->
-        <line x1="635" y1="220" x2="432" y2="172" stroke="url(#lineGrad2)" stroke-width="1.5" stroke-dasharray="6 3">
-          <animate attributeName="stroke-dashoffset" from="0" to="-27" dur="1.6s" repeatCount="indefinite"/>
-        </line>
+        <div class="story-canvas" id="storyCanvas">
+          <!-- Rendered by JS storyteller below -->
+        </div>
 
-        <!-- Traveling data packets -->
-        <circle r="4" fill="#a78bfa" opacity=".9" filter="url(#sf)">
-          <animateMotion dur="2.2s" repeatCount="indefinite" begin="0s">
-            <mpath><path d="M165,100 L368,148"/></mpath>
-          </animateMotion>
-          <animate attributeName="opacity" values="0;1;1;0" dur="2.2s" repeatCount="indefinite"/>
-        </circle>
-        <circle r="4" fill="#2dd4bf" opacity=".9" filter="url(#sf)">
-          <animateMotion dur="2.5s" repeatCount="indefinite" begin=".6s">
-            <mpath><path d="M635,100 L432,148"/></mpath>
-          </animateMotion>
-          <animate attributeName="opacity" values="0;1;1;0" dur="2.5s" repeatCount="indefinite" begin=".6s"/>
-        </circle>
-        <circle r="4" fill="#a78bfa" opacity=".9" filter="url(#sf)">
-          <animateMotion dur="2.8s" repeatCount="indefinite" begin="1.2s">
-            <mpath><path d="M400,160 L165,220"/></mpath>
-          </animateMotion>
-          <animate attributeName="opacity" values="0;1;1;0" dur="2.8s" repeatCount="indefinite" begin="1.2s"/>
-        </circle>
-        <circle r="4" fill="#2dd4bf" opacity=".9" filter="url(#sf)">
-          <animateMotion dur="2s" repeatCount="indefinite" begin="1.8s">
-            <mpath><path d="M400,160 L635,220"/></mpath>
-          </animateMotion>
-          <animate attributeName="opacity" values="0;1;1;0" dur="2s" repeatCount="indefinite" begin="1.8s"/>
-        </circle>
-
-        <!-- ── Agent boxes ── -->
-        <!-- Agent 1: Claude (top-left) -->
-        <g class="agent-box ab1">
-          <rect x="65" y="60" width="200" height="80" rx="12" fill="#0d0d1a" stroke="rgba(139,92,246,.3)" stroke-width="1"/>
-          <rect x="65" y="60" width="200" height="2" rx="1" fill="url(#hubGrad)" opacity=".6"/>
-          <text x="95" y="96" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#f4f4ff">Claude Sonnet</text>
-          <text x="95" y="113" font-family="Inter,sans-serif" font-size="9" fill="#6060a0">@darshan · provider: claude</text>
-          <circle cx="82" cy="93" r="6" fill="rgba(139,92,246,.2)" stroke="#8b5cf6" stroke-width="1"/>
-          <circle cx="82" cy="93" r="3" fill="#8b5cf6">
-            <animate attributeName="opacity" values="1;.4;1" dur="2s" repeatCount="indefinite"/>
-          </circle>
-        </g>
-
-        <!-- Agent 2: Codex (top-right) -->
-        <g class="agent-box ab2">
-          <rect x="535" y="60" width="200" height="80" rx="12" fill="#0d0d1a" stroke="rgba(45,212,191,.3)" stroke-width="1"/>
-          <rect x="535" y="60" width="200" height="2" rx="1" fill="url(#hubGrad)" opacity=".6"/>
-          <text x="565" y="96" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#f4f4ff">Codex</text>
-          <text x="565" y="113" font-family="Inter,sans-serif" font-size="9" fill="#6060a0">@rehma · provider: codex</text>
-          <circle cx="552" cy="93" r="6" fill="rgba(45,212,191,.15)" stroke="#2dd4bf" stroke-width="1"/>
-          <circle cx="552" cy="93" r="3" fill="#2dd4bf">
-            <animate attributeName="opacity" values="1;.4;1" dur="2.3s" begin=".4s" repeatCount="indefinite"/>
-          </circle>
-        </g>
-
-        <!-- Agent 3: Antigravity (bottom-left) -->
-        <g class="agent-box ab3">
-          <rect x="65" y="180" width="200" height="80" rx="12" fill="#0d0d1a" stroke="rgba(139,92,246,.25)" stroke-width="1"/>
-          <rect x="65" y="180" width="200" height="2" rx="1" fill="url(#hubGrad)" opacity=".5"/>
-          <text x="95" y="216" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#f4f4ff">Antigravity</text>
-          <text x="95" y="233" font-family="Inter,sans-serif" font-size="9" fill="#6060a0">@rahul · provider: antigravity</text>
-          <circle cx="82" cy="213" r="6" fill="rgba(139,92,246,.15)" stroke="#8b5cf6" stroke-width="1"/>
-          <circle cx="82" cy="213" r="3" fill="#8b5cf6">
-            <animate attributeName="opacity" values="1;.4;1" dur="2.6s" begin=".8s" repeatCount="indefinite"/>
-          </circle>
-        </g>
-
-        <!-- Agent 4: Custom (bottom-right) -->
-        <g class="agent-box ab4">
-          <rect x="535" y="180" width="200" height="80" rx="12" fill="#0d0d1a" stroke="rgba(45,212,191,.25)" stroke-width="1"/>
-          <rect x="535" y="180" width="200" height="2" rx="1" fill="url(#hubGrad)" opacity=".5"/>
-          <text x="565" y="216" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#f4f4ff">Any MCP Agent</text>
-          <text x="565" y="233" font-family="Inter,sans-serif" font-size="9" fill="#6060a0">@sachin · custom tooling</text>
-          <circle cx="552" cy="213" r="6" fill="rgba(45,212,191,.15)" stroke="#2dd4bf" stroke-width="1"/>
-          <circle cx="552" cy="213" r="3" fill="#2dd4bf">
-            <animate attributeName="opacity" values="1;.4;1" dur="2s" begin="1.2s" repeatCount="indefinite"/>
-          </circle>
-        </g>
-
-        <!-- ── Central Samvit Hub ── -->
-        <!-- Pulse rings -->
-        <circle cx="400" cy="160" r="32" fill="none" stroke="url(#hubGrad)" stroke-width=".8" opacity=".4">
-          <animate attributeName="r" values="32;52;32" dur="2.5s" repeatCount="indefinite"/>
-          <animate attributeName="opacity" values=".4;0;.4" dur="2.5s" repeatCount="indefinite"/>
-        </circle>
-        <circle cx="400" cy="160" r="32" fill="none" stroke="url(#hubGrad)" stroke-width=".8" opacity=".3">
-          <animate attributeName="r" values="32;52;32" dur="2.5s" begin=".8s" repeatCount="indefinite"/>
-          <animate attributeName="opacity" values=".3;0;.3" dur="2.5s" begin=".8s" repeatCount="indefinite"/>
-        </circle>
-        <!-- Hub body -->
-        <circle cx="400" cy="160" r="34" fill="#080814" stroke="url(#hubGrad)" stroke-width="1.5"/>
-        <circle cx="400" cy="160" r="28" fill="url(#hubGrad)" opacity=".12"/>
-        <!-- Hub icon: S letter mark -->
-        <text x="400" y="155" font-family="Inter,sans-serif" font-size="11" font-weight="900" fill="url(#hubGrad)" text-anchor="middle" opacity=".9">SAM</text>
-        <text x="400" y="169" font-family="Inter,sans-serif" font-size="8" font-weight="500" fill="#6060a0" text-anchor="middle">VIT</text>
-
-        <!-- Tool labels on the hub -->
-        <text x="400" y="208" font-family="Inter,sans-serif" font-size="7.5" fill="#4a4a72" text-anchor="middle">memory · tasks · rag · graph</text>
-      </svg>
+        <div class="story-caption">
+          <div class="caption-indicator">
+            <div class="ci active" id="ci0"></div>
+            <div class="ci" id="ci1"></div>
+            <div class="ci" id="ci2"></div>
+            <div class="ci" id="ci3"></div>
+          </div>
+          <span id="storyCaption">Knowledge evaporates every session</span>
+        </div>
+      </div>
     </div>
   </div>
 </div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// Story animation: tells the before/after narrative in 4 acts, 3s each, loops
+// ─────────────────────────────────────────────────────────────────────────────
+const STORY_ACTS = [
+  {
+    phase: "before",
+    caption: "Knowledge evaporates every session",
+    label: "Before Samvit",
+    rows: [
+      {dot:"#8b5cf6", name:"darshan", action:"reads auth.py for the 4th time…", badge:"lost", badgeTxt:"wasted", kb:"JWT expiry = 24h", kbVisible:true, flow:false},
+      {dot:"#2dd4bf", name:"rahul",   action:"discovers same thing independently", badge:"dupe", badgeTxt:"duplicate", flow:false},
+      {dot:"#8b5cf6", name:"rehma",   action:"Task #42 — already claimed by rahul!", badge:"dupe", badgeTxt:"collision", spark:true, flow:false},
+      {dot:"#2dd4bf", name:"sachin",  action:"sent review comment at 2am", badge:"void", badgeTxt:"never seen", flow:false},
+    ]
+  },
+  {
+    phase: "before",
+    caption: "Every agent starts from zero, every time",
+    label: "Before Samvit",
+    rows: [
+      {dot:"#ef4444", name:"darshan", action:"session starts — context: none", badge:"lost", badgeTxt:"0 memory", flow:false},
+      {dot:"#ef4444", name:"rahul",   action:"what did we decide about auth?", badge:"lost", badgeTxt:"forgotten", flow:false},
+      {dot:"#ef4444", name:"rehma",   action:"re-reading architecture docs…", badge:"dupe", badgeTxt:"again", flow:false},
+      {dot:"#ef4444", name:"sachin",  action:"can't find Darshan's note about Stripe", badge:"void", badgeTxt:"lost forever", flow:false},
+    ]
+  },
+  {
+    phase: "after",
+    caption: "One agent learns. Every agent knows. Instantly.",
+    label: "With Samvit",
+    samvit: true,
+    rows: [
+      {dot:"#a78bfa", name:"darshan", action:'remember("JWT 24h, refresh /api/refresh")', badge:"saved", badgeTxt:"stored", flow:true, flowDelay:0},
+      {dot:"#2dd4bf", name:"rahul",   action:"recall("auth") → score 0.94 · 80ms", badge:"claimed", badgeTxt:"instant", flow:true, flowDelay:400},
+      {dot:"#a78bfa", name:"rehma",   action:"claim() → Task #42 locked to me ✓", badge:"claimed", badgeTxt:"atomic", flow:true, flowDelay:800},
+      {dot:"#2dd4bf", name:"sachin",  action:'say(to:"darshan") → delivered, persists', badge:"delivered", badgeTxt:"received", flow:true, flowDelay:1200},
+    ]
+  },
+  {
+    phase: "after",
+    caption: "Index once. Every agent queries forever.",
+    label: "With Samvit",
+    samvit: true,
+    rows: [
+      {dot:"#a78bfa", name:"darshan", action:'index_code("/repo") → 312 symbols indexed', badge:"saved", badgeTxt:"once", flow:true, flowDelay:0},
+      {dot:"#2dd4bf", name:"rahul",   action:'explore_code("auth") → file, line, sig', badge:"claimed", badgeTxt:"no read", flow:true, flowDelay:300},
+      {dot:"#a78bfa", name:"rehma",   action:'ingest(arch.md) → 8 chunks → all agents', badge:"saved", badgeTxt:"shared", flow:true, flowDelay:600},
+      {dot:"#2dd4bf", name:"sachin",  action:'search_docs("Stripe webhooks") → 0.96', badge:"delivered", badgeTxt:"found", flow:true, flowDelay:900},
+    ]
+  },
+];
+
+const canvas     = document.getElementById("storyCanvas");
+const phaseLabel = document.getElementById("storyPhaseLabel");
+const captionEl  = document.getElementById("storyCaption");
+const cis        = [0,1,2,3].map(i => document.getElementById("ci"+i));
+
+let actIdx = 0;
+
+function renderAct(act) {
+  const isBefore = act.phase === "before";
+  phaseLabel.textContent  = act.label;
+  phaseLabel.className    = "story-phase " + (isBefore ? "phase-before" : "phase-after");
+  captionEl.textContent   = act.caption;
+  cis.forEach((c,i) => c.classList.toggle("active", i === actIdx));
+
+  let html = "";
+
+  // Samvit hub row (after phase only)
+  if (act.samvit) {
+    html += `<div class="samvit-hub">
+      <div class="hub-dot"></div>
+      <span class="hub-label">SAMVIT</span>
+      <span class="hub-tools">memory · tasks · messaging · rag · codegraph</span>
+    </div>`;
+  }
+
+  act.rows.forEach((r, i) => {
+    const badgeClass = "badge-" + r.badge;
+    const sparkHtml  = r.spark ? '<span class="spark">⚡</span>' : "";
+    const kbHtml     = r.kbVisible ? `<span class="kb">${r.kb}</span>` : "";
+    const rippleHtml = (act.samvit && r.flow) ? '<div class="ripple"></div>' : "";
+    html += `
+    <div class="agent-row" style="animation-delay:${i*80}ms">
+      ${rippleHtml}
+      <div class="flow-line" style="transition-delay:${(r.flowDelay||0)}ms" data-flow="${r.flow ? 1 : 0}"></div>
+      <div class="ag-dot" style="background:${r.dot}"></div>
+      <div class="ag-name">${r.name}</div>
+      <div class="ag-action">${r.action}</div>
+      ${kbHtml}
+      <div class="ag-badge ${badgeClass}">${r.badgeTxt}</div>
+      ${sparkHtml}
+    </div>`;
+  });
+
+  canvas.innerHTML = html;
+
+  // Trigger flow lines after paint
+  if (act.samvit) {
+    requestAnimationFrame(() => {
+      canvas.querySelectorAll(".flow-line[data-flow='1']").forEach(el => {
+        el.style.width = "100%";
+      });
+    });
+  }
+}
+
+function nextAct() {
+  actIdx = (actIdx + 1) % STORY_ACTS.length;
+  canvas.style.opacity = "0";
+  canvas.style.transform = "translateY(6px)";
+  setTimeout(() => {
+    renderAct(STORY_ACTS[actIdx]);
+    canvas.style.transition = "opacity .4s ease, transform .4s ease";
+    canvas.style.opacity = "1";
+    canvas.style.transform = "none";
+  }, 350);
+}
+
+// Init
+canvas.style.transition = "opacity .4s ease, transform .4s ease";
+renderAct(STORY_ACTS[0]);
+setInterval(nextAct, 3200);
+</script>
 
 <!-- ══════════════════════════════════════════════════════ NUMBERS -->
 <div class="numbers reveal">

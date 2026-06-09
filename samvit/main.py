@@ -31,6 +31,7 @@ from pydantic import BaseModel
 
 from samvit import auth, cleanup, db, embeddings, events, rag, codegraph
 from samvit.tools import memory, messaging, tasks
+from samvit.integrations.hermes import SamvitMemoryBackend
 
 load_dotenv()
 
@@ -193,6 +194,56 @@ async def guard_status():
     """Return current guard mode — no auth required (it's not sensitive)."""
     from samvit.guard import mode
     return {"mode": mode().value, "patterns": len(__import__("samvit.guard", fromlist=["PATTERNS"]).PATTERNS)}
+
+
+# ── Task create (HTTP) — used by dispatcher + Hermes cron bridge ──────────────
+
+class TaskCreateRequest(BaseModel):
+    title:       str
+    description: str | None = None
+    tags:        list[str]  = []
+    priority:    int        = 0
+    worker_type: str | None = None
+
+@app.post("/v1/tasks", status_code=201)
+async def create_task(req: TaskCreateRequest):
+    agent = _agent()
+    async with db.pool().acquire() as conn:
+        task_id = await conn.fetchval(
+            """
+            INSERT INTO tasks (title, description, tags, priority, worker_type, created_by)
+            VALUES ($1, $2, $3, $4, $5, $6) RETURNING id
+            """,
+            req.title, req.description, req.tags, req.priority,
+            req.worker_type, agent["id"],
+        )
+    return {"task_id": str(task_id)}
+
+
+# ── Hermes memory backend HTTP interface ─────────────────────────────────────
+# Hermes calls these endpoints when configured with:
+#   {"memory": {"backend": "external", "url": "http://localhost:8765/v1/hermes/memory"}}
+
+_hermes_memory = SamvitMemoryBackend()
+
+@app.post("/v1/hermes/memory/store")
+async def hermes_memory_store(body: dict):
+    ok = await _hermes_memory.store(
+        content=body.get("content", ""),
+        metadata=body.get("metadata"),
+        key=body.get("key"),
+    )
+    return {"stored": ok}
+
+@app.get("/v1/hermes/memory/search")
+async def hermes_memory_search(q: str, limit: int = 5):
+    results = await _hermes_memory.search(q, limit)
+    return {"results": results}
+
+@app.get("/v1/hermes/memory/get")
+async def hermes_memory_get(key: str):
+    result = await _hermes_memory.get(key)
+    return {"result": result}
 
 
 @app.post("/v1/admin/agents/{handle}/reset")

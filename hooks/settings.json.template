@@ -1,0 +1,49 @@
+{
+  "_comment": "Add this to your ~/.claude/settings.json to wire Samvit memory into Claude Code automatically.",
+  "_note": "Set SAMVIT_HOOK_HANDLE to your agent handle and SAMVIT_HOOK_TOKEN to your bearer token.",
+
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python -m samvit.hooks pre-tool",
+            "_comment": "Injects top-3 relevant memories as context before every tool call"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python -m samvit.hooks post-tool",
+            "_comment": "Auto-remembers significant Write/Edit/Bash outputs to Samvit"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python -m samvit.hooks stop",
+            "_comment": "Persists session summary when Claude stops"
+          }
+        ]
+      }
+    ]
+  },
+
+  "env": {
+    "SAMVIT_URL":          "http://localhost:8765",
+    "SAMVIT_HOOK_HANDLE":  "your-handle-here",
+    "SAMVIT_HOOK_TOKEN":   "samvit_your_token_here",
+    "SAMVIT_AUTO_REMEMBER": "1"
+  }
+}
