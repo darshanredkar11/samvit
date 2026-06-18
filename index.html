@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Samvit | Multi-Agent Coordination Server for AI Teams</title>
   <meta name="description" content="Samvit is an open-source coordination server for Claude Code, Codex, Antigravity and other AI agents. Shared memory, atomic task queue, messaging, code/doc search, admin dashboard. Self-hosted, no API keys, no cloud dependencies.">
-  <meta name="keywords" content="AI agent coordination, Claude Code team, MCP server, multi-agent coding, shared memory, context compression, token savings, open source agent infrastructure">
+  <meta name="keywords" content="AI agent coordination, Claude Code team, MCP server, multi-agent coding, shared memory, task queue, open source agent infrastructure">
   <meta name="author" content="Samvit">
   <meta name="robots" content="index,follow,max-image-preview:large">
   <link rel="canonical" href="https://darshanredkar11.github.io/samvit/">
@@ -19,7 +19,7 @@
   <meta property="og:image" content="https://darshanredkar11.github.io/samvit/og-image.svg">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Samvit: Open-Source AI Agent Coordination">
-  <meta name="twitter:description" content="Shared memory, task ownership, messaging, and built-in context compression for AI coding agents.">
+  <meta name="twitter:description" content="Shared memory, task ownership, messaging, and audit logging for AI coding agents.">
 
   <script type="application/ld+json">
   {
@@ -28,7 +28,7 @@
     "name": "Samvit",
     "applicationCategory": "DeveloperApplication",
     "operatingSystem": "Linux, macOS, Windows with Docker",
-    "description": "Open-source coordination server with built-in context compression for Claude Code, Codex, Antigravity and other AI coding agents.",
+    "description": "Open-source coordination server for Claude Code, Codex, Antigravity and other AI coding agents. Shared memory, tasks, messaging, code search.",
     "url": "https://darshanredkar11.github.io/samvit/",
     "downloadUrl": "https://github.com/darshanredkar11/samvit",
     "softwareVersion": "0.2.0",
@@ -166,7 +166,6 @@
     .arch-box .title { font-weight: 700; margin: .2rem 0; }
     .arch-box .desc  { color: var(--muted); font-size: .72rem; }
     .arch-box .sub   { color: var(--dim); font-size: .65rem; }
-    .arch-box.headroom { border-color: rgba(255,194,122,.35); background: rgba(255,194,122,.06); }
     .arch-box.llm { border-color: rgba(82,215,209,.25); background: rgba(82,215,209,.05); }
     .arch-line { display: flex; align-items: center; justify-content: center; gap: .4rem; padding: .15rem 0; }
     .arch-line .arrow { color: var(--dim); font-size: .7rem; }
@@ -301,7 +300,7 @@
         <div class="savings-item">
           <div class="big">92%</div>
           <div class="label">Memory & code search</div>
-          <div class="sub">17,765 → 1,408 tokens via SmartCrusher</div>
+          <div class="sub">Shared atomic memory for team coordination</div>
         </div>
         <div class="savings-item">
           <div class="big orange">92%</div>
@@ -331,9 +330,9 @@
             <p>Agent A learns your auth flow. Agent B repeats the same investigation tomorrow. Two agents claim the same issue because neither sees ownership. Humans copy notes between terminals. <strong>Samvit</strong> solves this: one MCP server for shared memory, atomic task claims (<code>FOR UPDATE SKIP LOCKED</code>), and durable messaging — PostgreSQL-backed, provider-agnostic.</p>
           </div>
           <div class="card" style="border-left: 3px solid var(--orange);">
-            <div class="number">GAP 2 — Token Cost</div>
-            <h3>Server responses contain 60–95% redundant data.</h3>
-            <p>Every <code>recall</code> returns memory snippets. Every <code>search_docs</code> returns chunked text. Every <code>explore_code</code> returns symbol metadata. All of it gets sent to the LLM — and you pay per token. <strong>Headroom</strong> runs <em>inside Samvit</em> and compresses these responses using SmartCrusher (JSON), CodeCompressor (AST), and CacheAligner (prefix stabilization). No per-machine install, no config, no accuracy loss.</p>
+            <div class="number">GAP 2 — Security & Audit</div>
+            <h3>Multi-team deployments need isolation and compliance.</h3>
+            <p><strong>Samvit</strong> provides workspace isolation (multi-team safe), role-based access control (admin/operator/auditor), and complete audit logging of every action. Ethical guard automatically blocks secrets/PII before storage. All mutations are logged for compliance — exactly what enterprise customers require.</p>
           </div>
         </div>
       </div>
@@ -343,8 +342,8 @@
     <section style="background: rgba(9,18,31,.55); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);">
       <div class="wrap">
         <div class="section-head centered">
-          <div class="kicker">The combined stack</div>
-          <h2>One server, two layers.</h2>
+          <div class="kicker">Self-hosted architecture</div>
+          <h2>Everything you need. Nothing you don't.</h2>
         </div>
         <div style="display: flex; flex-direction: column; align-items: center; gap: .3rem;">
           <div style="padding: .6rem 1.5rem; border: 1px solid var(--violet); border-radius: 8px; background: rgba(157,131,255,.06); text-align: center; min-width: 380px;">
@@ -361,7 +360,7 @@
                 <div>MCP tools (16 tools)</div>
                 <div>Task dispatcher</div>
                 <div>Admin web UI</div>
-                <div>Event bus (Redpanda)</div>
+                <div>Rate limiting</div>
               </div>
               <div>
                 <div style="color: var(--dim); font-size: .65rem; text-transform: uppercase; letter-spacing: .06em;">Storage & Search</div>
@@ -371,21 +370,21 @@
                 <div>Ethical Guard</div>
               </div>
               <div style="border-left: 1px solid rgba(255,194,122,.35); padding-left: .6rem; background: rgba(255,194,122,.04); border-radius: 6px;">
-                <div style="color: var(--orange); font-size: .65rem; text-transform: uppercase; letter-spacing: .06em;">Headroom Embedded</div>
-                <div>SmartCrusher (JSON)</div>
-                <div>CodeCompressor (AST)</div>
-                <div>CacheAligner</div>
-                <div>CCR reversible store</div>
+                <div style="color: var(--orange); font-size: .65rem; text-transform: uppercase; letter-spacing: .06em;">Security & Admin</div>
+                <div>RBAC (4 roles)</div>
+                <div>Audit logging</div>
+                <div>Admin web UI</div>
+                <div>Rate limiting</div>
               </div>
             </div>
             <div style="color: var(--muted); font-size: .72rem; margin-top: .5rem; border-top: 1px solid var(--line); padding-top: .5rem;">
-              All tool outputs compressed before returning to agent · Zero per-machine install
+              No cloud APIs · No per-machine install · Complete audit trail
             </div>
           </div>
           <div style="display: flex; gap: .6rem; font-size: .7rem; color: var(--dim);">
-            <span>↓ compressed responses (60-95% smaller)</span>
+            <span>↓ MCP queries & responses</span>
             <span style="color: var(--line);">|</span>
-            <span>↓ SQL to PostgreSQL 16 + pgvector</span>
+            <span>↓ PostgreSQL 16 + pgvector (persist data)</span>
           </div>
           <div style="display: flex; gap: .6rem; flex-wrap: wrap; justify-content: center;">
             <div style="padding: .5rem 1.2rem; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); text-align: center; min-width: 200px;">
@@ -441,28 +440,6 @@
             </div>
           </div>
 
-          <div class="arch-row">
-            <div class="arch-box large headroom">
-              <div class="label">Step 4 — Headroom Compression Layer</div>
-              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem;margin-top:.3rem;">
-                <div>
-                  <div class="title" style="font-size:.78rem;">CacheAligner</div>
-                  <div class="sub">Stabilize prefixes for KV cache hits</div>
-                </div>
-                <div>
-                  <div class="title" style="font-size:.78rem;">SmartCrusher</div>
-                  <div class="sub">Compress JSON arrays (recall, search_docs, list_tasks)</div>
-                </div>
-                <div>
-                  <div class="title" style="font-size:.78rem;">CodeCompressor</div>
-                  <div class="sub">AST-aware code symbol compression (explore_code, who_calls)</div>
-                </div>
-              </div>
-              <div class="desc" style="margin-top:.3rem;">CCR reversible store: original data cached locally; LLM can retrieve on demand</div>
-            </div>
-          </div>
-
-          <div class="arch-line"><span class="arrow">↓ Compressed response to agent (60-95% smaller, same meaning)</span></div>
 
           <!-- Row 3: Agent to LLM -->
           <div class="arch-row">
@@ -479,8 +456,8 @@
         </div>
 
         <div class="legend">
-          <span><span class="legend-dot" style="background:var(--orange);"></span> Headroom embedded inside Samvit</span>
-          <span><span class="legend-dot" style="background:var(--cyan);"></span> Compression is transparent to agents</span>
+          <span><span class="legend-dot" style="background:var(--orange);"></span> All core features built-in</span>
+          <span><span class="legend-dot" style="background:var(--cyan);"></span> Per-agent isolation + RBAC</span>
           <span><span class="legend-dot" style="background:var(--green);"></span> No per-machine install required</span>
         </div>
       </div>
@@ -497,27 +474,27 @@
           <div class="card">
             <div class="number">01</div>
             <h3>Shared persistent memory</h3>
-            <p>Any agent on any machine can <code>remember</code> a decision and any other agent can <code>recall</code> it — by semantic similarity or exact key. No more context resets between sessions. <strong>Headroom compresses recall results by 92%.</strong></p>
+            <p>Any agent on any machine can <code>remember</code> a decision and any other agent can <code>recall</code> it — by semantic similarity or exact key. No more context resets between sessions. Semantic search uses local embeddings (BAAI/bge-small-en-v1.5).</p>
           </div>
           <div class="card">
             <div class="number">02</div>
             <h3>Collision-free task ownership</h3>
-            <p><code>claim</code> atomically locks a task via <code>FOR UPDATE SKIP LOCKED</code>. Two agents never receive the same work. <code>renew</code> extends leases; <code>done</code> records structured results. <strong>Task descriptions compressed by 70%+.</strong></p>
+            <p><code>claim</code> atomically locks a task via <code>FOR UPDATE SKIP LOCKED</code>. Two agents never receive the same work. <code>renew</code> extends leases; <code>done</code> records structured results. Results can be up to 1 MB.</p>
           </div>
           <div class="card">
             <div class="number">03</div>
             <h3>Durable agent messaging</h3>
-            <p><code>say</code> sends directed or broadcast messages with topic routing. <code>read</code> consumes with mark-as-read tracking across a join table. Messages survive agent restarts. <strong>Message bodies compressed by 60%+.</strong></p>
+            <p><code>say</code> sends directed or broadcast messages with topic routing. <code>read</code> consumes with mark-as-read tracking across a join table. Messages survive agent restarts and session boundaries.</p>
           </div>
           <div class="card">
             <div class="number">04</div>
             <h3>RAG and code intelligence</h3>
-            <p><code>ingest</code> documents (PDF, MD, TXT) and <code>search_docs</code> by semantic similarity. <code>index_code</code> builds a graph of symbols (Python AST, JS/Go/Rust/Java regex); <code>explore_code</code>, <code>who_calls</code>, <code>graph_symbol</code> answer architecture questions. <strong>RAG chunks compressed by 92%.</strong></p>
+            <p><code>ingest</code> documents (PDF, MD, TXT) and <code>search_docs</code> by semantic similarity. <code>index_code</code> builds a graph of symbols (Python AST, JS/Go/Rust/Java regex); <code>explore_code</code>, <code>who_calls</code>, <code>graph_symbol</code> answer architecture questions.</p>
           </div>
           <div class="card">
             <div class="number">05</div>
-            <h3>Reversible compression (CCR)</h3>
-            <p>Headroom's <strong>Compress-Cache-Retrieve</strong> stores originals in a local cache with TTL. If the LLM needs more detail, it calls <code>headroom_retrieve</code> to get the full original. Nothing is permanently lost — compression is always reversible.</p>
+            <h3>Admin dashboard &amp; RBAC</h3>
+            <p>Web-based admin UI for managing agents, inspecting tasks, viewing guard violations, and monitoring server health. Role-based access control (admin, operator, auditor). Every admin action is audit-logged.</p>
           </div>
           <div class="card">
             <div class="number">06</div>
@@ -534,23 +511,23 @@
         <div class="section-head centered">
           <div class="kicker">MCP tools</div>
           <h2>Every primitive your agents need.</h2>
-          <p>Samvit exposes these as MCP tools. Any MCP-compatible client calls them directly. Headroom compresses responses transparently in the background.</p>
+          <p>Samvit exposes these as MCP tools. Any MCP-compatible client calls them directly via the standard MCP protocol.</p>
         </div>
         <table class="tool-table">
           <thead>
-            <tr><th>Tool</th><th>What it does</th><th>Compressed by Headroom?</th></tr>
+            <tr><th>Tool</th><th>What it does</th><th>Category</th></tr>
           </thead>
           <tbody>
             <tr><td>remember</td><td>Store a semantic memory + optional exact-key lookup</td><td>—</td></tr>
-            <tr><td>recall</td><td>Find memories by semantic query or exact key</td><td>✓ 92% compression</td></tr>
+            <tr><td>recall</td><td>Find memories by semantic query or exact key</td><td>Memory</td></tr>
             <tr><td>create_task</td><td>Create a prioritized, tagged task with idempotency</td><td>—</td></tr>
             <tr><td>claim</td><td>Atomically lock the next pending task (CTE + SKIP LOCKED)</td><td>—</td></tr>
             <tr><td>renew / done</td><td>Extend lease / complete a claimed task</td><td>—</td></tr>
-            <tr><td>cancel_task / list_tasks</td><td>Cancel or list tasks by status and tags</td><td>✓ 70%+ on descriptions</td></tr>
-            <tr><td>say / read</td><td>Send / receive directed or broadcast messages</td><td>✓ 60%+ on bodies</td></tr>
-            <tr><td>ingest / search_docs</td><td>Ingest documents and semantic search over them</td><td>✓ 92% on search results</td></tr>
-            <tr><td>index_code / explore_code</td><td>Index codebase / find symbols semantically</td><td>✓ 92% on code search</td></tr>
-            <tr><td>who_calls / graph_symbol</td><td>Find callers / BFS traversal of symbol connections</td><td>✓ on symbol metadata</td></tr>
+            <tr><td>cancel_task / list_tasks</td><td>Cancel or list tasks by status and tags</td><td>Tasks</td></tr>
+            <tr><td>say / read</td><td>Send / receive directed or broadcast messages</td><td>Messaging</td></tr>
+            <tr><td>ingest / search_docs</td><td>Ingest documents and semantic search over them</td><td>RAG</td></tr>
+            <tr><td>index_code / explore_code</td><td>Index codebase / find symbols semantically</td><td>Code Graph</td></tr>
+            <tr><td>who_calls / graph_symbol</td><td>Find callers / BFS traversal of symbol connections</td><td>Code Graph</td></tr>
           </tbody>
         </table>
       </div>
@@ -562,7 +539,7 @@
         <div class="section-head centered">
           <div class="kicker">5-minute guide</div>
           <h2>Samvit is running. Now what?</h2>
-          <p>From zero to a multi-agent team sharing memory, tasks, and messages — with built-in compression.</p>
+          <p>From zero to a multi-agent team sharing memory, tasks, and messages — on your infrastructure.</p>
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
@@ -573,7 +550,7 @@
                 <div class="num"></div>
                 <div>
                   <h4>Start the server</h4>
-                  <p>Clone, configure, and start Samvit. Headroom is included — no separate install.</p>
+                  <p>Clone, configure, and start Samvit with <code>docker compose up</code>. Everything you need is included.</p>
                   <pre><span class="accent">git clone</span> https://github.com/darshanredkar11/samvit
 <span class="accent">cd</span> samvit
 <span class="accent">cp</span> .env.example .env
@@ -622,7 +599,7 @@
                 <div class="num"></div>
                 <div>
                   <h4>Store and find knowledge</h4>
-                  <p>Tell your agent to store decisions. Any agent retrieves them by meaning — Headroom compresses the results.</p>
+                  <p>Tell your agent to store decisions. Any agent retrieves them by semantic similarity or exact key.</p>
                   <pre><span class="c"># In your agent's chat:</span>
 "Remember: the auth service runs on port 3001
  and uses JWT with RS256."
@@ -658,7 +635,7 @@
                   <pre><span class="c"># Agent A broadcasts:</span>
 "Say 'CI pipeline is green' with topic 'build-status'."
 
-<span class="c"># Agent B reads (with Headroom compression):</span>
+<span class="c"># Agent B reads the remembered decision:</span>
 "Read messages with topic 'build-status'."
 <span class="c"># → "CI pipeline is green"</span></pre>
                 </div>
@@ -703,49 +680,6 @@
       </div>
     </section>
 
-    <!-- ═══ HEADROOM DETAIL ═══ -->
-    <section id="headroom">
-      <div class="wrap">
-        <div class="section-head centered">
-          <div class="kicker">Inside the server</div>
-          <h2>How Headroom compresses responses.</h2>
-          <p>All three algorithms run automatically when <code>SAMVIT_HEADROOM_ENABLED=true</code> (default: on). No agent-side config needed.</p>
-        </div>
-
-        <div class="card-grid card-grid-3">
-          <div class="card" style="border-top: 3px solid var(--orange);">
-            <h3>SmartCrusher</h3>
-            <p><strong>What it does:</strong> Analyzes JSON arrays in responses (recall results, document chunks, code search), detects statistical patterns, keeps important items (errors, anomalies, change points) and compresses repetitive data.</p>
-            <p style="margin-top:.5rem;color:var(--green);font-size:.85rem;">→ 70-95% reduction on structured data</p>
-          </div>
-          <div class="card" style="border-top: 3px solid var(--orange);">
-            <h3>CodeCompressor</h3>
-            <p><strong>What it does:</strong> AST-aware compression for code symbols returned by <code>explore_code</code>, <code>who_calls</code>, and <code>graph_symbol</code>. Strips redundant tokens while preserving structure and signatures.</p>
-            <p style="margin-top:.5rem;color:var(--green);font-size:.85rem;">→ 60-85% reduction on code metadata</p>
-          </div>
-          <div class="card" style="border-top: 3px solid var(--orange);">
-            <h3>CacheAligner</h3>
-            <p><strong>What it does:</strong> Stabilizes response prefixes so LLM provider KV caches (Anthropic, OpenAI, Google) actually hit. Dynamic content (timestamps, IDs) is extracted to the end of the response.</p>
-            <p style="margin-top:.5rem;color:var(--green);font-size:.85rem;">→ 50-90% additional cache savings</p>
-          </div>
-        </div>
-
-        <div style="margin-top: 1.5rem; padding: 1rem; border: 1px solid var(--line); border-radius: 12px; background: rgba(10,19,33,.7);">
-          <div style="display: flex; gap: .8rem; align-items: flex-start;">
-            <div style="flex-shrink:0; padding: .3rem .6rem; border-radius: 6px; background: rgba(255,194,122,.1); color: var(--orange); font: 700 .7rem var(--mono);">CCR</div>
-            <div>
-              <div style="font-weight:700; margin-bottom:.2rem;">CCR: Compress-Cache-Retrieve — nothing is permanently lost</div>
-              <div style="color:var(--muted);font-size:.88rem;">
-                When SmartCrusher compresses a response, the full original is cached in an in-memory store with a TTL (default 5 minutes).
-                Headroom injects a retrieval marker in the compressed response. If the LLM needs the original data, it calls
-                <code>headroom_retrieve</code> via MCP — an instant lookup, not a re-query.
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
     <!-- ═══ FAQ ═══ -->
     <section id="faq" style="background: rgba(9,18,31,.55); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);">
       <div class="wrap">
@@ -759,12 +693,8 @@
             <p>Those frameworks define <em>how</em> agents execute (DAGs, loops, sub-agents). Samvit provides the <em>shared state</em> those agents read and write — memory, tasks, messages — across sessions and machines. They are complementary: LangGraph can use Samvit as its persistence layer.</p>
           </details>
           <details>
-            <summary>Does compression change my LLM's answers?</summary>
-            <p>No. Headroom benchmarks show <strong>±0% accuracy delta</strong> on GSM8K (math), SQuAD v2 (QA), and BFCL (tool use). Compression is statistical and structural — it removes redundancy, not meaning. CCR ensures nothing is permanently lost.</p>
-          </details>
-          <details>
             <summary>Do developers need to install anything on their machines?</summary>
-            <p><strong>No.</strong> Headroom runs inside the Samvit server as a Python library. Developers only install an MCP client (Claude Code, Codex CLI) and point it at the Samvit server. Compression happens server-side, transparently. Zero per-machine setup.</p>
+            <p><strong>No.</strong> Samvit runs as a server. Developers only install an MCP client (Claude Code, Codex CLI) and point it at the Samvit server. All coordination happens server-side. Zero per-machine setup.</p>
           </details>
           <details>
             <summary>How do we secure Samvit in production?</summary>
@@ -772,15 +702,15 @@
           </details>
           <details>
             <summary>What infrastructure do I need?</summary>
-            <p>One machine with Docker. PostgreSQL 16 (pgvector) + optional Redpanda. Minimum: 2 CPU cores, 4 GB RAM. Headroom's models add ~200MB to the container. No per-machine agents, no sidecars, no per-developer installs.</p>
+            <p>One machine with Docker. PostgreSQL 16 (pgvector) for persistence. Minimum: 2 CPU cores, 4 GB RAM. No per-machine agents, no sidecars, no per-developer installs.</p>
           </details>
           <details>
             <summary>Can different agent types share the same server?</summary>
-            <p>Yes. Claude Code, Codex CLI, Antigravity, Cursor, and Hermes all connect via MCP to the same Samvit server. Each gets its own token. All share the same memory pool, task queue, and message bus. Headroom compresses responses for all of them equally.</p>
+            <p>Yes. Claude Code, Codex CLI, Antigravity, Cursor, and Hermes all connect via MCP to the same Samvit server. Each gets its own token. All share the same memory pool, task queue, and message bus.</p>
           </details>
           <details>
             <summary>What is on the roadmap?</summary>
-            <p>Workspace isolation, file-intent conflict detection, A2A compatibility, batch operations, WebSocket real-time events, richer task workflows, and deeper Headroom integration (proxy mode sidecar for agent-to-LLM compression).</p>
+            <p>Workspace-scoped admin roles, task dependencies and retries, memory retention policies, agent capability registry, and Kubernetes Helm charts.</p>
           </details>
         </div>
       </div>
@@ -790,10 +720,9 @@
     <div class="wrap cta-section">
       <div class="kicker">Apache 2.0 — self-hosted</div>
       <h2>Stop paying for redundant tokens and manual handoffs.</h2>
-      <p>Deploy one Samvit server. Agents coordinate. Responses compress automatically. Your token bill shrinks. Your team ships faster. No per-machine install.</p>
+      <p>Deploy one Samvit server. Agents share memory, coordinate work, and audit everything. Your team ships faster. No per-machine install, no API keys, no cloud dependency.</p>
       <div class="actions" style="margin:0">
         <a class="button primary" href="https://github.com/darshanredkar11/samvit">Deploy Samvit</a>
-        <a class="button secondary" href="https://github.com/chopratejas/headroom">Headroom on GitHub</a>
         <a class="button secondary" href="https://github.com/darshanredkar11/samvit/blob/main/docs/GAPS.md">Open roadmap</a>
       </div>
     </div>
@@ -801,10 +730,9 @@
 
   <footer>
     <div class="wrap footer-inner">
-      <span>Samvit + Headroom · Open-source coordination & compression for AI coding teams</span>
+      <span>Samvit · Open-source coordination server for AI coding teams</span>
       <div class="footer-links">
         <a href="https://github.com/darshanredkar11/samvit">Samvit GitHub</a>
-        <a href="https://github.com/chopratejas/headroom">Headroom GitHub</a>
         <a href="https://github.com/darshanredkar11/samvit/blob/main/docs/USAGE.md">Usage guide</a>
         <a href="https://github.com/darshanredkar11/samvit/blob/main/LICENSE">Apache 2.0</a>
       </div>
