@@ -21,6 +21,7 @@ import contextvars
 import logging
 import os
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from typing import Any
 
 from dotenv import load_dotenv
@@ -88,14 +89,25 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Samvit", version="0.1.0", lifespan=lifespan)
 
-cors_origins = [
-    origin.strip()
-    for origin in os.environ.get(
-        "SAMVIT_CORS_ORIGINS",
-        "http://localhost,http://127.0.0.1",
-    ).split(",")
-    if origin.strip()
-]
+import re
+
+_cors_raw = os.environ.get(
+    "SAMVIT_CORS_ORIGINS",
+    "http://localhost,http://127.0.0.1",
+)
+cors_origins = []
+for origin in _cors_raw.split(","):
+    origin = origin.strip()
+    if not origin:
+        continue
+    if origin == "*":
+        log.warning("CORS: wildcard origin '*' rejected — use explicit origins")
+        continue
+    if not re.match(r"^https?://", origin):
+        log.warning("CORS: invalid origin %r rejected — must start with http:// or https://", origin)
+        continue
+    cors_origins.append(origin)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
@@ -182,8 +194,13 @@ async def auth_middleware(request: Request, call_next):
     return await call_next(request)
 
 
-def _error(code: int, message: str, field: str | None = None) -> JSONResponse:
-    body: dict[str, Any] = {"error": message, "code": code}
+def _error(code: int, message: str, error_code: str | None = None, field: str | None = None) -> JSONResponse:
+    body: dict[str, Any] = {
+        "error": message,
+        "code": code,
+        "error_code": error_code or f"ERR_{code}",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
     if field:
         body["field"] = field
     return JSONResponse(status_code=code, content=body)
