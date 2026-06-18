@@ -26,7 +26,7 @@ os.environ.setdefault("DATABASE_URL", "postgresql://samvit:samvit@localhost:5432
 os.environ.setdefault("REDPANDA_BROKERS", "localhost:9092")
 os.environ.setdefault("SAMVIT_ADMIN_SECRET", "test-admin-secret")
 
-from samvit import db, embeddings, events
+from samvit import db, embeddings
 from samvit.main import app
 
 
@@ -36,9 +36,7 @@ async def _startup():
     await db.init()
     await db.run_migrations()
     embeddings.load_model()
-    await events.init()
     yield
-    await events.close()
     await db.close()
 
 

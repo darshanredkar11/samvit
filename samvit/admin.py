@@ -98,7 +98,6 @@ async def get_status(agent: dict) -> dict:
             "violations_24h": counts["violations_24h"],
             "mode":          __import__("samvit.guard", fromlist=["mode"]).mode().value,
         },
-        "events": events.status(),
     }
 
 

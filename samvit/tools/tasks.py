@@ -485,16 +485,6 @@ async def done(
             )
 
     log.info("Task %s marked %s by agent %s", task_id, status, agent["handle"])
-
-    # Decision #13: publish event; failure is non-fatal
-    event_name = "task.completed" if status == "done" else "task.failed"
-    await events.publish(event_name, {
-        "task_id": task_id,
-        "status": status,
-        "agent": agent["handle"],
-        "result": result,
-    })
-
     return {"ok": True}
 
 

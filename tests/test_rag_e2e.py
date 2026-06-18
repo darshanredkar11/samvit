@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import tempfile
 import pytest
-from samvit.tools import rag
+from samvit import rag
 from samvit.tools.memory import recall, remember
 
 

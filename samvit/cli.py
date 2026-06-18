@@ -116,11 +116,6 @@ def _parser() -> argparse.ArgumentParser:
     hermes_sub = hermes.add_subparsers(dest="hermes_command", required=True)
     hermes_sub.add_parser("cron-sync", help="Trigger Hermes cron bridge sync")
 
-    # admin events
-    events = admin_sub.add_parser("events", help="Event bus telemetry")
-    events_sub = events.add_subparsers(dest="events_command", required=True)
-    events_sub.add_parser("status", help="Event bus connection status")
-
     return parser
 
 

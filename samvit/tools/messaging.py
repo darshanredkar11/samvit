@@ -78,17 +78,6 @@ async def say(
         )
 
     log.debug("say: from=%s to=%s topic=%s id=%s", agent["handle"], to, topic, message_id)
-
-    # Decision #13: publish to Redpanda; failure is non-fatal
-    redpanda_topic = f"messages.{to}" if to else "messages.broadcast"
-    await events.publish(redpanda_topic, {
-        "message_id": str(message_id),
-        "from": agent["handle"],
-        "to": to,
-        "topic": topic,
-        "body": body.strip(),
-    })
-
     return {"message_id": str(message_id)}
 
 
