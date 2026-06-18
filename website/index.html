@@ -101,6 +101,18 @@
     .nav-links a { color: var(--dim); text-decoration: none; font-size: .9rem; font-weight: 500; }
     .nav-links a:hover { color: var(--violet); }
     .nav-cta { border: 1px solid var(--line); border-radius: 9px; padding: .48rem .85rem; background: var(--panel); }
+    .nav-toggle { display: none; background: none; border: none; cursor: pointer; padding: .4rem; color: var(--ink); }
+    .nav-toggle svg { display: block; }
+    .nav-overlay {
+      display: none;
+      position: fixed; inset: 0; z-index: 100;
+      flex-direction: column; align-items: center; justify-content: center; gap: 1.2rem;
+      background: rgba(255,255,255,.98); backdrop-filter: blur(8px);
+      font-size: 1.2rem; font-weight: 600;
+    }
+    .nav-overlay a { color: var(--ink); text-decoration: none; }
+    .nav-overlay a:hover { color: var(--violet); }
+    .nav-overlay .nav-cta { font-size: 1rem; }
 
     .hero { padding: 6rem 0 4rem; text-align: center; }
     .eyebrow {
@@ -154,6 +166,7 @@
       display: flex; flex-direction: column; gap: .3rem;
       font-size: .8rem;
       overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
     }
     .arch-row { display: flex; align-items: stretch; justify-content: center; gap: .6rem; min-width: min-content; }
     .arch-box {
@@ -192,8 +205,9 @@
     .savings-item .label { color: var(--ink); font-size: .82rem; margin-top: .3rem; font-weight: 600; }
     .savings-item .sub { color: var(--muted); font-size: .72rem; }
 
+    code, pre { overflow-wrap: break-word; word-wrap: break-word; }
     .wrap-example { background: var(--panel-2); border: 1px solid var(--line); border-radius: 12px; padding: 1.2rem; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .wrap-example pre { margin: 0; color: #1a1a1a; font: .8rem/1.75 var(--mono); word-wrap: break-word; overflow-wrap: break-word; }
+    .wrap-example pre { margin: 0; color: #1a1a1a; font: .8rem/1.75 var(--mono); }
     .wrap-example .c { color: var(--dim); }
     .wrap-example .kw { color: var(--violet); font-weight: 600; }
     .wrap-example .str { color: var(--green); }
@@ -205,20 +219,25 @@
       counter-increment: step;
       display: grid; grid-template-columns: 32px 1fr; gap: .6rem .8rem;
       padding: .8rem 0; border-bottom: 1px solid var(--line);
+      min-width: 0;
     }
+    .usage-step > * { min-width: 0; }
     .usage-step:last-child { border-bottom: 0; }
+    .usage-step .num {
+      display: flex; align-items: flex-start; flex-shrink: 0;
+    }
     .usage-step .num::before {
       content: counter(step);
       width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%;
       color: white; background: var(--violet);
-      border: none; font-size: .8rem; font-weight: 700; box-shadow: 0 2px 6px rgba(92, 78, 201, .2);
+      border: none; font-size: .8rem; font-weight: 700; box-shadow: 0 2px 6px rgba(92, 78, 201, .2); flex-shrink: 0;
     }
     .usage-step h4 { margin: 0 0 .3rem; font-size: .95rem; color: var(--ink); }
     .usage-step p { margin: 0; color: var(--muted); font-size: .88rem; }
     .usage-step pre {
       margin: .5rem 0 0; padding: .7rem .9rem; overflow-x: auto; border-radius: 8px;
       background: var(--panel-2); border: 1px solid var(--line); color: var(--ink);
-      font: .78rem/1.65 var(--mono); grid-column: 2;
+      font: .78rem/1.65 var(--mono); grid-column: 2; word-wrap: break-word; overflow-wrap: break-word;
     }
     .usage-step pre .accent { color: var(--green); }
 
@@ -251,9 +270,16 @@
     .footer-links a { color: var(--muted); text-decoration: none; transition: color .2s; }
     .footer-links a:hover { color: var(--violet); }
 
+    .stack-grid > div:nth-child(3) { border-left: 1px solid rgba(255,194,122,.35); padding-left: .6rem; }
+
     /* Tablet and smaller */
     @media (max-width: 860px) {
+      .nav-toggle { display: block; }
       .nav-links a:not(.nav-cta) { display: none; }
+      .nav-links .nav-cta { display: none; }
+      .nav-overlay.open { display: flex; }
+      .stack-grid { grid-template-columns: 1fr !important; }
+      .stack-grid > div { border-left: none !important; padding-left: 0 !important; }
       .card-grid-3 { grid-template-columns: 1fr 1fr; }
       .card-grid-2 { grid-template-columns: 1fr; }
       .savings-highlight { grid-template-columns: 1fr; }
@@ -263,9 +289,18 @@
       h2 { font-size: clamp(1.5rem, 3.5vw, 3rem); }
     }
 
+    .guide-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; overflow: hidden; }
+    .guide-grid > * { min-width: 0; overflow: hidden; }
+
+    /* Tablet and smaller */
+    @media (max-width: 860px) {
+      .guide-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+    }
+
     /* Mobile */
     @media (max-width: 640px) {
       .wrap { width: calc(100% - 1.5rem); }
+      .guide-grid { grid-template-columns: 1fr; gap: 1rem; }
       .card-grid-3 { grid-template-columns: 1fr; }
       .card-grid-2 { grid-template-columns: 1fr; }
       .card { padding: 1.2rem; }
@@ -281,9 +316,9 @@
       .wrap-example pre { font-size: .7rem; line-height: 1.5; }
       .tool-table { font-size: .85rem; }
       .tool-table th, .tool-table td { padding: .4rem; }
-      .usage-step { grid-template-columns: 24px 1fr; gap: .5rem .6rem; padding: .6rem 0; }
-      .usage-step .num::before { width: 24px; height: 24px; font-size: .7rem; }
-      .usage-step pre { font-size: .7rem; padding: .5rem; }
+      .usage-step { grid-template-columns: 24px 1fr; gap: .5rem .6rem; padding: .6rem 0; overflow: hidden; }
+      .usage-step .num::before { width: 24px; height: 24px; font-size: .7rem; flex-shrink: 0; }
+      .usage-step pre { font-size: .7rem; padding: .5rem; overflow-x: auto; }
       .faq-grid { gap: .6rem; }
       .faq-grid details { padding: .7rem .8rem; }
       .faq-grid summary { font-size: .9rem; }
@@ -312,6 +347,9 @@
         <span class="mark" aria-hidden="true">S</span>
         <span>samvit</span>
       </a>
+      <button class="nav-toggle" aria-label="Menu" onclick="document.querySelector('.nav-overlay').classList.toggle('open')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="17" x2="21" y2="17"/></svg>
+      </button>
       <div class="nav-links">
         <a href="#problem">Problem</a>
         <a href="#architecture">Architecture</a>
@@ -320,6 +358,15 @@
         <a href="#admin-ui">Admin UI</a>
         <a href="#faq">FAQ</a>
         <a class="nav-cta" href="https://github.com/darshanredkar11/samvit">View on GitHub</a>
+      </div>
+      <div class="nav-overlay" onclick="this.classList.remove('open')">
+        <a href="#problem" onclick="this.closest('.nav-overlay').classList.remove('open')">Problem</a>
+        <a href="#architecture" onclick="this.closest('.nav-overlay').classList.remove('open')">Architecture</a>
+        <a href="#tools" onclick="this.closest('.nav-overlay').classList.remove('open')">Tools</a>
+        <a href="#guide" onclick="this.closest('.nav-overlay').classList.remove('open')">Guide</a>
+        <a href="#admin-ui" onclick="this.closest('.nav-overlay').classList.remove('open')">Admin UI</a>
+        <a href="#faq" onclick="this.closest('.nav-overlay').classList.remove('open')">FAQ</a>
+        <a class="nav-cta" href="https://github.com/darshanredkar11/samvit" onclick="this.closest('.nav-overlay').classList.remove('open')">View on GitHub</a>
       </div>
     </div>
   </nav>
@@ -393,14 +440,14 @@
           <h2>Everything you need. Nothing you don't.</h2>
         </div>
         <div style="display: flex; flex-direction: column; align-items: center; gap: .3rem;">
-          <div style="padding: .6rem 1.5rem; border: 1px solid var(--violet); border-radius: 8px; background: rgba(157,131,255,.06); text-align: center; min-width: 380px;">
+          <div style="padding: .6rem 1.5rem; border: 1px solid var(--violet); border-radius: 8px; background: rgba(157,131,255,.06); text-align: center; width: 100%; max-width: 550px;">
             <strong>Your AI agents</strong>
             <div style="color: var(--muted); font-size: .75rem;">Claude Code · Codex CLI · Antigravity · Cursor · Hermes · Custom MCP</div>
           </div>
           <div style="color: var(--dim); font-size: .7rem;">↓ MCP protocol (Streamable HTTP / SSE)</div>
-          <div style="padding: .8rem 1.5rem; border: 1px solid var(--cyan); border-radius: 10px; background: rgba(82,215,209,.05); text-align: center; min-width: 550px;">
+          <div style="padding: .8rem 1.5rem; border: 1px solid var(--cyan); border-radius: 10px; background: rgba(82,215,209,.05); text-align: center; width: 100%; max-width: 600px;">
             <div style="font-weight: 700; margin-bottom: .4rem;">Samvit Server (self-hosted)</div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .5rem; text-align: left; font-size: .78rem;">
+            <div class="stack-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .5rem; text-align: left; font-size: .78rem;">
               <div>
                 <div style="color: var(--dim); font-size: .65rem; text-transform: uppercase; letter-spacing: .06em;">Coordination</div>
                 <div>Auth middleware</div>
@@ -416,7 +463,7 @@
                 <div>CodeGraph (AST+regex)</div>
                 <div>Ethical Guard</div>
               </div>
-              <div style="border-left: 1px solid rgba(255,194,122,.35); padding-left: .6rem; background: rgba(255,194,122,.04); border-radius: 6px;">
+                <div style="background: rgba(255,194,122,.04); border-radius: 6px;">
                 <div style="color: var(--orange); font-size: .65rem; text-transform: uppercase; letter-spacing: .06em;">Security & Admin</div>
                 <div>RBAC (4 roles)</div>
                 <div>Audit logging</div>
@@ -589,7 +636,7 @@
           <p>From zero to a multi-agent team sharing memory, tasks, and messages — on your infrastructure.</p>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+        <div class="guide-grid">
           <div>
             <div class="usage-steps">
 
