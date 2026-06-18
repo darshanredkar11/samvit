@@ -83,6 +83,11 @@ in the shared database.
 
 No hosted account or model API is required.
 
+## Deployment
+
+See the **[deployment guide](docs/DEPLOYMENT.md)** for single-machine, multi-machine,
+and production deployment instructions, including health checks, backups, and hardening.
+
 ## Configuration
 
 Important environment variables are documented in [.env.example](.env.example).
@@ -133,7 +138,8 @@ compatibility remain planned work.
 
 See:
 
-- [Gap tracker](GAPS.md)
+- [Gap tracker](docs/GAPS.md)
+- [Pitch readiness status](docs/PITCH_READINESS_STATUS.md)
 - [Specification](SPEC.md)
 - [Changelog](CHANGELOG.md)
 - [Security policy](SECURITY.md)
