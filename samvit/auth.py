@@ -170,7 +170,9 @@ async def admin_reset_token(handle: str, admin_secret: str) -> str:
     """
     import os
     expected = os.environ.get("SAMVIT_ADMIN_SECRET", "")
-    if not expected or not hmac.compare_digest(admin_secret, expected):
+    if not expected:
+        raise PermissionError("SAMVIT_ADMIN_SECRET is not configured. Cannot reset token without admin secret.")
+    if not hmac.compare_digest(admin_secret, expected):
         raise PermissionError("Invalid admin secret")
 
     normalised = validate_handle(handle)
