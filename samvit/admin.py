@@ -903,6 +903,3 @@ async def trigger_cron_sync(admin_agent: dict) -> dict:
                details=result)
 
     return {"ok": True, **result}
-
-
-# ── Events / Redpanda admin ───────────────────────────────────────────────────

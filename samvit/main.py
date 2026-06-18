@@ -2,8 +2,7 @@
 Samvit MCP server + HTTP registration endpoints.
 
 Layout:
-  - FastAPI lifespan: init DB, run migrations, load embeddings, start Redpanda,
-    start cleanup task
+  - FastAPI lifespan: init DB, run migrations, load embeddings, start cleanup task
   - Auth middleware: validates Bearer token on every request except /health and
     /v1/agents/register; stores agent in _current_agent contextvar
   - HTTP routes: /health, /v1/agents/register, /v1/agents/rotate,

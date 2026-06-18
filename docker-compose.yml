@@ -11,7 +11,6 @@ services:
       - "${SAMVIT_BIND_ADDRESS:-127.0.0.1}:8765:8765"
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-samvit}:${POSTGRES_PASSWORD:-samvit}@postgres:5432/${POSTGRES_DB:-samvit}
-      REDPANDA_BROKERS: redpanda:9092
       SAMVIT_ADMIN_SECRET: ${SAMVIT_ADMIN_SECRET:-change-me-in-production}
       SAMVIT_ADMIN_DEV_MODE: ${SAMVIT_ADMIN_DEV_MODE:-true}
       # Ethical guard mode: redact | block | warn | off  (default: redact)
@@ -24,8 +23,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      redpanda:
-        condition: service_healthy
     restart: unless-stopped
 
   test:
@@ -35,14 +32,11 @@ services:
       target: test
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-samvit}:${POSTGRES_PASSWORD:-samvit}@postgres:5432/${POSTGRES_DB:-samvit}
-      REDPANDA_BROKERS: redpanda:9092
       SAMVIT_ADMIN_SECRET: test-admin-secret
       SAMVIT_GUARD_MODE: redact
       HF_HUB_DISABLE_XET: "1"
     depends_on:
       postgres:
-        condition: service_healthy
-      redpanda:
         condition: service_healthy
 
   postgres:
@@ -60,25 +54,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-    restart: unless-stopped
-
-  redpanda:
-    image: redpandadata/redpanda:v26.1.8
-    command:
-      - redpanda
-      - start
-      - --smp 1
-      - --memory 512M
-      - --overprovisioned
-      - --kafka-addr PLAINTEXT://0.0.0.0:9092
-      - --advertise-kafka-addr PLAINTEXT://redpanda:9092
-      # Allow auto topic creation (Decision: no pre-declaration needed)
-      - --set redpanda.auto_create_topics_enabled=true
-    healthcheck:
-      test: ["CMD-SHELL", "rpk cluster health | grep -q healthy"]
-      interval: 5s
-      timeout: 5s
-      retries: 20
     restart: unless-stopped
 
 volumes:

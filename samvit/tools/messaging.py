@@ -6,7 +6,6 @@ Decisions applied:
   #4  say to unknown handle → 404 (LookupError)
   #9  body size capped at 64 KB
   #11 message_reads join table (no read_by UUID[] array)
-  #13 Redpanda publish failure is logged, not raised
 """
 
 from __future__ import annotations

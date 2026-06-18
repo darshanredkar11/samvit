@@ -11,7 +11,7 @@ Samvit lets AI coding tools on different machines share:
 - Persistent semantic and key/value memory
 - An atomic task queue with ownership and renewable leases
 - Directed and broadcast messages across sessions
-- Searchable documents and an optional code knowledge graph
+- Searchable documents and code knowledge graph (when repository is mounted)
 
 Samvit does not replace Claude Code, Antigravity, LangGraph, or CrewAI. It gives
 otherwise isolated agents one neutral place to coordinate.

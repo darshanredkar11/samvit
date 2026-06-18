@@ -428,7 +428,6 @@ async def done(
     """
     Mark a task done or failed. Validates claim_token ownership.
     Decision #9: result capped at 1 MB.
-    Decision #13: Redpanda publish failure is swallowed.
     """
     if status not in ("done", "failed"):
         raise ValueError(f"status must be 'done' or 'failed', got {status!r}")
