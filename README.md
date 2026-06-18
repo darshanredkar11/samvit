@@ -78,10 +78,11 @@ in the shared database.
 | API and MCP server | FastAPI + official MCP Python SDK |
 | Current MCP transport | Streamable HTTP |
 | Relational and vector storage | PostgreSQL 16 + pgvector |
-| Local embeddings | `all-MiniLM-L6-v2` |
-| Optional event delivery | Redpanda |
+| Local embeddings | `BAAI/bge-small-en-v1.5` (384-dim) |
+| Rate limiting | Per-agent sliding-window |
+| Admin UI | React + TypeScript + Vite |
 
-No hosted account or model API is required.
+**No hosted account or model API required.** Everything runs on your infrastructure.
 
 ## Deployment
 
@@ -102,18 +103,19 @@ Important environment variables are documented in [.env.example](.env.example).
 
 ## Admin Dashboard
 
-Samvit ships with a web-based admin dashboard for managing agents, inspecting tasks
-and guard violations, and monitoring server health.
+Samvit ships with a web-based admin dashboard for managing agents, inspecting tasks,
+viewing guard violations, and monitoring server health.
 
-```bash
-# Build the admin UI (requires Node.js 18+)
-cd admin-ui && npm ci && npm run build
+**Features:**
+- Role-based access control (admin, operator, auditor)
+- Agent management (register, suspend, rotate tokens)
+- Task management (force-release, cancel)
+- Guard violations viewer + stats
+- Audit log of all admin actions
+- Real-time system metrics
 
-# Open http://localhost:8765/admin in your browser
-```
-
-The UI authenticates via `SAMVIT_ADMIN_SECRET`. Log in with any registered agent
-handle and the admin secret value.
+The admin UI is pre-built and served at `http://localhost:8765/admin`.
+Authenticate with any agent token and the `SAMVIT_ADMIN_SECRET`.
 
 ## Development
 
@@ -130,20 +132,35 @@ samvit serve --host 127.0.0.1 --port 8765
 samvit doctor
 ```
 
+## Documentation
+
+- **[Deployment Guide](docs/DEPLOYMENT.md)** — Single-machine, multi-machine, and production setup
+- **[Usage Guide](docs/USAGE.md)** — Complete team onboarding + examples
+- **[Architecture Decisions](docs/ADR.md)** — Why we built it this way
+- **[Security Policy](SECURITY.md)** — Compliance, deployment hardening, best practices
+- **[Contributing](CONTRIBUTING.md)** — How to contribute
+- **[Changelog](CHANGELOG.md)** — Release history
+- **[Build Summary](ENTERPRISE_MINIMAL_COMPLETE.md)** — v0.2.0 completion report
+
 ## Project Status
 
-Samvit is alpha software. The core coordination workflow is implemented, but
-workspace-level tenancy, conflict-aware file intents, task dependencies, and A2A
-compatibility remain planned work.
+**v0.2.0** (Current) — Core coordination workflow is complete and production-ready:
+- ✅ Atomic task queue with no double-assignment
+- ✅ Shared memory (semantic + KV, namespaced)
+- ✅ Messaging (direct + broadcast, topics)
+- ✅ Code knowledge graph (Python/JS/TS parsing, semantic search)
+- ✅ Admin dashboard with RBAC + audit logging
+- ✅ Ethical guard (blocks secrets/PII automatically)
+- ✅ Workspace isolation (multi-team safe)
+- ✅ Self-hosted deployment (Docker, no dependencies)
 
-See:
+**v0.3.0** (Planned):
+- Task dependencies & retries
+- Memory lifecycle & retention policies
+- Workspace-scoped admin roles
+- Agent capability registry
 
-- [Gap tracker](docs/GAPS.md)
-- [Pitch readiness status](docs/PITCH_READINESS_STATUS.md)
-- [Specification](SPEC.md)
-- [Changelog](CHANGELOG.md)
-- [Security policy](SECURITY.md)
-- [Contributing](CONTRIBUTING.md)
+See [Specification](SPEC.md) for full feature roadmap.
 
 ## License
 
