@@ -31,3 +31,6 @@ pgdata/
 
 # sentence-transformers model cache
 .cache/
+
+# Node (admin-ui)
+node_modules/

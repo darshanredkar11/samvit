@@ -1,8 +1,8 @@
-# Samvit — Specification v0.2
+# Samvit — Specification v0.3
 
 > Provider-agnostic multi-agent coordination layer: shared memory, task queue, and async messaging for teams of mixed AI tools.
 
-*v0.2 — incorporates second-AI review feedback. Name changed from Relay to Samvit.*
+*v0.3 — current MCP transport and expanded coordination lifecycle.*
 
 ---
 
@@ -45,14 +45,14 @@ curl -X POST http://localhost:8765/v1/agents/register \
 {
   "mcpServers": {
     "samvit": {
-      "type": "sse",
-      "url": "http://localhost:8765/sse",
+      "type": "http",
+      "url": "http://localhost:8765/mcp",
       "headers": { "Authorization": "Bearer samvit_abc123..." }
     }
   }
 }
 
-# 4. Done — your AI now has: remember, recall, claim, done, say, read
+# 4. Done — your AI now has memory, task, messaging, document, and code tools
 
 # 5. Every teammate repeats steps 2–3 with their own handle + AI tool
 ```
@@ -123,7 +123,7 @@ All exposed over the **Model Context Protocol (MCP)**, so any MCP-compatible cli
 │  └─────────────┘   └──────────────┘  └─────────────┘  │
 └────────────────────────────────────────────────────────┘
          ▲                ▲
-         │ MCP/SSE        │ (internal)
+         │ MCP/HTTP       │ (internal)
    ┌─────┴──────┐   ┌─────┴──────┐
    │ Claude     │   │ Codex      │   Antigravity, etc.
    │ (Darshan)  │   │ (Rehma)    │
@@ -134,7 +134,7 @@ All exposed over the **Model Context Protocol (MCP)**, so any MCP-compatible cli
 
 | Component | Technology | Role |
 |---|---|---|
-| MCP Server | Python 3.12, FastMCP | Exposes all tools over MCP/SSE |
+| MCP Server | Python 3.12, FastMCP | Exposes tools over MCP Streamable HTTP |
 | Relational store | PostgreSQL 16 | Tasks, messages, agent registry, KV memory |
 | Vector store | pgvector extension | Semantic memory (embeddings) |
 | Message bus | Redpanda (Kafka-compatible) | Durable pub/sub for `say`/`read` |
@@ -270,6 +270,10 @@ Common codes:
 
 All tools are exposed as MCP tools. Each request must carry a bearer token
 (`Authorization: Bearer <token>`) identifying the calling agent.
+
+Current clients connect to `/mcp` using Streamable HTTP. Legacy SSE clients can
+connect to `/legacy/sse`. Workers and hooks use the authenticated
+`POST /v1/tools/call` bridge.
 
 ### 6.1 Memory — `remember`
 
@@ -465,6 +469,31 @@ the `read_by` array is not updated — useful for inspecting without consuming.
 
 ---
 
+### 6.7 Additional Task Lifecycle Tools
+
+`create_task` creates prioritized work with tags, optional `worker_type`, and an
+optional creator-scoped `idempotency_key`.
+
+`list_tasks` returns team tasks filtered by status or tags.
+
+`renew` refreshes `claimed_at` for a long-running task after verifying the
+authenticated agent and claim token.
+
+`cancel_task` lets the creator cancel one of its own pending tasks.
+
+Task completion is implemented as one conditional update that verifies task
+status, `claimed_by`, and `claim_token`.
+
+### 6.8 Document and Code Tools
+
+`ingest` and `search_docs` provide chunked local document retrieval.
+
+`index_code`, `explore_code`, `who_calls`, and `graph_symbol` provide a
+server-side code graph. Indexed paths must be inside `SAMVIT_CODE_ROOTS`; Docker
+Compose mounts `SAMVIT_WORKSPACE` read-only at `/workspace`.
+
+---
+
 ## 7. Agent Identity & Auth
 
 - Each agent registers once with a handle and provider. Registration returns a bearer token.
@@ -511,9 +540,11 @@ CREATE TABLE schema_migrations (
 
 ---
 
-## 9. MVP Scope
+## 9. Current Scope
 
-The MVP ships exactly these six tools plus agent registration and claim expiry cleanup.
+The current alpha includes the original six coordination tools plus task
+creation, listing, lease renewal, cancellation, document search, and code graph
+queries.
 
 | Item | Status |
 |---|---|
@@ -523,6 +554,10 @@ The MVP ships exactly these six tools plus agent registration and claim expiry c
 | `done` | MVP |
 | `say` | MVP |
 | `read` | MVP |
+| `create_task` / `list_tasks` | Alpha |
+| `renew` / `cancel_task` | Alpha |
+| `ingest` / `search_docs` | Alpha |
+| `index_code` / `explore_code` / `who_calls` / `graph_symbol` | Alpha |
 | Agent register / rotate | MVP |
 | Claim expiry background task | MVP |
 | Schema migration runner | MVP |
@@ -629,8 +664,8 @@ Add to any MCP client (e.g. Claude Code `~/.claude/settings.json`):
 {
   "mcpServers": {
     "samvit": {
-      "type": "sse",
-      "url": "http://localhost:8765/sse",
+      "type": "http",
+      "url": "http://localhost:8765/mcp",
       "headers": {
         "Authorization": "Bearer samvit_<your_token>"
       }
@@ -682,4 +717,4 @@ Core server (this repo) is Apache 2.0 forever. Potential commercial layer:
 
 ---
 
-*Spec version 0.2*
+*Spec version 0.3*

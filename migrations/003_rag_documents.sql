@@ -29,7 +29,7 @@ CREATE TABLE document_chunks (
     chunk_index     INT         NOT NULL,
     content         TEXT        NOT NULL,
     embedding       VECTOR(384),
-    embedding_model TEXT        NOT NULL DEFAULT 'all-MiniLM-L6-v2',
+    embedding_model TEXT        NOT NULL DEFAULT 'BAAI/bge-small-en-v1.5',
     char_start      INT,
     char_end        INT,
     metadata        JSONB       NOT NULL DEFAULT '{}',

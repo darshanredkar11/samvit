@@ -4,28 +4,51 @@ build-backend = "hatchling.build"
 
 [project]
 name = "samvit"
-version = "0.1.0"
-description = "Provider-agnostic multi-agent coordination layer"
+version = "0.2.0"
+description = "Shared coordination server for Claude, Codex, Antigravity, and other AI agents"
+readme = "README.md"
 license = { text = "Apache-2.0" }
 requires-python = ">=3.12"
+authors = [
+    { name = "Darshan Redkar" },
+]
+keywords = ["ai-agents", "mcp", "multi-agent", "claude-code", "coordination"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+]
 dependencies = [
     "fastapi>=0.111",
     "uvicorn[standard]>=0.29",
     "asyncpg>=0.29",
-    "mcp[cli]>=1.3",
-    "sentence-transformers>=3.0",
+    "mcp[cli]>=1.10,<2",
+    "fastembed>=0.4",
     "aiokafka>=0.11",
     "bcrypt>=4.1",
     "python-dotenv>=1.0",
     "pydantic>=2.7",
-    "numpy>=1.26",
 ]
 
+[project.urls]
+Homepage = "https://darshanredkar11.github.io/samvit/"
+Repository = "https://github.com/darshanredkar11/samvit"
+Documentation = "https://github.com/darshanredkar11/samvit/blob/main/docs/USAGE.md"
+Issues = "https://github.com/darshanredkar11/samvit/issues"
+
+[project.scripts]
+samvit = "samvit.cli:main"
+
 [project.optional-dependencies]
+headroom = [
+    "headroom-ai>=0.1",
+]
 pdf = [
     "pdfplumber>=0.11",
 ]
 dev = [
+    "build>=1.2",
     "pytest>=8.2",
     "pytest-asyncio>=0.23",
     "httpx>=0.27",
@@ -34,7 +57,12 @@ dev = [
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
 testpaths = ["tests"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["samvit"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"migrations" = "samvit/migrations"

@@ -4,7 +4,7 @@ import asyncio
 import uuid
 import pytest
 from samvit import db
-from samvit.tools.tasks import claim, done
+from samvit.tools.tasks import cancel, claim, create, done, list_tasks, renew
 
 
 async def _insert_task(title: str, tags: list[str] = None, priority: int = 0) -> str:
@@ -74,6 +74,15 @@ async def test_done_wrong_token_raises(agent_rec):
 
 
 @pytest.mark.asyncio
+async def test_done_wrong_agent_raises(two_agent_recs):
+    owner, intruder = two_agent_recs
+    tid = await _insert_task(f"wrong-agent-{uuid.uuid4().hex}")
+    task = (await claim(owner, task_id=tid))["task"]
+    with pytest.raises(PermissionError):
+        await done(intruder, task["id"], task["claim_token"])
+
+
+@pytest.mark.asyncio
 async def test_done_twice_raises(agent_rec):
     tid = await _insert_task(f"twice-{uuid.uuid4().hex}")
     task = (await claim(agent_rec, task_id=tid))["task"]
@@ -110,3 +119,30 @@ async def test_no_double_claim(two_agent_recs):
     )
     claimed = [r for r in [r1["task"], r2["task"]] if r is not None]
     assert len(claimed) == 1, "Double-claim bug: both agents got the same task"
+
+
+@pytest.mark.asyncio
+async def test_create_task_adds_worker_type_to_tags(agent_rec):
+    result = await create(
+        agent_rec,
+        f"worker-{uuid.uuid4().hex}",
+        worker_type="review",
+    )
+    task = (await claim(agent_rec, tags=["review"], task_id=result["task_id"]))["task"]
+    assert "review" in task["tags"]
+
+
+@pytest.mark.asyncio
+async def test_task_lease_can_be_renewed(agent_rec):
+    tid = await _insert_task(f"renew-{uuid.uuid4().hex}")
+    task = (await claim(agent_rec, task_id=tid))["task"]
+    result = await renew(agent_rec, tid, task["claim_token"])
+    assert result["ok"] is True
+
+
+@pytest.mark.asyncio
+async def test_creator_can_cancel_pending_task(agent_rec):
+    created = await create(agent_rec, f"cancel-{uuid.uuid4().hex}")
+    assert await cancel(agent_rec, created["task_id"]) == {"ok": True}
+    listed = await list_tasks(agent_rec, status="cancelled")
+    assert any(task["id"] == created["task_id"] for task in listed["tasks"])

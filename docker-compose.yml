@@ -1,21 +1,26 @@
-version: "3.9"
-
 # Credentials from environment; defaults are for local dev only.
 # For production: create a .env file or use Docker secrets.
 # Decision: never hard-code credentials in compose.
 
 services:
   samvit:
-    build: .
+    build:
+      context: .
+      target: runtime
     ports:
-      - "8765:8765"
+      - "${SAMVIT_BIND_ADDRESS:-127.0.0.1}:8765:8765"
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-samvit}:${POSTGRES_PASSWORD:-samvit}@postgres:5432/${POSTGRES_DB:-samvit}
       REDPANDA_BROKERS: redpanda:9092
       SAMVIT_ADMIN_SECRET: ${SAMVIT_ADMIN_SECRET:-change-me-in-production}
+      SAMVIT_ADMIN_DEV_MODE: ${SAMVIT_ADMIN_DEV_MODE:-true}
       # Ethical guard mode: redact | block | warn | off  (default: redact)
       SAMVIT_GUARD_MODE: ${SAMVIT_GUARD_MODE:-redact}
+      SAMVIT_CODE_ROOTS: /workspace
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    volumes:
+      - ${SAMVIT_WORKSPACE:-.}:/workspace:ro
+      - ./admin-ui/dist:/app/admin-ui/dist:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -23,8 +28,27 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  test:
+    profiles: ["test"]
+    build:
+      context: .
+      target: test
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-samvit}:${POSTGRES_PASSWORD:-samvit}@postgres:5432/${POSTGRES_DB:-samvit}
+      REDPANDA_BROKERS: redpanda:9092
+      SAMVIT_ADMIN_SECRET: test-admin-secret
+      SAMVIT_GUARD_MODE: redact
+      HF_HUB_DISABLE_XET: "1"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+
   postgres:
     image: pgvector/pgvector:pg16
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-samvit}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-samvit}
@@ -39,7 +63,7 @@ services:
     restart: unless-stopped
 
   redpanda:
-    image: redpandadata/redpanda:latest
+    image: redpandadata/redpanda:v26.1.8
     command:
       - redpanda
       - start

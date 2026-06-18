@@ -48,7 +48,7 @@ CREATE TABLE semantic_memory (
     namespace       TEXT        NOT NULL CHECK (length(namespace) > 0),
     content         TEXT        NOT NULL CHECK (length(content) > 0),
     embedding       VECTOR(384),
-    embedding_model TEXT        NOT NULL DEFAULT 'all-MiniLM-L6-v2',
+    embedding_model TEXT        NOT NULL DEFAULT 'BAAI/bge-small-en-v1.5',
     metadata        JSONB       NOT NULL DEFAULT '{}',
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );

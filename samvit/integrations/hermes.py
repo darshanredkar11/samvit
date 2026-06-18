@@ -110,7 +110,7 @@ class SamvitMemoryBackend:
 
     async def store(self, content: str, metadata: dict | None = None, key: str | None = None) -> bool:
         """Store a memory. Returns True on success."""
-        result = await _call("/mcp/call", {
+        result = await _call("/v1/tools/call", {
             "tool": "remember",
             "params": {
                 "content": content,
@@ -123,7 +123,7 @@ class SamvitMemoryBackend:
 
     async def search(self, query: str, limit: int = 5) -> list[dict]:
         """Semantic search — returns list of {content, score, agent} dicts."""
-        result = await _call("/mcp/call", {
+        result = await _call("/v1/tools/call", {
             "tool": "recall",
             "params": {"query": query, "limit": limit, "namespace": "global"},
         })
@@ -137,7 +137,7 @@ class SamvitMemoryBackend:
 
     async def get(self, key: str) -> dict | None:
         """Exact key lookup."""
-        result = await _call("/mcp/call", {
+        result = await _call("/v1/tools/call", {
             "tool": "recall",
             "params": {"key": key, "namespace": "global"},
         })
@@ -147,9 +147,14 @@ class SamvitMemoryBackend:
         return results[0] if results else None
 
     async def delete(self, key: str) -> bool:
-        """Samvit memories are immutable — log warning, return True to not break Hermes."""
-        log.warning("Hermes requested delete of key=%r — Samvit memories are permanent", key)
-        return True
+        """Delete a key from Samvit via the forget tool."""
+        result = await _call("/v1/tools/call", {
+            "tool": "forget",
+            "params": {"key": key, "namespace": "global"},
+        })
+        if result is None:
+            return False
+        return result.get("deleted", False)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -174,6 +179,7 @@ class HermesCronBridge:
 
     def __init__(self, config_path: Path = HERMES_CFG) -> None:
         self.config_path = config_path
+        self._known_cron_names: set[str] = set()
 
     def load_crons(self) -> list[dict]:
         """Load cron definitions from Hermes config. Returns [] if not found."""
@@ -190,14 +196,16 @@ class HermesCronBridge:
     async def sync_to_samvit(self) -> dict:
         """
         For each cron definition, create a Samvit task if one isn't already
-        pending or claimed. Returns {created: N, skipped: N}.
+        pending or claimed. Also cancels tasks for crons that were removed
+        from the config. Returns {created: N, skipped: N, cancelled: N}.
         Idempotent — safe to call repeatedly.
         """
         crons = self.load_crons()
         if not crons:
-            return {"created": 0, "skipped": 0, "crons_found": 0}
+            return {"created": 0, "skipped": 0, "crons_found": 0, "cancelled": 0}
 
-        created = skipped = 0
+        current_names = {cron.get("name", "unnamed") for cron in crons}
+        created = skipped = cancelled = 0
 
         for cron in crons:
             name     = cron.get("name", "unnamed")
@@ -210,14 +218,6 @@ class HermesCronBridge:
             if already_exists:
                 skipped += 1
                 continue
-
-            result = await _call("/mcp/call", {
-                "tool": "remember",  # use remember to avoid auth complexity here
-                "params": {
-                    "content": f"[NOOP — use task API]",
-                    "namespace": "global",
-                },
-            })
 
             # Use the HTTP task-create endpoint directly
             ok = await self._create_task(
@@ -233,17 +233,60 @@ class HermesCronBridge:
             else:
                 log.warning("Failed to create task for cron: %s", name)
 
-        return {"created": created, "skipped": skipped, "crons_found": len(crons)}
+        # Clean up orphaned cron tasks (removed from config)
+        removed_names = self._known_cron_names - current_names
+        if removed_names:
+            cancelled = await self._cancel_orphaned_tasks(removed_names)
+
+        self._known_cron_names = current_names
+
+        return {"created": created, "skipped": skipped, "cancelled": cancelled, "crons_found": len(crons)}
+
+    async def _cancel_orphaned_tasks(self, cron_names: set[str]) -> int:
+        """Cancel pending/claimed tasks for crons that no longer exist."""
+        cancelled = 0
+        for name in cron_names:
+            try:
+                async with httpx.AsyncClient(timeout=5) as c:
+                    r = await c.get(
+                        f"{SAMVIT_URL}/v1/hermes/task-exists",
+                        params={"tag": name},
+                        headers=_headers(),
+                    )
+                    if r.status_code != 200 or not r.json().get("exists", False):
+                        continue
+                # Cancel via the HTTP bridge — list tasks with this tag, then cancel each
+                list_resp = await _call("/v1/tools/call", {
+                    "tool": "list_tasks",
+                    "params": {"tags": [name], "status": "pending", "limit": 50},
+                })
+                if list_resp:
+                    for task in list_resp.get("tasks", []):
+                        await _call("/v1/tools/call", {
+                            "tool": "cancel_task",
+                            "params": {"task_id": task["id"]},
+                        })
+                        cancelled += 1
+                        log.info("Cancelled orphaned cron task: %s (%s)", name, task["id"])
+            except Exception as exc:
+                log.warning("Failed to cancel orphaned cron %s: %s", name, exc)
+        return cancelled
 
     async def _task_exists(self, cron_name: str) -> bool:
         """Check if a task tagged with this cron name is already active."""
-        # We use recall to check — in production you'd query the tasks table directly
-        result = await _call("/mcp/call", {
-            "tool": "recall",
-            "params": {"key": f"cron.task.{cron_name}", "namespace": "global"},
-        })
-        if result and result.get("results"):
-            return True
+        if not HERMES_TOKEN:
+            return False
+        try:
+            async with httpx.AsyncClient(timeout=MEMORY_TIMEOUT) as c:
+                r = await c.get(
+                    f"{SAMVIT_URL}/v1/hermes/task-exists",
+                    params={"tag": cron_name},
+                    headers=_headers(),
+                )
+                if r.status_code == 200:
+                    return r.json().get("exists", False)
+        except Exception as exc:
+            log.debug("task-exists check failed: %s", exc)
         return False
 
     async def _create_task(
@@ -271,18 +314,6 @@ class HermesCronBridge:
                     headers=_headers(),
                 )
                 if r.status_code in (200, 201):
-                    task_id = r.json().get("task_id")
-                    # Mark in Samvit so we know this cron has a task
-                    cron_name = next((t for t in tags if t != "hermes-cron"), "")
-                    if cron_name and task_id:
-                        await _call("/mcp/call", {
-                            "tool": "remember",
-                            "params": {
-                                "content": f"Cron task created: {title} → {task_id}",
-                                "key": f"cron.task.{cron_name}",
-                                "namespace": "global",
-                            },
-                        })
                     return True
         except Exception as exc:
             log.error("Task creation failed: %s", exc)
@@ -371,7 +402,7 @@ class HermesSkillWatcher:
             key = f"{SKILL_KEY_PREFIX}{name}"
             is_new = name not in self._known_mtimes
 
-            result = await _call("/mcp/call", {
+            result = await _call("/v1/tools/call", {
                 "tool": "remember",
                 "params": {
                     "content": f"[Hermes Skill: {name}]\n\n{content}",
@@ -387,7 +418,7 @@ class HermesSkillWatcher:
                 log.info("%s Hermes skill: %s", action, name)
 
                 # Broadcast so all agents know about the new skill
-                await _call("/mcp/call", {
+                await _call("/v1/tools/call", {
                     "tool": "say",
                     "params": {
                         "body": f"{'New' if is_new else 'Updated'} Hermes skill available: {name}. "
@@ -407,7 +438,7 @@ class HermesSkillWatcher:
                 name    = path.stem
                 if not content:
                     continue
-                result = await _call("/mcp/call", {
+                result = await _call("/v1/tools/call", {
                     "tool": "remember",
                     "params": {
                         "content": f"[Hermes Skill: {name}]\n\n{content}",

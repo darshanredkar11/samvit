@@ -140,7 +140,7 @@ class SamvitDispatcher:
     ) -> dict | None:
         try:
             r = await client.post(
-                f"{self.samvit_url}/mcp/call",
+                f"{self.samvit_url}/v1/tools/call",
                 json={"tool": "claim", "params": {"tags": [worker_type]}},
                 headers={"Authorization": f"Bearer {token}"},
             )

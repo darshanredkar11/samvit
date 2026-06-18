@@ -1,5 +1,5 @@
 """
-Background task: release abandoned task claims.
+Background task: release abandoned claims, enforce deadlines.
 
 Decision #8 (grace period):
   Cleanup resets tasks where:
@@ -8,6 +8,10 @@ Decision #8 (grace period):
 
   The 5-minute grace period means an agent that finishes at minute 30+
   still has a window to call done() before the task is released.
+
+Deadline enforcement:
+  Pending tasks past their deadline are auto-cancelled.
+  Claimed tasks past their deadline are released (same as expired claim timeout).
 
 Runs every 5 minutes.
 """
@@ -48,12 +52,35 @@ async def _release_expired_claims() -> int:
     return count
 
 
+async def _cancel_overdue_tasks() -> int:
+    """
+    Cancel pending tasks whose deadline has passed.
+    Returns number of tasks cancelled.
+    """
+    async with db.pool().acquire() as conn:
+        result = await conn.execute(
+            """
+            UPDATE tasks
+               SET status  = 'cancelled',
+                   done_at = now()
+             WHERE status = 'pending'
+               AND deadline IS NOT NULL
+               AND deadline < now()
+            """
+        )
+    count = int(result.split()[-1])
+    if count:
+        log.warning("Auto-cancelled %d overdue pending task(s)", count)
+    return count
+
+
 async def start() -> None:
     """Run the cleanup loop forever. Schedule as an asyncio task at startup."""
-    log.info("Claim cleanup task started (interval=%ds)", INTERVAL_SECONDS)
+    log.info("Cleanup task started (interval=%ds)", INTERVAL_SECONDS)
     while True:
         try:
             await _release_expired_claims()
+            await _cancel_overdue_tasks()
         except Exception as exc:
             log.error("Cleanup task error: %s", exc)
         await asyncio.sleep(INTERVAL_SECONDS)

@@ -89,7 +89,7 @@ PATTERNS: list[Pattern] = [
     # ── VCS / CI tokens ───────────────────────────────────────────────────────
     _p("github_token",
        "credential",
-       r"gh[pousr]_[A-Za-z0-9]{36,}"),
+       r"gh[pousr]_[A-Za-z0-9]{32,}"),
 
     _p("gitlab_token",
        "credential",
@@ -103,7 +103,7 @@ PATTERNS: list[Pattern] = [
     # Matches: password=abc123, api_key: "xyz", SECRET="...", token = '...'
     _p("generic_secret",
        "credential",
-       r"""(?i)(?:password|passwd|secret|token|api[_\-]?key|auth[_\-]?key|access[_\-]?key)\s*[=:]\s*['"]?(?!your_|<|{|\[|example|placeholder|changeme|xxx)[A-Za-z0-9_/+\-=.!@#$%^&*]{8,}""",
+       r"""(?i)(?:password|passwd|secret|token|api[_\-]?key|auth[_\-]?key|access[_\-]?key)['"]?\s*[=:]\s*['"]?(?!your_|<|{|\[|example|placeholder|changeme|xxx)[A-Za-z0-9_/+\-=.!@#$%^&*]{8,}""",
        severity="medium"),
 
     # ── Database / service connection strings ─────────────────────────────────

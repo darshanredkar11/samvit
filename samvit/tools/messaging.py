@@ -56,7 +56,8 @@ async def say(
         # Decision #4: validate recipient handle
         if to:
             row = await conn.fetchrow(
-                "SELECT id FROM agents WHERE handle = $1", to.lower().strip()
+                "SELECT id FROM agents WHERE handle = $1 AND workspace_id = $2",
+                to.lower().strip(), agent["workspace_id"],
             )
             if not row:
                 raise LookupError(f"Agent '{to}' not found")
@@ -64,8 +65,8 @@ async def say(
 
         message_id = await conn.fetchval(
             """
-            INSERT INTO messages (from_agent, to_agent, topic, body, metadata)
-            VALUES ($1, $2, $3, $4, $5)
+            INSERT INTO messages (from_agent, to_agent, topic, body, metadata, workspace_id)
+            VALUES ($1, $2, $3, $4, $5, $6)
             RETURNING id
             """,
             agent["id"],
@@ -73,6 +74,7 @@ async def say(
             topic,
             body.strip(),
             metadata,
+            agent["workspace_id"],
         )
 
     log.debug("say: from=%s to=%s topic=%s id=%s", agent["handle"], to, topic, message_id)
@@ -110,8 +112,10 @@ async def read(
 
     async with db.pool().acquire() as conn:
         # Build the query dynamically based on optional filters
-        params: list = [agent["id"], limit]
-        filters = [
+        params: list = [agent["id"], agent["workspace_id"], limit]
+        filters: list[str] = [
+            # Scoped to agent's workspace
+            "m.workspace_id = $2",
             # Directed to me OR broadcast — but NOT already read by me
             """
             (m.to_agent = $1 OR m.to_agent IS NULL)
@@ -135,34 +139,43 @@ async def read(
 
         where = " AND ".join(filters)
 
-        rows = await conn.fetch(
-            f"""
-            SELECT
-                m.id,
-                m.body,
-                m.topic,
-                m.metadata,
-                m.created_at,
-                a.handle AS from_handle
-              FROM messages m
-              JOIN agents a ON a.id = m.from_agent
-             WHERE {where}
-             ORDER BY m.created_at ASC
-             LIMIT $2
-            """,
-            *params,
-        )
-
-        # Decision #11: mark as read via join table (atomic with fetch in same conn)
-        if mark_read and rows:
-            message_ids = [r["id"] for r in rows]
-            await conn.executemany(
-                """
-                INSERT INTO message_reads (message_id, agent_id)
-                VALUES ($1, $2)
-                ON CONFLICT DO NOTHING
+        if mark_read:
+            rows = await conn.fetch(
+                f"""
+                WITH candidates AS (
+                    SELECT m.id
+                      FROM messages m
+                     WHERE {where}
+                     ORDER BY m.created_at ASC
+                     LIMIT $3
+                ),
+                marked AS (
+                    INSERT INTO message_reads (message_id, agent_id)
+                    SELECT id, $1 FROM candidates
+                    ON CONFLICT DO NOTHING
+                    RETURNING message_id
+                )
+                SELECT m.id, m.body, m.topic, m.metadata, m.created_at,
+                       a.handle AS from_handle
+                  FROM marked
+                  JOIN messages m ON m.id = marked.message_id
+                  JOIN agents a ON a.id = m.from_agent
+                 ORDER BY m.created_at ASC
                 """,
-                [(mid, agent["id"]) for mid in message_ids],
+                *params,
+            )
+        else:
+            rows = await conn.fetch(
+                f"""
+                SELECT m.id, m.body, m.topic, m.metadata, m.created_at,
+                       a.handle AS from_handle
+                  FROM messages m
+                  JOIN agents a ON a.id = m.from_agent
+                 WHERE {where}
+                 ORDER BY m.created_at ASC
+                 LIMIT $3
+                """,
+                *params,
             )
 
     # ── Ethical guard: scan output before delivering to LLM ─────────────────

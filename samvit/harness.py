@@ -136,7 +136,7 @@ class SamvitWorker:
 
     async def remember(self, content: str, key: str | None = None,
                        namespace: str = "global", metadata: dict | None = None) -> dict:
-        return await self._post("/mcp/call", {
+        return await self._post("/v1/tools/call", {
             "tool": "remember",
             "params": {"content": content, "key": key,
                        "namespace": namespace, "metadata": metadata or {}},
@@ -144,7 +144,7 @@ class SamvitWorker:
 
     async def recall(self, query: str | None = None, key: str | None = None,
                      namespace: str = "global", limit: int = 5) -> list[dict]:
-        r = await self._post("/mcp/call", {
+        r = await self._post("/v1/tools/call", {
             "tool": "recall",
             "params": {"query": query, "key": key,
                        "namespace": namespace, "limit": limit},
@@ -152,13 +152,13 @@ class SamvitWorker:
         return r.get("results", [])
 
     async def say(self, body: str, to: str | None = None, topic: str | None = None) -> dict:
-        return await self._post("/mcp/call", {
+        return await self._post("/v1/tools/call", {
             "tool": "say",
             "params": {"body": body, "to": to, "topic": topic},
         })
 
     async def read(self, mark_read: bool = True, limit: int = 20) -> list[dict]:
-        r = await self._post("/mcp/call", {
+        r = await self._post("/v1/tools/call", {
             "tool": "read",
             "params": {"mark_read": mark_read, "limit": limit},
         })
@@ -227,7 +227,8 @@ class SamvitWorker:
                 raise RuntimeError(
                     f"Handle '{self.handle}' is already registered but this machine "
                     f"has no valid credentials for it. "
-                    f"If you lost your token, use: "
+                    f"If you lost your token, ask an administrator to perform an "
+                    f"admin reset: "
                     f"POST {self.samvit_url}/v1/admin/agents/{self.handle}/reset"
                 )
             raise RuntimeError(f"Registration failed: {r.status_code} {r.text}")
@@ -268,7 +269,7 @@ class SamvitWorker:
         if worker_type:
             claim_tags.append(worker_type)
         try:
-            r = await self._post("/mcp/call", {
+            r = await self._post("/v1/tools/call", {
                 "tool": "claim",
                 "params": {"tags": claim_tags or None},
             })
@@ -280,7 +281,7 @@ class SamvitWorker:
     async def _done(self, task_id: str, claim_token: str,
                     result: dict | None, status: str) -> None:
         try:
-            await self._post("/mcp/call", {
+            await self._post("/v1/tools/call", {
                 "tool": "done",
                 "params": {"task_id": task_id, "claim_token": claim_token,
                            "result": result, "status": status},

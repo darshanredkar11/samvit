@@ -12,6 +12,7 @@ Decisions applied:
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import hmac
 
 import asyncpg
@@ -37,6 +38,11 @@ def generate_token() -> str:
     return TOKEN_PREFIX + secrets.token_urlsafe(48)
 
 
+def _token_sha256(token: str) -> str:
+    """Deterministic SHA-256 hash for fast index lookup."""
+    return hashlib.sha256(token.encode()).hexdigest()
+
+
 async def hash_token(token: str) -> str:
     """bcrypt-hash a token. Runs in thread pool to avoid blocking the loop."""
     loop = asyncio.get_running_loop()
@@ -60,6 +66,7 @@ async def verify_token_hash(token: str, hashed: str) -> bool:
 async def authenticate(raw_token: str) -> dict | None:
     """
     Validate a bearer token and return the agent row, or None.
+    Uses SHA-256 index for fast lookup, then bcrypt to confirm.
     Strips whitespace before comparison (Decision #1 annex).
     Never logs the token value.
     """
@@ -67,15 +74,18 @@ async def authenticate(raw_token: str) -> dict | None:
     if not token.startswith(TOKEN_PREFIX):
         return None
 
-    async with db.pool().acquire() as conn:
-        # Fetch all agents — we need to bcrypt-check each until we find a match.
-        # For MVP scale (< 100 agents) this is fine.
-        # Post-MVP: store a fast lookup hash (e.g. SHA-256) alongside bcrypt hash.
-        rows = await conn.fetch("SELECT id, handle, provider, token_hash FROM agents")
+    sha256 = _token_sha256(token)
 
-    for row in rows:
-        if await verify_token_hash(token, row["token_hash"]):
-            return dict(row)
+    async with db.pool().acquire() as conn:
+        row = await conn.fetchrow(
+            "SELECT id, handle, provider, role, suspended_at, workspace_id, token_hash FROM agents WHERE token_hash_sha256 = $1",
+            sha256,
+        )
+        if row is None:
+            return None
+
+    if await verify_token_hash(token, row["token_hash"]):
+        return dict(row)
 
     return None
 
@@ -108,18 +118,22 @@ async def register_agent(handle: str, provider: str) -> dict:
     normalised = validate_handle(handle)
     token = generate_token()
     token_hash = await hash_token(token)
+    sha256 = _token_sha256(token)
 
     async with db.pool().acquire() as conn:
+        default_ws = await conn.fetchval("SELECT id FROM workspaces WHERE name = 'default'")
         try:
             agent_id = await conn.fetchval(
                 """
-                INSERT INTO agents (handle, provider, token_hash)
-                VALUES ($1, $2, $3)
+                INSERT INTO agents (handle, provider, token_hash, token_hash_sha256, workspace_id)
+                VALUES ($1, $2, $3, $4, $5)
                 RETURNING id
                 """,
                 normalised,
                 provider.strip(),
                 token_hash,
+                sha256,
+                default_ws,
             )
         except asyncpg.UniqueViolationError:
             raise ValueError(f"Handle '{normalised}' is already registered")
@@ -135,13 +149,12 @@ async def rotate_token(agent_id: str) -> str:
     """
     new_token = generate_token()
     new_hash = await hash_token(new_token)
+    new_sha256 = _token_sha256(new_token)
 
     async with db.pool().acquire() as conn:
-        # Single atomic UPDATE — old hash replaced in one round-trip
         result = await conn.execute(
-            "UPDATE agents SET token_hash = $1 WHERE id = $2",
-            new_hash,
-            agent_id,
+            "UPDATE agents SET token_hash = $1, token_hash_sha256 = $2 WHERE id = $3",
+            new_hash, new_sha256, agent_id,
         )
         if result == "UPDATE 0":
             raise ValueError("Agent not found")
@@ -163,6 +176,7 @@ async def admin_reset_token(handle: str, admin_secret: str) -> str:
     normalised = validate_handle(handle)
     new_token = generate_token()
     new_hash = await hash_token(new_token)
+    new_sha256 = _token_sha256(new_token)
 
     async with db.pool().acquire() as conn:
         async with conn.transaction():
@@ -173,8 +187,8 @@ async def admin_reset_token(handle: str, admin_secret: str) -> str:
             if not agent_id:
                 raise ValueError(f"Agent '{normalised}' not found")
             await conn.execute(
-                "UPDATE agents SET token_hash = $1 WHERE id = $2",
-                new_hash, agent_id,
+                "UPDATE agents SET token_hash = $1, token_hash_sha256 = $2 WHERE id = $3",
+                new_hash, new_sha256, agent_id,
             )
 
     log.info("Admin reset token for handle=%s", normalised)

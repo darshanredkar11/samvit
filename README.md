@@ -1,371 +1,144 @@
 # Samvit
 
-**The coordination layer for mixed AI teams.**
+**The shared coordination server for Claude, Codex, Antigravity, and mixed AI teams.**
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.12%2B-blue)](pyproject.toml)
-[![MCP](https://img.shields.io/badge/protocol-MCP-purple)](https://modelcontextprotocol.io)
-[![Website](https://img.shields.io/badge/website-live-brightgreen)](https://darshanredkar11.github.io/samvit/)
+[![MCP](https://img.shields.io/badge/MCP-Streamable%20HTTP-purple)](https://modelcontextprotocol.io)
 
-**[🌐 Website](https://darshanredkar11.github.io/samvit/) · [📖 Spec](SPEC.md) · [🔍 Failure Analysis](FAILURE_ANALYSIS.md) · [📄 OpenAPI](http://localhost:8765/openapi.json)**
+Samvit lets AI coding tools on different machines share:
 
-Samvit gives teams of AI agents — Claude, Codex, Antigravity, or any MCP-compatible tool — a shared substrate they're missing today:
+- Persistent semantic and key/value memory
+- An atomic task queue with ownership and renewable leases
+- Directed and broadcast messages across sessions
+- Searchable documents and an optional code knowledge graph
 
-- 🧠 **Persistent shared memory** — semantic search + key/value store
-- 📋 **Task queue** — claim work without double-assignment
-- 💬 **Async messaging** — agents leave notes for each other across sessions
+Samvit does not replace Claude Code, Antigravity, LangGraph, or CrewAI. It gives
+otherwise isolated agents one neutral place to coordinate.
 
-Single Docker image. No cloud dependencies. Fully open source.
+## Start Here
 
----
+For a plain-English team setup, including Claude Code on one machine and
+Antigravity on another, read the **[complete usage guide](docs/USAGE.md)**.
 
-## The problem
-
-Your team uses different AI tools. Each one starts every session blank. There's no shared memory, no shared task list, no way for Claude to leave a note that Codex reads tomorrow.
-
-You bolt on bespoke solutions — shared files, ad-hoc queues, Notion pages — none of which the AI can actually read or write natively.
-
-Samvit is the missing piece.
-
----
-
-## Quick start
+## Quick Start
 
 ```bash
-# 1. Start the server
-git clone https://github.com/darshanredkar11/samvit
+git clone https://github.com/darshanredkar11/samvit.git
 cd samvit
+cp .env.example .env
 docker compose up -d
-
-# 2. Register your agent (once)
-curl -s -X POST http://localhost:8765/v1/agents/register \
-  -H "Content-Type: application/json" \
-  -d '{"handle": "darshan", "provider": "claude"}' | jq .
-# → { "agent_id": "...", "token": "samvit_..." }
-
-# 3. Add to your AI tool — example for Claude Code (~/.claude/settings.json):
-{
-  "mcpServers": {
-    "samvit": {
-      "type": "sse",
-      "url": "http://localhost:8765/sse",
-      "headers": { "Authorization": "Bearer samvit_..." }
-    }
-  }
-}
+curl http://127.0.0.1:8765/ready
 ```
 
-Your AI now has six new tools: `remember`, `recall`, `claim`, `done`, `say`, `read`.
+Register an agent:
 
----
-
-## The six tools
-
-### Memory
-
-```
-remember "JWT tokens expire in 24h, refresh at /api/refresh"
-```
-Stores the text as a vector embedding. Any agent can search it later.
-
-```
-remember "Stripe webhook secret" --key stripe.webhook.secret
-```
-Also stores as a named key for exact lookup.
-
-```
-recall "how does auth work?"
-```
-Returns the most semantically similar memories — across all agents.
-
-```
-recall --key stripe.webhook.secret
-```
-Exact key lookup.
-
----
-
-### Tasks
-
-```
-claim
-```
-Atomically picks up the next available task. Two agents calling `claim` simultaneously always get different tasks — guaranteed by `SELECT FOR UPDATE SKIP LOCKED`.
-
-```
-done --task-id abc123 --claim-token xyz --result '{"tests": "passing"}'
-```
-Marks the task complete with an optional result payload. If an agent crashes, the task auto-releases after 30 minutes.
-
----
-
-### Messaging
-
-```
-say --to sachin "PR #42 is ready for review"
-```
-Leaves a message for Sachin. Sachin reads it whenever they next start a session.
-
-```
-say "Team: deploy is live" --topic ops
-```
-Broadcast — any agent reading `--topic ops` sees it.
-
-```
-read
-```
-Fetches all unread messages. `read --mark-read false` peeks without consuming.
-
----
-
-## Harness workers
-
-Build agents that auto-connect to Samvit, claim tasks from the queue, and persist memories without any boilerplate:
-
-```python
-from samvit.harness import SamvitWorker
-import asyncio
-
-class ReviewWorker(SamvitWorker):
-    async def execute(self, task, context=None):
-        # context = top-5 relevant memories auto-loaded before this call
-        result = await my_llm_review(task["description"])
-        await self.remember(f"Reviewed {task['title']}: {result}")
-        return {"verdict": result}
-
-asyncio.run(ReviewWorker("rahul", "antigravity").run(tags=["review"]))
+```bash
+docker compose exec samvit samvit register darshan \
+  --provider claude-code \
+  --url http://127.0.0.1:8765
 ```
 
-**What you get for free:** token persistence (`~/.samvit/credentials.json`, chmod 600), retry-with-backoff on startup, graceful SIGTERM shutdown, memory context injected before each task.
+Connect Claude Code:
 
-### Dispatcher — route tasks to the right worker
-
-```python
-from samvit.dispatcher import SamvitDispatcher
-
-dispatcher = SamvitDispatcher()
-
-@dispatcher.worker("review")
-class ReviewWorker(SamvitWorker): ...
-
-@dispatcher.worker("backend")
-class BackendWorker(SamvitWorker): ...
-
-asyncio.run(dispatcher.run())  # polls queue, spawns right worker per task
+```bash
+claude mcp add --transport http samvit \
+  http://127.0.0.1:8765/mcp \
+  --header "Authorization: Bearer samvit_YOUR_TOKEN"
 ```
 
-### Claude Code hooks — memory wires automatically
+The current MCP endpoint is `/mcp`. Legacy SSE clients can use `/legacy/sse`.
 
-Add to `~/.claude/settings.json` (see `hooks/settings.json.template`):
+## Core Tools
 
-```json
-{
-  "hooks": {
-    "PreToolUse":  [{"matcher":".*","hooks":[{"type":"command","command":"python -m samvit.hooks pre-tool"}]}],
-    "PostToolUse": [{"matcher":"Write|Edit|Bash","hooks":[{"type":"command","command":"python -m samvit.hooks post-tool"}]}],
-    "Stop":        [{"hooks":[{"type":"command","command":"python -m samvit.hooks stop"}]}]
-  }
-}
+| Area | Tools | Purpose |
+|---|---|---|
+| Memory | `remember`, `recall` | Preserve and retrieve team decisions |
+| Tasks | `create_task`, `list_tasks`, `claim`, `renew`, `done`, `cancel_task` | Coordinate work without duplicate assignment |
+| Messaging | `say`, `read` | Leave persistent direct or topic messages |
+| Documents | `ingest`, `search_docs` | Search shared documents by meaning |
+| Code | `index_code`, `explore_code`, `who_calls`, `graph_symbol` | Query a server-mounted repository |
+
+## Two Machines, One Team
+
+```text
+Machine A: Claude Code ──┐
+                        ├── MCP/HTTP ── Samvit ── PostgreSQL + pgvector
+Machine B: Antigravity ──┘
 ```
 
-Every Claude Code session now auto-recalls relevant memories before tool calls and auto-remembers significant outputs. Zero manual `remember` calls needed.
-
----
-
-## Hermes Agent integration
-
-[Hermes Agent](https://github.com/nousresearch/hermes-agent) (180k+ GitHub stars) is a self-improving agent framework. Samvit integrates at three points:
-
-**1. Shared skill pool** — Hermes normally stores skills per-machine. Point it at Samvit instead so every agent on the team shares one skill pool:
-
-```json
-// ~/.hermes/config.json
-{
-  "memory": {
-    "backend": "external",
-    "url": "http://localhost:8765/v1/hermes/memory"
-  }
-}
-```
-
-**2. Task queue replaces crons** — Instead of fixed cron schedules per machine, Hermes tasks land in Samvit's queue. Dynamic priority, no double-execution:
-
-```python
-from samvit.integrations.hermes import HermesCronBridge
-bridge = HermesCronBridge()
-await bridge.sync_to_samvit()  # reads ~/.hermes/config.json → creates Samvit tasks
-```
-
-**3. Skill auto-publish** — When Hermes writes a new skill, it publishes instantly to all agents:
-
-```python
-from samvit.integrations.hermes import HermesSkillWatcher
-watcher = HermesSkillWatcher()
-await watcher.run()  # watches ~/.hermes/skills/*.md, publishes via remember(key="skill.{name}")
-```
-
----
-
-## A day in the life
-
-```
-Morning:
-  Sachin's Claude     → claim → "Build payments module"
-  Darshan's Claude    → claim → "Write docs for /checkout"
-  Rehma's Codex       → claim → "Add input validation"
-  Rahul's Antigravity → recall "payments design decisions"
-                         ← gets notes Sachin wrote last sprint
-
-During the day:
-  Darshan  → remember "Stripe secret is in .env as STRIPE_SECRET"
-  Rehma    → recall "stripe"  ← finds Darshan's note
-  Rahul    → done (review complete)
-           → say --to rehma "your PR is approved"
-
-End of day:
-  Rehma    → read  ← sees approval, merges
-```
-
----
+Each teammate receives a separate token. Agents do not connect directly. They
+call Samvit, which authenticates them and stores memory, task state, and messages
+in the shared database.
 
 ## Architecture
 
-```
-┌────────────────────────────────────────────────────────┐
-│                    Docker Compose                       │
-│                                                        │
-│  ┌─────────────┐   ┌──────────────┐  ┌─────────────┐  │
-│  │  MCP Server │   │  PostgreSQL  │  │  Redpanda   │  │
-│  │  (Python)   │──▶│  + pgvector  │  │  (Kafka)    │  │
-│  │  port 8765  │   │  port 5432   │  │  port 9092  │  │
-│  └─────────────┘   └──────────────┘  └─────────────┘  │
-└────────────────────────────────────────────────────────┘
-         ▲
-         │ MCP / SSE
-   Claude · Codex · Antigravity · any MCP client
-```
-
 | Component | Technology |
 |---|---|
-| MCP Server | Python 3.12, FastMCP |
-| Relational + KV store | PostgreSQL 16 |
-| Vector store | pgvector (`all-MiniLM-L6-v2`, local) |
-| Message bus | Redpanda (Kafka-compatible) |
-| Embeddings | `sentence-transformers` — no external API calls |
+| API and MCP server | FastAPI + official MCP Python SDK |
+| Current MCP transport | Streamable HTTP |
+| Relational and vector storage | PostgreSQL 16 + pgvector |
+| Local embeddings | `all-MiniLM-L6-v2` |
+| Optional event delivery | Redpanda |
 
-**No cloud dependencies.** All components run in Docker on your machine or a single VM.
-
----
-
-## HTTP API
-
-Registration is plain HTTP. Everything else is MCP.
-
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/health` | Liveness check |
-| `POST` | `/v1/agents/register` | Register a new agent |
-| `POST` | `/v1/agents/rotate` | Rotate bearer token |
-| `POST` | `/v1/admin/agents/{handle}/reset` | Admin: reset lost token |
-
----
-
-## Project layout
-
-```
-samvit/
-├── main.py          — FastAPI app + MCP tool registration + auth middleware
-├── auth.py          — token generation, bcrypt hashing, registration, rotation
-├── db.py            — asyncpg connection pool + migration runner
-├── embeddings.py    — sentence-transformers wrapper (eager load, thread pool)
-├── events.py        — Redpanda producer (degraded-mode tolerant)
-├── cleanup.py       — background task: release expired claims every 5 min
-└── tools/
-    ├── memory.py    — remember, recall
-    ├── tasks.py     — claim, done
-    └── messaging.py — say, read
-migrations/
-└── 001_initial.sql
-tests/               — 32 tests, real Postgres + Redpanda (no mocks)
-```
-
----
-
-## Running tests
-
-```bash
-# Start infra
-docker compose up -d postgres redpanda
-
-# Install dev deps
-pip install -e ".[dev]"
-
-# Run tests
-pytest -v
-
-# With coverage
-pytest --cov=samvit --cov-report=term-missing
-```
-
----
+No hosted account or model API is required.
 
 ## Configuration
 
-All configuration via environment variables (see `.env.example`):
+Important environment variables are documented in [.env.example](.env.example).
 
-| Variable | Default | Description |
-|---|---|---|
-| `DATABASE_URL` | — | asyncpg DSN |
-| `REDPANDA_BROKERS` | `redpanda:9092` | Kafka broker address |
-| `SAMVIT_ADMIN_SECRET` | — | Secret for admin token reset |
-| `LOG_LEVEL` | `INFO` | Logging level |
+- `DATABASE_URL`: PostgreSQL connection string
+- `SAMVIT_ADMIN_SECRET`: emergency token-reset secret
+- `SAMVIT_BIND_ADDRESS`: defaults to localhost
+- `SAMVIT_GUARD_MODE`: `redact`, `block`, `warn`, or `off`
+- `SAMVIT_WORKSPACE`: repository mounted read-only at `/workspace`
+- `SAMVIT_CODE_ROOTS`: allowed server-side indexing roots
+- `SAMVIT_CORS_ORIGINS`: allowed browser origins
 
----
+## Admin Dashboard
 
-## Security
+Samvit ships with a web-based admin dashboard for managing agents, inspecting tasks
+and guard violations, and monitoring server health.
 
-- Bearer tokens: 48-byte cryptographically random, bcrypt-hashed in DB
-- Handles validated to `^[a-z0-9_-]{1,64}$`
-- `Authorization` header redacted from all logs
-- Namespace isolation: agents can only write to their own or `global` namespace
-- No external API calls — embeddings are fully local
+```bash
+# Build the admin UI (requires Node.js 18+)
+cd admin-ui && npm ci && npm run build
 
----
+# Open http://localhost:8765/admin in your browser
+```
 
-## Roadmap
+The UI authenticates via `SAMVIT_ADMIN_SECRET`. Log in with any registered agent
+handle and the admin secret value.
 
-The core server is Apache 2.0 forever.
+## Development
 
-| Item | Status |
-|---|---|
-| `remember` / `recall` / `claim` / `done` / `say` / `read` | ✅ MVP |
-| Agent registration + token rotation | ✅ MVP |
-| Claim expiry + auto-release | ✅ MVP |
-| Web dashboard | 🔜 Post-MVP |
-| Client SDK (Python) | 🔜 Post-MVP |
-| Multi-tenant namespace isolation | 🔜 Post-MVP |
-| Audit log | 🔜 Post-MVP |
-| Rate limiting | 🔜 Post-MVP |
+```bash
+docker compose up -d postgres redpanda
+pip install -e ".[dev]"
+pytest -v
+```
 
----
+Run without Docker after configuring dependencies:
 
-## Contributing
+```bash
+samvit serve --host 127.0.0.1 --port 8765
+samvit doctor
+```
 
-PRs welcome. Open an issue first for anything beyond a small fix.
+## Project Status
 
----
+Samvit is alpha software. The core coordination workflow is implemented, but
+workspace-level tenancy, conflict-aware file intents, task dependencies, and A2A
+compatibility remain planned work.
 
-## Validation
+See:
 
-An independent audit (Antigravity GPT-OSS 120B, 2026-06-09) reviewed the full codebase against SPEC.md v0.2 and found **no issues**. Full report: [FAILURE_ANALYSIS.md](FAILURE_ANALYSIS.md).
-
-Post-audit, three implementation bugs were identified and fixed before the initial push:
-- `auth.py` — missing `import asyncpg`
-- `tasks.py` — invalid `UPDATE…JOIN` replaced with CTE pattern
-- `tests/` — rewrote to call tool functions directly (FastMCP has no REST routes)
-
----
+- [Gap tracker](GAPS.md)
+- [Specification](SPEC.md)
+- [Changelog](CHANGELOG.md)
+- [Security policy](SECURITY.md)
+- [Contributing](CONTRIBUTING.md)
 
 ## License
 
-Apache 2.0 — see [LICENSE](LICENSE).
+Apache 2.0. See [LICENSE](LICENSE).

@@ -36,6 +36,49 @@ log = logging.getLogger(__name__)
 MAX_FILE_BYTES = 512 * 1024   # 512 KB per file
 MAX_FILES      = 500          # per repo index run
 
+# Magic byte prefixes for common binary formats
+_BINARY_MAGIC_PREFIXES = [
+    b"\x7fELF",             # ELF
+    b"\xfe\xed\xfa\xce",    # Mach-O 32-bit
+    b"\xfe\xed\xfa\xcf",    # Mach-O 64-bit
+    b"\xca\xfe\xba\xbe",    # Java class
+    b"\xcf\xfa\xed\xfe",    # Mach-O (another variant)
+    b"\x1f\x8b",            # gzip
+    b"\x42\x5a\x68",        # bzip2
+    b"\x89PNG",             # PNG
+    b"\xff\xd8\xff",        # JPEG
+    b"\x47\x49\x46",        # GIF
+    b"\x25\x50\x44\x46",    # PDF
+    b"\x00\x00\x00\x00",    # common in object files
+]
+_SCAN_BYTES = 8192  # bytes to scan for null / magic
+
+
+def _is_binary(path: Path) -> bool:
+    """
+    Heuristic check: read first _SCAN_BYTES bytes and look for null characters
+    or known binary magic prefixes. Returns True if likely binary.
+    """
+    try:
+        with path.open("rb") as f:
+            header = f.read(_SCAN_BYTES)
+    except OSError:
+        return True  # can't read, treat as binary
+
+    if not header:
+        return False  # empty file is text-safe
+
+    # Check magic byte prefixes
+    for magic in _BINARY_MAGIC_PREFIXES:
+        if header.startswith(magic):
+            return True
+
+    # Check for null bytes — strong indicator of binary content
+    if b"\x00" in header:
+        return True
+
+    return False
+
 # ── Language detection ────────────────────────────────────────────────────────
 
 LANG_EXTENSIONS = {
@@ -331,6 +374,23 @@ def _get_parser(file_path: str):
     return None
 
 
+def _allowed_code_roots() -> list[Path]:
+    configured = os.environ.get("SAMVIT_CODE_ROOTS", "/workspace")
+    return [
+        Path(value).expanduser().resolve()
+        for value in configured.split(os.pathsep)
+        if value.strip()
+    ]
+
+
+def _is_within(path: Path, root: Path) -> bool:
+    try:
+        path.relative_to(root)
+        return True
+    except ValueError:
+        return False
+
+
 async def index_repo(
     agent: dict,
     root_path: str,
@@ -344,6 +404,12 @@ async def index_repo(
     root = Path(root_path).expanduser().resolve()
     if not root.exists():
         raise ValueError(f"Path does not exist: {root_path}")
+    allowed_roots = _allowed_code_roots()
+    if not any(_is_within(root, allowed) for allowed in allowed_roots):
+        roots = ", ".join(str(path) for path in allowed_roots)
+        raise ValueError(
+            f"Path is outside SAMVIT_CODE_ROOTS. Allowed roots: {roots}"
+        )
 
     allowed_exts = set(extensions or list(LANG_EXTENSIONS.keys()))
     files = [
@@ -363,6 +429,10 @@ async def index_repo(
         try:
             if path.stat().st_size > MAX_FILE_BYTES:
                 log.debug("Skipping large file: %s", path)
+                skipped += 1
+                continue
+            if _is_binary(path):
+                log.debug("Skipping binary file: %s", path)
                 skipped += 1
                 continue
             source = path.read_text(errors="replace")
@@ -421,9 +491,10 @@ async def _persist_graph(
             await conn.execute(
                 """
                 INSERT INTO code_repos (repo_id, agent_id, root_path, language,
-                                        file_count, node_count, edge_count)
-                VALUES ($1, $2, $3, $4, $5, $6, $7)
-                ON CONFLICT (repo_id) DO UPDATE
+                                        file_count, node_count, edge_count,
+                                        workspace_id)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                ON CONFLICT (workspace_id, repo_id) DO UPDATE
                    SET agent_id   = EXCLUDED.agent_id,
                        root_path  = EXCLUDED.root_path,
                        file_count = EXCLUDED.file_count,
@@ -433,12 +504,13 @@ async def _persist_graph(
                 """,
                 repo_id, agent["id"], root_path, lang,
                 len({n.file_path for n in nodes}),
-                len(nodes), len(edges),
+                len(nodes), len(edges), agent["workspace_id"],
             )
 
             # Clear old nodes for this repo (re-index)
             await conn.execute(
-                "DELETE FROM code_nodes WHERE repo_id = $1", repo_id
+                "DELETE FROM code_nodes WHERE repo_id = $1 AND workspace_id = $2",
+                repo_id, agent["workspace_id"],
             )
 
             # Embed and insert nodes
@@ -448,8 +520,11 @@ async def _persist_graph(
                     node.name, node.node_type, node.signature, node.docstring
                 ]))[:512]
                 try:
-                    vector = await embeddings.embed(embed_text)
-                except Exception:
+                    vec = await embeddings.embed(embed_text)
+                    vector = embeddings.fmt_vector(vec)
+                except Exception as exc:
+                    log.warning("Embedding failed for node %s (%s): %s",
+                                node.qualified, node.node_type, exc)
                     vector = None
 
                 node_uuid = str(uuid.uuid4())
@@ -459,9 +534,10 @@ async def _persist_graph(
                     """
                     INSERT INTO code_nodes
                         (id, repo_id, node_type, name, qualified, file_path,
-                         line_start, line_end, signature, docstring, language, embedding)
-                    VALUES ($1, $2, $3::node_type, $4, $5, $6, $7, $8, $9, $10, $11, $12::vector)
-                    ON CONFLICT (repo_id, qualified) DO UPDATE
+                         line_start, line_end, signature, docstring, language,
+                         embedding, workspace_id)
+                    VALUES ($1, $2, $3::node_type, $4, $5, $6, $7, $8, $9, $10, $11, $12::vector, $13)
+                    ON CONFLICT (workspace_id, repo_id, qualified) DO UPDATE
                        SET line_start = EXCLUDED.line_start,
                            line_end   = EXCLUDED.line_end,
                            signature  = EXCLUDED.signature,
@@ -473,7 +549,7 @@ async def _persist_graph(
                     node.file_path, node.line_start, node.line_end,
                     node.signature, node.docstring,
                     detect_language(node.file_path) or "unknown",
-                    vector,
+                    vector, agent["workspace_id"],
                 )
 
             # Insert edges, resolving qualified names to UUIDs
@@ -495,6 +571,7 @@ async def _persist_graph(
 # ── Query functions ───────────────────────────────────────────────────────────
 
 async def explore_code(
+    agent: dict,
     repo_id: str,
     query: str,
     limit: int = 10,
@@ -504,11 +581,11 @@ async def explore_code(
     if not query.strip():
         raise ValueError("query must not be empty")
     limit = min(limit, 50)
-    vector = await embeddings.embed(query)
+    vector = embeddings.fmt_vector(await embeddings.embed(query))
 
     async with db.pool().acquire() as conn:
         type_clause = ""
-        params: list[Any] = [vector, repo_id, limit]
+        params: list[Any] = [vector, repo_id, limit, agent["workspace_id"]]
         if node_types:
             params.append([t for t in node_types])
             type_clause = f"AND node_type = ANY(${len(params)}::node_type[])"
@@ -521,6 +598,7 @@ async def explore_code(
                 1 - (embedding <=> $1::vector) AS score
               FROM code_nodes
              WHERE repo_id = $2
+               AND workspace_id = $4
                AND embedding IS NOT NULL
                {type_clause}
              ORDER BY embedding <=> $1::vector
@@ -546,7 +624,7 @@ async def explore_code(
     }
 
 
-async def who_calls(repo_id: str, function_name: str) -> dict:
+async def who_calls(agent: dict, repo_id: str, function_name: str) -> dict:
     """Return all functions/methods that call the named function."""
     async with db.pool().acquire() as conn:
         rows = await conn.fetch(
@@ -558,11 +636,12 @@ async def who_calls(repo_id: str, function_name: str) -> dict:
               FROM code_edges ce
               JOIN code_nodes cn ON cn.id = ce.from_node
              WHERE ce.repo_id = $1
+               AND cn.workspace_id = $3
                AND ce.edge_type = 'calls'
                AND ce.to_name = $2
              ORDER BY cn.file_path, cn.line_start
             """,
-            repo_id, function_name,
+            repo_id, function_name, agent["workspace_id"],
         )
 
     return {
@@ -580,7 +659,7 @@ async def who_calls(repo_id: str, function_name: str) -> dict:
     }
 
 
-async def graph_symbol(repo_id: str, symbol_name: str, depth: int = 2) -> dict:
+async def graph_symbol(agent: dict, repo_id: str, symbol_name: str, depth: int = 2) -> dict:
     """
     Return the dependency subgraph around a symbol (BFS up to `depth` hops).
     Useful for understanding what a function/class depends on and what uses it.
@@ -593,10 +672,11 @@ async def graph_symbol(repo_id: str, symbol_name: str, depth: int = 2) -> dict:
             """
             SELECT id, name, qualified, file_path, node_type, signature
               FROM code_nodes
-             WHERE repo_id = $1 AND (name = $2 OR qualified LIKE '%' || $2)
+             WHERE repo_id = $1 AND workspace_id = $3
+               AND (name = $2 OR qualified LIKE '%' || $2)
              LIMIT 1
             """,
-            repo_id, symbol_name,
+            repo_id, symbol_name, agent["workspace_id"],
         )
         if not root:
             return {"error": f"Symbol '{symbol_name}' not found in repo '{repo_id}'"}
@@ -616,6 +696,7 @@ async def graph_symbol(repo_id: str, symbol_name: str, depth: int = 2) -> dict:
                 break
             next_frontier: list[str] = []
             for node_id in frontier:
+                # Outbound edges (what this symbol calls / imports)
                 edges = await conn.fetch(
                     """
                     SELECT ce.edge_type, ce.to_name,
@@ -643,6 +724,34 @@ async def graph_symbol(repo_id: str, symbol_name: str, depth: int = 2) -> dict:
                             "type": e["to_type"],
                             "file": e["to_file"],
                         })
+
+                # Inbound edges (what calls / uses this symbol)
+                inbound_edges = await conn.fetch(
+                    """
+                    SELECT ce.edge_type,
+                           cn.id AS from_id, cn.name AS from_sym,
+                           cn.node_type AS from_type, cn.file_path AS from_file
+                      FROM code_edges ce
+                      LEFT JOIN code_nodes cn ON cn.id = ce.from_node
+                     WHERE ce.to_node = $1
+                    """,
+                    node_id,
+                )
+                for e in inbound_edges:
+                    all_edges.append({
+                        "from": str(e["from_id"]) if e["from_id"] else None,
+                        "to":   node_id,
+                        "type": e["edge_type"],
+                    })
+                    if e["from_id"] and str(e["from_id"]) not in visited:
+                        visited.add(str(e["from_id"]))
+                        next_frontier.append(str(e["from_id"]))
+                        all_nodes.append({
+                            "id":   str(e["from_id"]),
+                            "name": e["from_sym"],
+                            "type": e["from_type"],
+                            "file": e["from_file"],
+                        })
             frontier = next_frontier
 
     return {
@@ -653,10 +762,11 @@ async def graph_symbol(repo_id: str, symbol_name: str, depth: int = 2) -> dict:
     }
 
 
-async def list_repos() -> dict:
+async def list_repos(agent: dict) -> dict:
     """List all indexed repos."""
     async with db.pool().acquire() as conn:
         rows = await conn.fetch(
-            "SELECT repo_id, root_path, language, file_count, node_count, edge_count, indexed_at FROM code_repos ORDER BY indexed_at DESC"
+            "SELECT repo_id, root_path, language, file_count, node_count, edge_count, indexed_at FROM code_repos WHERE workspace_id = $1 ORDER BY indexed_at DESC",
+            agent["workspace_id"],
         )
     return {"repos": [dict(r) for r in rows]}

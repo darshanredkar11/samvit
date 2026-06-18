@@ -289,16 +289,13 @@ async def test_hermes_memory_get_returns_none_on_timeout():
 
 
 @pytest.mark.asyncio
-async def test_hermes_memory_delete_returns_true_with_warning(caplog):
-    """Delete is a no-op but must return True so Hermes doesn't crash."""
+async def test_hermes_memory_delete_returns_false_without_token():
+    """Without SAMVIT_HERMES_TOKEN, delete returns False."""
     from samvit.integrations.hermes import SamvitMemoryBackend
-    import logging
 
     backend = SamvitMemoryBackend()
-    with caplog.at_level(logging.WARNING):
-        result = await backend.delete("skill.auth")
-    assert result is True
-    assert "permanent" in caplog.text
+    result = await backend.delete("skill.auth")
+    assert result is False
 
 
 # ── Hermes skill watcher: mtime stabilisation ────────────────────────────────

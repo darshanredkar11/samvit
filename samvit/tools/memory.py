@@ -15,6 +15,7 @@ Decisions applied:
 from __future__ import annotations
 
 import logging
+import uuid
 from typing import Any
 
 from samvit import db, embeddings, guard
@@ -40,17 +41,17 @@ async def remember(
     Store content as a vector embedding. If key is supplied, also upsert KV.
     Both writes happen in one transaction (Decision #6).
     """
-    ns = _resolve_namespace(namespace, agent["handle"])
-    _assert_write_allowed(ns, agent["handle"])
-
     if metadata is None:
         metadata = {}
 
-    # ── Ethical guard: scan input before embedding or storing ────────────────
+    # ── Ethical guard: scan input before namespace resolution or storing ────
     content = await guard.apply(content, agent["id"], "input", "remember")
 
+    ns = _resolve_namespace(namespace, agent["handle"])
+    _assert_write_allowed(ns, agent["handle"])
+
     # Embed first — if this fails we haven't touched the DB
-    vector = await embeddings.embed(content)
+    vector = embeddings.fmt_vector(await embeddings.embed(content))
 
     async with db.pool().acquire() as conn:
         async with conn.transaction():
@@ -58,11 +59,12 @@ async def remember(
             memory_id = await conn.fetchval(
                 """
                 INSERT INTO semantic_memory
-                    (agent_id, namespace, content, embedding, metadata)
-                VALUES ($1, $2, $3, $4::vector, $5)
+                    (agent_id, workspace_id, namespace, content, embedding, metadata)
+                VALUES ($1, $2, $3, $4, $5::vector, $6)
                 RETURNING id
                 """,
                 agent["id"],
+                agent["workspace_id"],
                 ns,
                 content,
                 vector,
@@ -75,12 +77,13 @@ async def remember(
                     raise ValueError("key must not be empty")
                 await conn.execute(
                     """
-                    INSERT INTO kv_memory (agent_id, namespace, key, value, updated_at)
-                    VALUES ($1, $2, $3, $4, now())
-                    ON CONFLICT (namespace, key)
+                    INSERT INTO kv_memory (agent_id, workspace_id, namespace, key, value, updated_at)
+                    VALUES ($1, $2, $3, $4, $5, now())
+                    ON CONFLICT (workspace_id, namespace, key)
                     DO UPDATE SET value = EXCLUDED.value, updated_at = now()
                     """,
                     agent["id"],
+                    agent["workspace_id"],
                     ns,
                     key.strip(),
                     {"text": content, **metadata},
@@ -116,16 +119,18 @@ async def recall(
 
     # ── KV exact lookup ───────────────────────────────────────────────────────
     if key:
-        return await _kv_recall(ns, key.strip())
+        return await _kv_recall(agent, ns, key.strip())
 
     # ── Vector search ─────────────────────────────────────────────────────────
     if not query or not query.strip():
         raise ValueError("Either query or key is required")
 
-    return await _vector_recall(ns, query, limit, min_score)
+    query = await guard.apply(query.strip(), agent["id"], "input", "recall")
+
+    return await _vector_recall(agent, ns, query, limit, min_score)
 
 
-async def _kv_recall(namespace: str, key: str) -> dict:
+async def _kv_recall(agent: dict, namespace: str, key: str) -> dict:
     async with db.pool().acquire() as conn:
         row = await conn.fetchrow(
             """
@@ -134,17 +139,23 @@ async def _kv_recall(namespace: str, key: str) -> dict:
               JOIN agents a ON a.id = kv.agent_id
              WHERE kv.namespace = $1
                AND kv.key = $2
+               AND kv.workspace_id = $3
             """,
-            namespace, key,
+            namespace, key, agent["workspace_id"],
         )
     if not row:
         return {"results": []}   # Decision #5: empty array, not 404
+
+    content = row["value"].get("text", "")
+    # Decision #11 annex: guard KV output same as vector path
+    clean_content = await guard.apply(content, agent["id"], "output", "recall",
+                                      check_entropy=False)
 
     return {
         "results": [
             {
                 "key": key,
-                "content": row["value"].get("text", ""),
+                "content": clean_content,
                 "value": row["value"],
                 "agent": row["handle"],
                 "updated_at": row["updated_at"].isoformat(),
@@ -154,12 +165,13 @@ async def _kv_recall(namespace: str, key: str) -> dict:
 
 
 async def _vector_recall(
+    agent: dict,
     namespace: str,
     query: str,
     limit: int,
     min_score: float,
 ) -> dict:
-    vector = await embeddings.embed(query)
+    vector = embeddings.fmt_vector(await embeddings.embed(query))
 
     async with db.pool().acquire() as conn:
         # Decision #7: check row count; pgvector uses seq scan automatically
@@ -167,7 +179,8 @@ async def _vector_recall(
         # explicitly disable the index scan for very small tables to avoid
         # the planner choosing a potentially unhelpful index path.
         row_count: int = await conn.fetchval(
-            "SELECT COUNT(*) FROM semantic_memory WHERE namespace = $1", namespace
+            "SELECT COUNT(*) FROM semantic_memory WHERE namespace = $1 AND workspace_id = $2",
+            namespace, agent["workspace_id"],
         )
 
         if row_count < 100:
@@ -185,6 +198,7 @@ async def _vector_recall(
               FROM semantic_memory sm
               JOIN agents a ON a.id = sm.agent_id
              WHERE sm.namespace = $2
+               AND sm.workspace_id = $5
                AND 1 - (sm.embedding <=> $1::vector) >= $3
              ORDER BY sm.embedding <=> $1::vector
              LIMIT $4
@@ -193,6 +207,7 @@ async def _vector_recall(
             namespace,
             min_score,
             limit,
+            agent["workspace_id"],
         )
 
     # ── Ethical guard: scan output before returning to LLM ──────────────────
@@ -216,6 +231,61 @@ async def _vector_recall(
             for r, clean_content in cleaned_rows
         ]
     }
+
+
+# ── forget ─────────────────────────────────────────────────────────────────────
+
+async def forget(
+    agent: dict,
+    key: str | None = None,
+    memory_id: str | None = None,
+    namespace: str | None = None,
+) -> dict:
+    """
+    Delete a memory by key (KV) or id (vector semantic memory).
+    Agents may only delete memories in their own namespace or 'global'.
+    Returns {"deleted": True} if anything was removed, {"deleted": False} if not found.
+    """
+    ns = _resolve_namespace(namespace, agent["handle"])
+    _assert_write_allowed(ns, agent["handle"])
+
+    if not key and not memory_id:
+        raise ValueError("Either key or memory_id is required")
+
+    deleted = False
+
+    async with db.pool().acquire() as conn:
+        async with conn.transaction():
+            if key:
+                result = await conn.execute(
+                    """
+                    DELETE FROM kv_memory
+                     WHERE namespace = $1 AND key = $2 AND workspace_id = $3
+                    """,
+                    ns, key.strip(), agent["workspace_id"],
+                )
+                if result != "DELETE 0":
+                    deleted = True
+
+            if memory_id:
+                try:
+                    mid = uuid.UUID(memory_id)
+                except ValueError:
+                    raise ValueError(f"Invalid memory_id: {memory_id!r}")
+
+                result = await conn.execute(
+                    """
+                    DELETE FROM semantic_memory
+                     WHERE id = $1 AND namespace = $2 AND workspace_id = $3
+                    """,
+                    mid, ns, agent["workspace_id"],
+                )
+                if result != "DELETE 0":
+                    deleted = True
+
+    log.debug("forget: agent=%s ns=%s key=%s id=%s deleted=%s",
+              agent["handle"], ns, key, memory_id, deleted)
+    return {"deleted": deleted}
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────

@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import time
 
 from aiokafka import AIOKafkaProducer
 from aiokafka.errors import KafkaConnectionError
@@ -21,11 +22,15 @@ log = logging.getLogger(__name__)
 
 _producer: AIOKafkaProducer | None = None
 _degraded: bool = False   # True when Redpanda is unreachable at startup
+_published_count: int = 0
+_publish_failures: int = 0
+_last_publish_latency_ms: float | None = None
 
 
 async def init() -> None:
     """Start the Kafka producer. Sets _degraded=True if Redpanda is unreachable."""
     global _producer, _degraded
+    _degraded = False
     brokers = os.environ.get("REDPANDA_BROKERS", "localhost:9092")
     _producer = AIOKafkaProducer(
         bootstrap_servers=brokers,
@@ -58,12 +63,30 @@ async def publish(topic: str, payload: dict) -> None:
     Publish payload to topic.
     Decision #13: swallows all errors with a WARNING — DB is source of truth.
     """
-    global _degraded
+    global _degraded, _published_count, _publish_failures, _last_publish_latency_ms
     if _degraded or _producer is None:
+        _publish_failures += 1
         log.warning("Event publish skipped (degraded): topic=%s payload=%s", topic, payload)
         return
+    started = time.perf_counter()
     try:
         await _producer.send_and_wait(topic, payload)
+        _published_count += 1
+        _last_publish_latency_ms = round(
+            (time.perf_counter() - started) * 1000, 2
+        )
         log.debug("Event published: topic=%s", topic)
     except Exception as exc:
+        _publish_failures += 1
         log.warning("Event publish failed (topic=%s): %s", topic, exc)
+
+
+def status() -> dict:
+    """Return lightweight event-bus telemetry for health and metrics endpoints."""
+    return {
+        "connected": _producer is not None and not _degraded,
+        "degraded": _degraded,
+        "published": _published_count,
+        "failures": _publish_failures,
+        "last_publish_latency_ms": _last_publish_latency_ms,
+    }

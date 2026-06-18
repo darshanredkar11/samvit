@@ -23,7 +23,7 @@ CREATE TABLE code_nodes (
     docstring   TEXT,                       -- first docstring if available
     language    TEXT        NOT NULL DEFAULT 'python',
     embedding   VECTOR(384),                -- semantic search over symbol names + docstrings
-    embedding_model TEXT    NOT NULL DEFAULT 'all-MiniLM-L6-v2',
+    embedding_model TEXT    NOT NULL DEFAULT 'BAAI/bge-small-en-v1.5',
     metadata    JSONB       NOT NULL DEFAULT '{}',
     indexed_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
     UNIQUE (repo_id, qualified)

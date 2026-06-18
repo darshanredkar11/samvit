@@ -1,5 +1,6 @@
 """Tests for say and read."""
 from __future__ import annotations
+import asyncio
 import pytest
 from samvit.tools.messaging import say, read
 
@@ -87,7 +88,44 @@ async def test_self_message(agent_rec):
 
 
 @pytest.mark.asyncio
+async def test_concurrent_reads_deliver_message_once(two_agent_recs):
+    sender, receiver = two_agent_recs
+    sent = await say(sender, "deliver once", to=receiver["handle"])
+    first, second = await asyncio.gather(read(receiver), read(receiver))
+    delivered = [
+        message
+        for result in (first, second)
+        for message in result["messages"]
+        if message["id"] == sent["message_id"]
+    ]
+    assert len(delivered) == 1
+
+
+@pytest.mark.asyncio
 async def test_http_unauthenticated_rejected(http):
     """HTTP endpoints require a Bearer token."""
     r = await http.post("/v1/agents/rotate")
     assert r.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_http_tool_bridge_requires_auth(http):
+    r = await http.post(
+        "/v1/tools/call",
+        json={"tool": "read", "params": {"mark_read": False}},
+    )
+    assert r.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_http_tool_bridge_calls_tools(http, agent_rec):
+    r = await http.post(
+        "/v1/tools/call",
+        headers={"Authorization": f"Bearer {agent_rec['_token']}"},
+        json={
+            "tool": "say",
+            "params": {"body": "bridge works", "to": agent_rec["handle"]},
+        },
+    )
+    assert r.status_code == 200
+    assert r.json()["message_id"]

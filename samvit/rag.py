@@ -29,7 +29,7 @@ log = logging.getLogger(__name__)
 
 # ── Config ────────────────────────────────────────────────────────────────────
 
-CHUNK_SIZE_CHARS   = 1600   # ~400 tokens for all-MiniLM-L6-v2
+CHUNK_SIZE_CHARS   = 1600   # ~400 tokens for BAAI/bge-small-en-v1.5
 CHUNK_OVERLAP_CHARS = 160   # ~10% overlap
 MAX_DOCUMENT_BYTES  = 10 * 1024 * 1024   # 10 MB hard limit per document
 
@@ -179,11 +179,11 @@ async def ingest(
                 """
                 INSERT INTO documents
                     (id, agent_id, filename, content_type, description,
-                     char_count, chunk_count, namespace)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                     char_count, chunk_count, namespace, workspace_id)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                 """,
                 document_id, agent["id"], filename, ct, description,
-                len(raw_text), len(chunks), namespace,
+                len(raw_text), len(chunks), namespace, agent["workspace_id"],
             )
 
             # Embed and insert each chunk
@@ -192,7 +192,8 @@ async def ingest(
                 clean_content = await guard.apply(
                     chunk["content"], agent["id"], "input", "ingest"
                 )
-                vector = await embeddings.embed(clean_content)
+                vec = await embeddings.embed(clean_content)
+                vector = embeddings.fmt_vector(vec)
                 await conn.execute(
                     """
                     INSERT INTO document_chunks
@@ -257,7 +258,7 @@ async def search_docs(
         raise ValueError("query must not be empty")
     limit = min(limit, 20)
 
-    vector = await embeddings.embed(query)
+    vector = embeddings.fmt_vector(await embeddings.embed(query))
 
     async with db.pool().acquire() as conn:
         row_count = await conn.fetchval(
@@ -266,7 +267,7 @@ async def search_docs(
         if row_count < 100:
             await conn.execute("SET LOCAL enable_indexscan = off")
 
-        params: list = [vector, namespace, min_score, limit]
+        params: list = [vector, namespace, min_score, limit, agent["workspace_id"]]
         filename_clause = ""
         if filename_filter:
             params.append(f"%{filename_filter}%")
@@ -288,6 +289,7 @@ async def search_docs(
               FROM document_chunks dc
               JOIN documents d ON d.id = dc.document_id
              WHERE d.namespace = $2
+               AND d.workspace_id = $5
                AND 1 - (dc.embedding <=> $1::vector) >= $3
                {filename_clause}
              ORDER BY dc.embedding <=> $1::vector

@@ -103,10 +103,14 @@ def hook_pre_tool(stdin_data: dict) -> None:
     if not query:
         return
 
-    result = _call("/mcp/call", {
-        "tool": "recall",
-        "params": {"query": query, "limit": 3, "namespace": "global"},
-    })
+    try:
+        result = _call("/v1/tools/call", {
+            "tool": "recall",
+            "params": {"query": query, "limit": 3, "namespace": "global"},
+        })
+    except Exception as exc:
+        log.debug("Samvit pre-tool hook failed (non-fatal): %s", exc)
+        return
     if not result or not result.get("results"):
         return
 
@@ -153,10 +157,13 @@ def hook_post_tool(stdin_data: dict) -> None:
             content = f"Ran `{cmd[:100]}` → {output[:400]}"
 
     if content:
-        _call("/mcp/call", {
-            "tool": "remember",
-            "params": {"content": content, "namespace": "global"},
-        })
+        try:
+            _call("/v1/tools/call", {
+                "tool": "remember",
+                "params": {"content": content, "namespace": "global"},
+            })
+        except Exception as exc:
+            log.debug("Samvit post-tool hook failed (non-fatal): %s", exc)
 
 
 def hook_stop(stdin_data: dict) -> None:
@@ -167,14 +174,17 @@ def hook_stop(stdin_data: dict) -> None:
     usage  = stdin_data.get("usage", {})
     if reason:
         summary = f"Session ended: {reason}. Tokens used: {usage}"
-        _call("/mcp/call", {
-            "tool": "remember",
-            "params": {
-                "content": summary,
-                "key": f"session.{HOOK_HANDLE}.last",
-                "namespace": HOOK_HANDLE,
-            },
-        })
+        try:
+            _call("/v1/tools/call", {
+                "tool": "remember",
+                "params": {
+                    "content": summary,
+                    "key": f"session.{HOOK_HANDLE}.last",
+                    "namespace": HOOK_HANDLE,
+                },
+            })
+        except Exception as exc:
+            log.debug("Samvit stop hook failed (non-fatal): %s", exc)
 
 
 def main() -> None:
