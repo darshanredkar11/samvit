@@ -34,3 +34,4 @@ pgdata/
 
 # Node (admin-ui)
 node_modules/
+*.tsbuildinfo
