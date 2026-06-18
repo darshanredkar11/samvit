@@ -1,1369 +1,815 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Samvit — Shared intelligence for AI teams</title>
-<meta name="description" content="Shared memory, task queue, RAG, and code graph for teams of AI agents. 1 Docker command. No cloud. Apache 2.0."/>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#040407;--surface:#0a0a12;--surface2:#0f0f1a;
-  --border:rgba(255,255,255,.06);--border2:rgba(255,255,255,.1);
-  --p:#8b5cf6;--p2:#7c3aed;--p3:#a78bfa;--p4:#c4b5fd;
-  --t:#2dd4bf;--t2:#14b8a6;
-  --pk:#ec4899;
-  --text:#f4f4ff;--text2:#9090b8;--text3:#4a4a72;
-  --mono:'JetBrains Mono',monospace;
-  --code:#080810;
-}
-html{scroll-behavior:smooth}
-body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Samvit + Headroom | Server-Side Agent Coordination & Context Compression</title>
+  <meta name="description" content="Samvit gives Claude Code, Codex, Antigravity and other AI coding agents shared memory, tasks and messaging. Headroom compresses all server responses by 60-95%. Self-hosted, no per-machine install.">
+  <meta name="keywords" content="AI agent coordination, Claude Code team, MCP server, multi-agent coding, shared memory, context compression, token savings, open source agent infrastructure">
+  <meta name="author" content="Samvit">
+  <meta name="robots" content="index,follow,max-image-preview:large">
+  <link rel="canonical" href="https://darshanredkar11.github.io/samvit/">
+  <meta name="theme-color" content="#07111f">
 
-/* ━━━━━━━━━━━━━━━━━━━━━━ LOGO SVG MARK ━━━━━━━━━━━━━━━━━━━━━━ */
-.logo-mark svg{display:block}
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Samvit">
+  <meta property="og:title" content="Samvit + Headroom: Agent Coordination + Context Compression">
+  <meta property="og:description" content="Connect Claude Code, Codex, Antigravity and custom agents to shared memory, atomic tasks and persistent team messages. Compress all server responses by 60-95%. Self-hosted.">
+  <meta property="og:url" content="https://darshanredkar11.github.io/samvit/">
+  <meta property="og:image" content="https://darshanredkar11.github.io/samvit/og-image.svg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Samvit: Open-Source AI Agent Coordination">
+  <meta name="twitter:description" content="Shared memory, task ownership, messaging, and built-in context compression for AI coding agents.">
 
-/* ━━━━━━━━━━━━━━━━━━━━━━ NAV ━━━━━━━━━━━━━━━━━━━━━━ */
-nav{
-  position:fixed;top:0;left:0;right:0;z-index:200;
-  display:flex;align-items:center;justify-content:space-between;
-  padding:.85rem 2.5rem;
-  background:rgba(4,4,7,.85);
-  backdrop-filter:blur(20px) saturate(180%);
-  border-bottom:1px solid var(--border);
-}
-.nav-logo{display:flex;align-items:center;gap:.65rem;text-decoration:none;color:var(--text)}
-.nav-name{font-weight:800;font-size:1.05rem;letter-spacing:-.03em}
-.nav-links{display:flex;gap:1.6rem;list-style:none}
-.nav-links a{color:var(--text3);text-decoration:none;font-size:.82rem;font-weight:500;transition:color .2s}
-.nav-links a:hover{color:var(--text2)}
-.nav-right{display:flex;align-items:center;gap:.75rem}
-.btn-ghost{color:var(--text2);text-decoration:none;font-size:.82rem;font-weight:500;padding:.38rem .85rem;border-radius:6px;transition:color .2s}
-.btn-ghost:hover{color:var(--text)}
-.btn-nav{
-  background:linear-gradient(135deg,var(--p),var(--p2));
-  color:#fff;text-decoration:none;font-size:.82rem;font-weight:600;
-  padding:.42rem 1.1rem;border-radius:7px;
-  box-shadow:0 0 20px rgba(139,92,246,.3);
-  transition:transform .2s,box-shadow .2s
-}
-.btn-nav:hover{transform:translateY(-2px);box-shadow:0 0 30px rgba(139,92,246,.5)}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Samvit",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "Linux, macOS, Windows with Docker",
+    "description": "Open-source coordination server with built-in context compression for Claude Code, Codex, Antigravity and other AI coding agents.",
+    "url": "https://darshanredkar11.github.io/samvit/",
+    "downloadUrl": "https://github.com/darshanredkar11/samvit",
+    "softwareVersion": "0.2.0",
+    "license": "https://www.apache.org/licenses/LICENSE-2.0",
+    "isAccessibleForFree": true,
+    "codeRepository": "https://github.com/darshanredkar11/samvit",
+    "programmingLanguage": "Python"
+  }
+  </script>
 
-/* ━━━━━━━━━━━━━━━━━━━━━━ HERO ━━━━━━━━━━━━━━━━━━━━━━ */
-.hero{
-  min-height:100vh;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;
-  padding:7rem 1.5rem 5rem;text-align:center;
-  position:relative;overflow:hidden
-}
-/* Animated grid */
-.hero-grid{
-  position:absolute;inset:0;
-  background-image:
-    linear-gradient(rgba(139,92,246,.04) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(139,92,246,.04) 1px,transparent 1px);
-  background-size:60px 60px;
-  mask-image:radial-gradient(ellipse 90% 80% at 50% 40%,black 30%,transparent 100%);
-  pointer-events:none;
-  animation:gridPan 20s linear infinite
-}
-@keyframes gridPan{0%{background-position:0 0}100%{background-position:60px 60px}}
+  <style>
+    :root {
+      --ink: #eaf2ff;
+      --muted: #9aabc2;
+      --dim: #6c7e97;
+      --bg: #050a12;
+      --panel: #0a1321;
+      --panel-2: #0e1a2b;
+      --line: rgba(157, 183, 221, .16);
+      --violet: #9d83ff;
+      --cyan: #52d7d1;
+      --green: #93e7b0;
+      --orange: #ffc27a;
+      --red: #ff6b6b;
+      --max: 1200px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
 
-/* Glows */
-.glow{position:absolute;border-radius:50%;filter:blur(100px);pointer-events:none;animation:glowPulse 6s ease-in-out infinite}
-.glow1{width:600px;height:600px;background:rgba(139,92,246,.1);top:-20%;left:50%;transform:translateX(-50%);animation-delay:0s}
-.glow2{width:350px;height:350px;background:rgba(45,212,191,.07);bottom:5%;right:-5%;animation-delay:-2s}
-.glow3{width:250px;height:250px;background:rgba(236,72,153,.05);bottom:10%;left:-2%;animation-delay:-4s}
-@keyframes glowPulse{0%,100%{opacity:.6;transform:scale(1) translateX(-50%)}50%{opacity:1;transform:scale(1.1) translateX(-50%)}}
-.glow2,.glow3{transform:none!important}
-@keyframes glowPulse2{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.15)}}
-.glow2{animation-name:glowPulse2}
-.glow3{animation-name:glowPulse2;animation-delay:-3s}
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 75% 0%, rgba(82, 215, 209, .10), transparent 30rem),
+        radial-gradient(circle at 20% 12%, rgba(157, 131, 255, .13), transparent 35rem),
+        radial-gradient(circle at 50% 100%, rgba(255, 194, 122, .06), transparent 30rem),
+        var(--bg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.6;
+    }
 
-.hero-inner{position:relative;z-index:1;max-width:900px;width:100%}
+    a { color: inherit; }
+    code { font-family: var(--mono); }
 
-.eyebrow{
-  display:inline-flex;align-items:center;gap:.5rem;
-  background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.2);
-  color:var(--p3);border-radius:100px;
-  padding:.28rem 1rem;font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
-  margin-bottom:1.8rem;
-  animation:fadeUp .5s ease both
-}
-.eyebrow-dot{width:5px;height:5px;background:var(--t);border-radius:50%;animation:blink 2s ease infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+    .wrap { width: min(calc(100% - 2rem), var(--max)); margin: auto; }
 
-h1{
-  font-size:clamp(3rem,7.5vw,5.6rem);font-weight:900;
-  line-height:1.04;letter-spacing:-.05em;
-  margin-bottom:1.4rem;
-  animation:fadeUp .5s .08s ease both
-}
-.h1-white{color:var(--text)}
-.h1-grad{
-  background:linear-gradient(120deg,var(--p3) 0%,var(--t) 40%,var(--p3) 80%);
-  background-size:200%;
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  animation:shimmer 5s linear infinite
-}
-@keyframes shimmer{to{background-position:200% center}}
+    nav {
+      position: sticky; top: 0; z-index: 50;
+      border-bottom: 1px solid var(--line);
+      background: rgba(5, 10, 18, .86);
+      backdrop-filter: blur(18px);
+    }
+    .nav-inner {
+      min-height: 68px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .brand {
+      display: flex; align-items: center; gap: .7rem;
+      text-decoration: none; font-weight: 800; letter-spacing: -.03em;
+    }
+    .mark {
+      width: 34px; height: 34px; border-radius: 10px;
+      display: grid; place-items: center;
+      background: linear-gradient(135deg, var(--violet), var(--cyan));
+      color: #07111f; font-weight: 950;
+      box-shadow: 0 0 30px rgba(157, 131, 255, .28);
+    }
+    .nav-links { display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap; }
+    .nav-links a { color: var(--muted); text-decoration: none; font-size: .9rem; }
+    .nav-links a:hover { color: var(--ink); }
+    .nav-cta { border: 1px solid var(--line); border-radius: 9px; padding: .48rem .85rem; }
 
-.hero-sub{
-  color:var(--text2);font-size:clamp(1rem,2vw,1.18rem);
-  max-width:560px;margin:0 auto 2.4rem;line-height:1.75;
-  animation:fadeUp .5s .16s ease both
-}
+    .hero { padding: 6rem 0 4rem; text-align: center; }
+    .eyebrow {
+      display: inline-flex; gap: .5rem; align-items: center; padding: .35rem .75rem;
+      color: var(--cyan); border: 1px solid rgba(82, 215, 209, .25);
+      border-radius: 999px; background: rgba(82, 215, 209, .07);
+      font-size: .78rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+    }
+    h1 {
+      max-width: 1000px; margin: 1.2rem auto 1rem;
+      font-size: clamp(2.5rem, 7vw, 5.4rem); line-height: 1.02; letter-spacing: -.06em;
+    }
+    .gradient { color: transparent; background: linear-gradient(100deg, var(--violet), var(--cyan)); background-clip: text; }
+    .gradient-orange { color: transparent; background: linear-gradient(100deg, var(--orange), var(--violet)); background-clip: text; }
+    .hero-copy { max-width: 780px; margin: 0 auto; color: var(--muted); font-size: clamp(1rem, 2vw, 1.2rem); }
+    .actions { display: flex; justify-content: center; flex-wrap: wrap; gap: .8rem; margin: 2rem 0; }
+    .button {
+      display: inline-flex; justify-content: center; align-items: center; gap: .45rem;
+      min-height: 46px; padding: .7rem 1.15rem; border-radius: 10px;
+      text-decoration: none; font-weight: 750; border: 1px solid var(--line);
+    }
+    .button.primary { color: #07111f; border: 0; background: linear-gradient(135deg, var(--violet), var(--cyan)); }
+    .button.secondary { background: rgba(255,255,255,.025); }
+    .button:hover { transform: translateY(-1px); }
 
-.hero-ctas{
-  display:flex;gap:.85rem;justify-content:center;flex-wrap:wrap;
-  margin-bottom:4rem;
-  animation:fadeUp .5s .24s ease both
-}
-.btn-primary{
-  display:inline-flex;align-items:center;gap:.5rem;
-  background:linear-gradient(135deg,var(--p),var(--p2));
-  color:#fff;text-decoration:none;
-  padding:.82rem 2rem;border-radius:10px;
-  font-weight:700;font-size:.98rem;
-  box-shadow:0 0 40px rgba(139,92,246,.35);
-  transition:transform .2s,box-shadow .2s
-}
-.btn-primary:hover{transform:translateY(-2px);box-shadow:0 0 60px rgba(139,92,246,.55)}
-.btn-outline{
-  display:inline-flex;align-items:center;gap:.5rem;
-  color:var(--text2);text-decoration:none;
-  padding:.82rem 1.7rem;border-radius:10px;
-  font-weight:600;font-size:.98rem;
-  border:1px solid var(--border2);
-  transition:border-color .2s,color .2s,transform .2s
-}
-.btn-outline:hover{border-color:var(--p);color:var(--text);transform:translateY(-2px)}
+    section { padding: 5rem 0; }
+    .section-head { max-width: 720px; margin-bottom: 2.5rem; }
+    .section-head.centered { margin-left: auto; margin-right: auto; text-align: center; }
+    .kicker { color: var(--cyan); font-size: .76rem; text-transform: uppercase; letter-spacing: .11em; font-weight: 800; }
+    .kicker.violet { color: var(--violet); }
+    h2 { margin: .6rem 0 .8rem; font-size: clamp(1.8rem, 4.5vw, 3.2rem); line-height: 1.08; letter-spacing: -.045em; }
+    .section-head p { color: var(--muted); font-size: 1.05rem; }
 
-@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    .card-grid { display: grid; gap: 1rem; }
+    .card-grid-3 { grid-template-columns: repeat(3, 1fr); }
+    .card-grid-2 { grid-template-columns: repeat(2, 1fr); }
+    .card {
+      padding: 1.45rem; border: 1px solid var(--line); border-radius: 14px;
+      background: rgba(10, 19, 33, .72);
+    }
+    .card .number { color: var(--violet); font: 800 .75rem var(--mono); }
+    .card h3 { margin: .7rem 0 .45rem; font-size: 1.08rem; }
+    .card p { margin: 0; color: var(--muted); font-size: .92rem; }
+    .card code { color: var(--cyan); font-weight: 600; }
 
-/* ━━━━━━━━━━━━━━━━━━━━━━ AGENT FLOW DIAGRAM ━━━━━━━━━━━━━━━━━━━━━━ */
-.flow-diagram{
-  width:100%;max-width:800px;margin:0 auto;
-  animation:fadeUp .5s .32s ease both;
-  position:relative
-}
-.flow-svg{width:100%;height:auto}
+    /* ── Architecture Diagram ── */
+    .arch {
+      display: flex; flex-direction: column; gap: .3rem;
+      font-size: .8rem;
+    }
+    .arch-row { display: flex; align-items: stretch; justify-content: center; gap: .6rem; }
+    .arch-box {
+      padding: .75rem .9rem; border: 1px solid var(--line); border-radius: 10px;
+      background: var(--panel); text-align: center; line-height: 1.4;
+    }
+    .arch-box.small { flex: 1; }
+    .arch-box.med   { flex: 1.8; }
+    .arch-box.large { flex: 3; }
+    .arch-box .label { color: var(--dim); font-size: .65rem; text-transform: uppercase; letter-spacing: .07em; }
+    .arch-box .title { font-weight: 700; margin: .2rem 0; }
+    .arch-box .desc  { color: var(--muted); font-size: .72rem; }
+    .arch-box .sub   { color: var(--dim); font-size: .65rem; }
+    .arch-box.headroom { border-color: rgba(255,194,122,.35); background: rgba(255,194,122,.06); }
+    .arch-box.llm { border-color: rgba(82,215,209,.25); background: rgba(82,215,209,.05); }
+    .arch-line { display: flex; align-items: center; justify-content: center; gap: .4rem; padding: .15rem 0; }
+    .arch-line .arrow { color: var(--dim); font-size: .7rem; }
 
-/* Agent boxes */
-.agent-box{
-  animation:agentFloat 4s ease-in-out infinite;
-}
-.ab1{animation-delay:0s}
-.ab2{animation-delay:.8s}
-.ab3{animation-delay:1.6s}
-.ab4{animation-delay:2.4s}
-@keyframes agentFloat{
-  0%,100%{transform:translateY(0)}
-  50%{transform:translateY(-4px)}
-}
+    .legend {
+      display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap;
+      margin-top: 1.2rem; font-size: .78rem;
+    }
+    .legend-dot {
+      display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: .35rem;
+    }
 
-/* Animated data packets traveling along paths */
-.packet{
-  animation:travelPath 3s ease-in-out infinite;
-  opacity:0
-}
-.p1{animation-delay:.2s}
-.p2{animation-delay:.9s}
-.p3{animation-delay:1.7s}
-.p4{animation-delay:2.5s}
-@keyframes travelPath{
-  0%{opacity:0;offset-distance:0%}
-  10%{opacity:1}
-  90%{opacity:1}
-  100%{opacity:0;offset-distance:100%}
-}
+    .savings-highlight {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;
+      margin: 1.5rem 0;
+    }
+    .savings-item {
+      padding: 1.2rem; text-align: center; border: 1px solid var(--line); border-radius: 12px;
+      background: rgba(10,19,33,.7);
+    }
+    .savings-item .big { font-size: 1.8rem; font-weight: 800; color: var(--green); }
+    .savings-item .big.orange { color: var(--orange); }
+    .savings-item .label { color: var(--muted); font-size: .82rem; margin-top: .3rem; }
+    .savings-item .sub { color: var(--dim); font-size: .72rem; }
 
-/* Center hub pulse */
-.hub-ring{
-  animation:hubPulse 2.5s ease-in-out infinite;
-  transform-origin:center;
-}
-.hr1{animation-delay:0s}
-.hr2{animation-delay:.6s}
-.hr3{animation-delay:1.2s}
-@keyframes hubPulse{
-  0%{opacity:.5;transform:scale(1)}
-  50%{opacity:.1;transform:scale(1.8)}
-  100%{opacity:0;transform:scale(2.4)}
-}
+    .wrap-example { background: #040912; border: 1px solid var(--line); border-radius: 12px; padding: 1.2rem; overflow-x: auto; }
+    .wrap-example pre { margin: 0; color: #c9d8ec; font: .8rem/1.75 var(--mono); }
+    .wrap-example .c { color: var(--dim); }
+    .wrap-example .kw { color: var(--violet); }
+    .wrap-example .str { color: var(--green); }
+    .wrap-example .fn { color: var(--cyan); }
+    .wrap-example .cmt { color: #5a6a7e; }
 
-/* Connection lines glow */
-.conn-line{
-  stroke-dasharray:6 3;
-  animation:dashFlow 2s linear infinite;
-}
-@keyframes dashFlow{to{stroke-dashoffset:-18}}
+    .usage-steps { counter-reset: step; }
+    .usage-step {
+      counter-increment: step;
+      display: grid; grid-template-columns: 32px 1fr; gap: .6rem .8rem;
+      padding: .8rem 0; border-bottom: 1px solid var(--line);
+    }
+    .usage-step:last-child { border-bottom: 0; }
+    .usage-step .num::before {
+      content: counter(step);
+      width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%;
+      color: var(--cyan); background: rgba(82,215,209,.08);
+      border: 1px solid rgba(82,215,209,.25); font-size: .8rem; font-weight: 700;
+    }
+    .usage-step h4 { margin: 0 0 .3rem; font-size: .95rem; }
+    .usage-step p { margin: 0; color: var(--muted); font-size: .88rem; }
+    .usage-step pre {
+      margin: .5rem 0 0; padding: .7rem .9rem; overflow-x: auto; border-radius: 8px;
+      background: #040912; border: 1px solid var(--line); color: #c9d8ec;
+      font: .78rem/1.65 var(--mono); grid-column: 2;
+    }
+    .usage-step pre .accent { color: var(--green); }
 
-/* ━━━━━━━━━━━━━━━━━━━━━━ NUMBERS BANNER ━━━━━━━━━━━━━━━━━━━━━━ */
-.numbers{
-  padding:3rem 1.5rem;
-  border-top:1px solid var(--border);
-  border-bottom:1px solid var(--border);
-  overflow:hidden;
-}
-.numbers-inner{
-  max-width:1100px;margin:0 auto;
-  display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
-  gap:0;
-}
-.num-item{
-  text-align:center;padding:1.5rem 1rem;
-  border-right:1px solid var(--border);
-}
-.num-item:last-child{border-right:none}
-.num-val{
-  font-size:clamp(2.2rem,5vw,3.4rem);font-weight:900;
-  letter-spacing:-.04em;line-height:1;
-  background:linear-gradient(135deg,var(--p3),var(--t));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  display:block;margin-bottom:.35rem;
-}
-.num-lbl{font-size:.78rem;color:var(--text3);font-weight:500;line-height:1.4}
+    .tool-table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+    .tool-table th { text-align: left; color: var(--dim); font-size: .72rem; text-transform: uppercase; letter-spacing: .07em; padding: .5rem .6rem; border-bottom: 1px solid var(--line); }
+    .tool-table td { padding: .6rem; border-bottom: 1px solid rgba(157,183,221,.08); color: var(--muted); }
+    .tool-table td:first-child { color: var(--cyan); font-weight: 600; font-family: var(--mono); font-size: .85rem; }
+    .tool-table tr:hover td { color: var(--ink); }
 
-/* ━━━━━━━━━━━━━━━━━━━━━━ BEFORE / AFTER ━━━━━━━━━━━━━━━━━━━━━━ */
-.ba-section{padding:6rem 1.5rem;max-width:1100px;margin:0 auto}
-.ba-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:3rem}
-.ba-card{
-  border-radius:16px;padding:2rem;
-  position:relative;overflow:hidden
-}
-.ba-before{
-  background:rgba(239,68,68,.04);
-  border:1px solid rgba(239,68,68,.15);
-}
-.ba-after{
-  background:rgba(139,92,246,.05);
-  border:1px solid rgba(139,92,246,.2);
-}
-.ba-label{
-  font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
-  margin-bottom:1.2rem;display:flex;align-items:center;gap:.5rem
-}
-.ba-before .ba-label{color:rgba(239,68,68,.7)}
-.ba-after  .ba-label{color:var(--p3)}
-.ba-row{
-  display:flex;align-items:flex-start;gap:.75rem;
-  margin-bottom:.85rem;
-  animation:baRowIn .4s ease both
-}
-.ba-icon{font-size:.9rem;flex-shrink:0;margin-top:.1rem}
-.ba-text{font-size:.88rem;line-height:1.55}
-.ba-before .ba-text{color:rgba(239,68,68,.7)}
-.ba-after  .ba-text{color:var(--text2)}
-.ba-divider{
-  display:flex;align-items:center;justify-content:center;
-  font-size:1.8rem;color:var(--p3);font-weight:900;
-  position:relative;
-}
-.vs-circle{
-  width:52px;height:52px;
-  background:linear-gradient(135deg,var(--p),var(--t));
-  border-radius:50%;display:flex;align-items:center;justify-content:center;
-  font-size:.85rem;font-weight:800;color:#fff;
-  box-shadow:0 0 30px rgba(139,92,246,.4);
-  animation:vsRotate 8s linear infinite
-}
-@keyframes vsRotate{to{box-shadow:0 0 30px rgba(45,212,191,.4),0 0 60px rgba(139,92,246,.2)}}
+    .faq-grid { display: grid; gap: .8rem; }
+    .faq-grid details {
+      padding: .9rem 1rem; border: 1px solid var(--line); border-radius: 10px;
+      background: rgba(10,19,33,.6);
+    }
+    .faq-grid summary { cursor: pointer; font-weight: 700; font-size: .95rem; }
+    .faq-grid details p { color: var(--muted); margin: .6rem 0 0; font-size: .9rem; }
 
-/* ━━━━━━━━━━━━━━━━━━━━━━ SECTION SHARED ━━━━━━━━━━━━━━━━━━━━━━ */
-.section{padding:6rem 1.5rem;max-width:1100px;margin:0 auto}
-.sec-label{
-  font-size:.7rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
-  color:var(--p3);margin-bottom:.7rem
-}
-h2{
-  font-size:clamp(1.9rem,4vw,2.9rem);font-weight:800;
-  letter-spacing:-.04em;line-height:1.12;margin-bottom:.9rem
-}
-.sec-sub{color:var(--text2);max-width:480px;font-size:1.02rem;line-height:1.72;margin-bottom:3rem}
+    .cta-section {
+      margin: 3rem auto 4rem; padding: 3rem 1.5rem; text-align: center;
+      border: 1px solid rgba(157,131,255,.3); border-radius: 22px;
+      background: linear-gradient(130deg, rgba(157,131,255,.1), rgba(82,215,209,.07));
+    }
+    .cta-section p { color: var(--muted); max-width: 600px; margin: .7rem auto 1.5rem; }
 
-/* ━━━━━━━━━━━━━━━━━━━━━━ TOOL GRID ━━━━━━━━━━━━━━━━━━━━━━ */
-.tools-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
-  gap:1px;
-  background:var(--border);
-  border-radius:20px;overflow:hidden;
-  margin-bottom:3rem
-}
-.tool-card{
-  background:var(--surface);padding:1.6rem;
-  transition:background .2s;cursor:default;
-  position:relative;overflow:hidden
-}
-.tool-card::after{
-  content:'';position:absolute;inset:0;
-  background:linear-gradient(135deg,rgba(139,92,246,.05),transparent);
-  opacity:0;transition:opacity .25s
-}
-.tool-card:hover{background:var(--surface2)}
-.tool-card:hover::after{opacity:1}
-.tool-tag{
-  display:inline-block;font-size:.65rem;font-weight:700;
-  letter-spacing:.1em;text-transform:uppercase;
-  padding:.15rem .5rem;border-radius:4px;margin-bottom:.8rem
-}
-.tag-mem{background:rgba(139,92,246,.15);color:var(--p3)}
-.tag-tsk{background:rgba(45,212,191,.12);color:var(--t)}
-.tag-msg{background:rgba(236,72,153,.1);color:var(--pk)}
-.tag-rag{background:rgba(251,146,60,.1);color:#fb923c}
-.tag-cg {background:rgba(34,211,238,.1);color:#22d3ee}
-.tool-name{font-size:1.05rem;font-weight:700;margin-bottom:.35rem;font-family:var(--mono)}
-.tool-desc{font-size:.83rem;color:var(--text2);line-height:1.55}
+    footer { border-top: 1px solid var(--line); padding: 2rem 0; color: var(--dim); font-size: .85rem; }
+    .footer-inner { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+    .footer-links { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .footer-links a { color: var(--muted); text-decoration: none; }
 
-/* ━━━━━━━━━━━━━━━━━━━━━━ ANIMATED TERMINAL ━━━━━━━━━━━━━━━━━━━━━━ */
-.term-wrap{
-  background:var(--code);border:1px solid rgba(255,255,255,.07);
-  border-radius:16px;overflow:hidden;
-  box-shadow:0 40px 80px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.02);
-}
-.term-bar{
-  background:rgba(255,255,255,.03);border-bottom:1px solid rgba(255,255,255,.06);
-  padding:.65rem 1rem;display:flex;align-items:center;gap:.4rem
-}
-.tdot{width:11px;height:11px;border-radius:50%}
-.td1{background:#ff5f57}.td2{background:#febc2e}.td3{background:#28c840}
-.term-tab{margin-left:.5rem;font-family:var(--mono);font-size:.72rem;color:var(--text3)}
-.term-body{padding:1.2rem 1.5rem;font-family:var(--mono);font-size:.8rem;line-height:2}
-.tl{display:flex;gap:.7rem}
-.tp{color:var(--p3)}
-.tc{color:var(--text3)}
-.tk{color:var(--t)}
-.ts{color:#a3e635}
-.ta{color:#fb923c}
-.tr{color:var(--p3)}
-.tcursor{
-  display:inline-block;width:7px;height:13px;
-  background:var(--p3);border-radius:1px;
-  animation:cur .9s step-end infinite;vertical-align:middle
-}
-@keyframes cur{0%,100%{opacity:1}50%{opacity:0}}
-
-/* ━━━━━━━━━━━━━━━━━━━━━━ CTO SECTION ━━━━━━━━━━━━━━━━━━━━━━ */
-.cto-section{
-  background:var(--surface);
-  border-top:1px solid var(--border);
-  border-bottom:1px solid var(--border);
-  padding:6rem 1.5rem;
-}
-.cto-inner{max-width:1100px;margin:0 auto}
-.cto-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem;margin-top:3rem}
-.cto-card{
-  background:var(--bg);border:1px solid var(--border);
-  border-radius:14px;padding:1.8rem;
-  position:relative;overflow:hidden;
-  transition:border-color .25s,transform .25s
-}
-.cto-card::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:1.5px;
-  background:linear-gradient(90deg,var(--p),var(--t));
-  transform:scaleX(0);transform-origin:left;transition:transform .35s
-}
-.cto-card:hover{border-color:rgba(139,92,246,.25);transform:translateY(-3px)}
-.cto-card:hover::before{transform:scaleX(1)}
-.cto-icon{font-size:1.5rem;margin-bottom:.9rem}
-.cto-card h3{font-size:1rem;font-weight:700;margin-bottom:.5rem}
-.cto-card p{color:var(--text2);font-size:.87rem;line-height:1.62}
-.cto-metric{
-  display:inline-flex;align-items:center;gap:.3rem;
-  background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.2);
-  color:var(--p3);border-radius:6px;padding:.15rem .55rem;
-  font-size:.72rem;font-weight:700;font-family:var(--mono);
-  margin-top:.75rem
-}
-
-/* ━━━━━━━━━━━━━━━━━━━━━━ PRODUCTIVITY TIMELINE ━━━━━━━━━━━━━━━━━━━━━━ */
-.timeline{border-left:2px solid rgba(139,92,246,.2);padding-left:2rem;margin-top:2rem}
-.tl-item{position:relative;padding-bottom:2rem}
-.tl-item::before{
-  content:'';position:absolute;left:-2.42rem;top:.35rem;
-  width:10px;height:10px;border-radius:50%;
-  background:linear-gradient(135deg,var(--p),var(--t));
-  box-shadow:0 0 10px rgba(139,92,246,.5)
-}
-.tl-time{font-size:.68rem;font-weight:700;color:var(--p3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.4rem}
-.tl-content{
-  background:var(--code);border:1px solid var(--border);
-  border-radius:10px;padding:.9rem 1.2rem;
-  font-family:var(--mono);font-size:.78rem;line-height:1.9
-}
-.ag{color:#fb923c;font-weight:500}
-.cmd{color:var(--t)}
-.res{color:var(--p3)}
-
-/* ━━━━━━━━━━━━━━━━━━━━━━ SETUP STEPS ━━━━━━━━━━━━━━━━━━━━━━ */
-.setup-section{padding:6rem 1.5rem;max-width:1100px;margin:0 auto}
-.steps{display:flex;flex-direction:column;gap:1.5rem;max-width:680px}
-.step{display:flex;gap:1.3rem;align-items:flex-start}
-.step-n{
-  flex-shrink:0;width:34px;height:34px;
-  background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.25);
-  border-radius:50%;display:flex;align-items:center;justify-content:center;
-  font-weight:800;font-size:.8rem;color:var(--p3)
-}
-.step-body h3{font-size:.95rem;font-weight:700;margin-bottom:.3rem}
-.step-body p{color:var(--text2);font-size:.85rem;margin-bottom:.6rem}
-.code-snip{
-  background:var(--code);border:1px solid var(--border);
-  border-radius:9px;padding:.9rem 1.1rem;
-  font-family:var(--mono);font-size:.77rem;line-height:1.8;color:var(--text2)
-}
-.code-snip .ck{color:var(--t)}.code-snip .cs{color:#a3e635}
-.code-snip .cc{color:var(--text3)}.code-snip .cp{color:var(--p3)}
-
-/* ━━━━━━━━━━━━━━━━━━━━━━ OSS BANNER ━━━━━━━━━━━━━━━━━━━━━━ */
-.oss{max-width:1100px;margin:0 auto 6rem;padding:0 1.5rem}
-.oss-box{
-  background:linear-gradient(135deg,rgba(139,92,246,.07),rgba(45,212,191,.05));
-  border:1px solid rgba(139,92,246,.15);
-  border-radius:20px;padding:4rem;text-align:center;position:relative;overflow:hidden
-}
-.oss-box::before{
-  content:'';position:absolute;top:-40%;left:-40%;width:180%;height:180%;
-  background:radial-gradient(circle at 50% 50%,rgba(139,92,246,.04),transparent 60%);
-  pointer-events:none
-}
-.oss-box h2{margin-bottom:.9rem}
-.oss-box p{color:var(--text2);max-width:460px;margin:0 auto 2rem;line-height:1.7}
-.oss-tags{display:flex;flex-wrap:wrap;gap:.55rem;justify-content:center;margin-bottom:2.2rem}
-.oss-tag{
-  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);
-  border-radius:100px;padding:.28rem .8rem;font-size:.75rem;color:var(--text2)
-}
-
-/* ━━━━━━━━━━━━━━━━━━━━━━ FOOTER ━━━━━━━━━━━━━━━━━━━━━━ */
-footer{
-  border-top:1px solid var(--border);padding:2rem 2.5rem;
-  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem
-}
-.foot-left{display:flex;align-items:center;gap:.6rem}
-.foot-logo-wrap{display:flex;align-items:center;gap:.5rem}
-.foot-name{font-weight:700;font-size:.9rem}
-.foot-sep{color:var(--text3)}
-.foot-tag{color:var(--text3);font-size:.8rem}
-.foot-links{display:flex;gap:1.4rem}
-.foot-links a{color:var(--text3);text-decoration:none;font-size:.8rem;transition:color .2s}
-.foot-links a:hover{color:var(--text2)}
-
-/* ━━━━━━━━━━━━━━━━━━━━━━ SCROLL REVEAL ━━━━━━━━━━━━━━━━━━━━━━ */
-.reveal{opacity:0;transform:translateY(20px);transition:opacity .55s ease,transform .55s ease}
-.reveal.visible{opacity:1;transform:none}
-.reveal-left{opacity:0;transform:translateX(-20px);transition:opacity .55s ease,transform .55s ease}
-.reveal-left.visible{opacity:1;transform:none}
-.reveal-right{opacity:0;transform:translateX(20px);transition:opacity .55s ease,transform .55s ease}
-.reveal-right.visible{opacity:1;transform:none}
-
-/* ━━━━━━━━━━━━━━━━━━━━━━ RESPONSIVE ━━━━━━━━━━━━━━━━━━━━━━ */
-@media(max-width:768px){
-  .nav-links{display:none}
-  .ba-grid{grid-template-columns:1fr}
-  .ba-divider{display:none}
-  nav{padding:.85rem 1.2rem}
-}
-</style>
+    @media (max-width: 860px) {
+      .nav-links a:not(.nav-cta) { display: none; }
+      .card-grid-3 { grid-template-columns: 1fr 1fr; }
+      .card-grid-2 { grid-template-columns: 1fr; }
+      .savings-highlight { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .card-grid-3 { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
-
-<!-- ══════════════════════════════════════════════════════ NAV -->
-<nav>
-  <a href="#" class="nav-logo">
-    <!-- LOGO: 4 agents orbiting a central hub — "unified coordination" -->
-    <div class="logo-mark">
-      <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <radialGradient id="lg1" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stop-color="#a78bfa"/>
-            <stop offset="100%" stop-color="#2dd4bf"/>
-          </radialGradient>
-          <radialGradient id="lg2" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stop-color="#8b5cf6"/>
-            <stop offset="100%" stop-color="#14b8a6"/>
-          </radialGradient>
-          <filter id="glow">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="1.5" result="blur"/>
-            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-          </filter>
-        </defs>
-        <!-- Outer ring -->
-        <circle cx="17" cy="17" r="15.5" stroke="url(#lg1)" stroke-width=".6" opacity=".25"/>
-        <!-- Connection lines (dashed, animated) -->
-        <line x1="17" y1="4.5" x2="17" y2="12.5" stroke="url(#lg1)" stroke-width="1" stroke-dasharray="2 1.5" opacity=".7">
-          <animate attributeName="stroke-dashoffset" from="0" to="-7" dur="1.5s" repeatCount="indefinite"/>
-        </line>
-        <line x1="29.5" y1="17" x2="21.5" y2="17" stroke="url(#lg1)" stroke-width="1" stroke-dasharray="2 1.5" opacity=".7">
-          <animate attributeName="stroke-dashoffset" from="0" to="-7" dur="1.8s" repeatCount="indefinite"/>
-        </line>
-        <line x1="17" y1="29.5" x2="17" y2="21.5" stroke="url(#lg1)" stroke-width="1" stroke-dasharray="2 1.5" opacity=".7">
-          <animate attributeName="stroke-dashoffset" from="0" to="-7" dur="1.3s" repeatCount="indefinite"/>
-        </line>
-        <line x1="4.5" y1="17" x2="12.5" y2="17" stroke="url(#lg1)" stroke-width="1" stroke-dasharray="2 1.5" opacity=".7">
-          <animate attributeName="stroke-dashoffset" from="0" to="-7" dur="2s" repeatCount="indefinite"/>
-        </line>
-        <!-- Diagonal connections (cross) -->
-        <line x1="8" y1="8" x2="13" y2="13" stroke="#8b5cf6" stroke-width=".5" opacity=".2"/>
-        <line x1="26" y1="8" x2="21" y2="13" stroke="#2dd4bf" stroke-width=".5" opacity=".2"/>
-        <line x1="8" y1="26" x2="13" y2="21" stroke="#2dd4bf" stroke-width=".5" opacity=".2"/>
-        <line x1="26" y1="26" x2="21" y2="21" stroke="#8b5cf6" stroke-width=".5" opacity=".2"/>
-        <!-- Agent nodes (top, right, bottom, left) -->
-        <circle cx="17" cy="4" r="3" fill="#8b5cf6" opacity=".9">
-          <animate attributeName="r" values="3;3.4;3" dur="2s" repeatCount="indefinite"/>
-        </circle>
-        <circle cx="30" cy="17" r="3" fill="#2dd4bf" opacity=".85">
-          <animate attributeName="r" values="3;3.4;3" dur="2.3s" begin=".5s" repeatCount="indefinite"/>
-        </circle>
-        <circle cx="17" cy="30" r="3" fill="#8b5cf6" opacity=".9">
-          <animate attributeName="r" values="3;3.4;3" dur="2.1s" begin="1s" repeatCount="indefinite"/>
-        </circle>
-        <circle cx="4" cy="17" r="3" fill="#2dd4bf" opacity=".85">
-          <animate attributeName="r" values="3;3.4;3" dur="1.9s" begin="1.5s" repeatCount="indefinite"/>
-        </circle>
-        <!-- Central hub pulse rings -->
-        <circle cx="17" cy="17" r="5" fill="none" stroke="url(#lg1)" stroke-width=".8" opacity=".15">
-          <animate attributeName="r" values="5;9;5" dur="2.5s" repeatCount="indefinite"/>
-          <animate attributeName="opacity" values=".15;0;.15" dur="2.5s" repeatCount="indefinite"/>
-        </circle>
-        <!-- Central hub -->
-        <circle cx="17" cy="17" r="4.5" fill="url(#lg2)" filter="url(#glow)"/>
-        <circle cx="17" cy="17" r="2.2" fill="#fff" opacity=".9"/>
-      </svg>
-    </div>
-    <span class="nav-name">samvit</span>
-  </a>
-  <ul class="nav-links">
-    <li><a href="#tools">Tools</a></li>
-    <li><a href="#integrations">Integrations</a></li>
-    <li><a href="#for-ctos">For CTOs</a></li>
-    <li><a href="#how-it-works">How it works</a></li>
-    <li><a href="#setup">Setup</a></li>
-    <li><a href="http://localhost:8765/openapi.json" target="_blank" rel="noopener">API</a></li>
-  </ul>
-  <div class="nav-right">
-    <a href="https://github.com/darshanredkar11/samvit/blob/main/SPEC.md" class="btn-ghost">Docs</a>
-    <a href="https://github.com/darshanredkar11/samvit" class="btn-nav">GitHub →</a>
-  </div>
-</nav>
-
-<!-- ══════════════════════════════════════════════════════ HERO -->
-<div class="hero">
-  <div class="hero-grid"></div>
-  <div class="glow glow1"></div>
-  <div class="glow glow2"></div>
-  <div class="glow glow3"></div>
-
-  <div class="hero-inner">
-    <div class="eyebrow">
-      <span class="eyebrow-dot"></span>
-      Apache 2.0 · MCP protocol · 1 docker command
-    </div>
-
-    <h1>
-      <span class="h1-white">Shared intelligence</span><br/>
-      <span class="h1-grad">for your AI team.</span>
-    </h1>
-
-    <p class="hero-sub">
-      Claude, Codex, Antigravity, Hermes — each one brilliant, all of them isolated.
-      Samvit gives every agent on your team a shared brain, a task queue,
-      persistent document memory, a queryable code graph, and native Hermes integration.
-    </p>
-
-    <div class="hero-ctas">
-      <a href="#setup" class="btn-primary">
-        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="2"><path d="M7.5 1v13M1 7.5l6.5-6.5 6.5 6.5"/></svg>
-        Deploy in 5 minutes
+  <nav aria-label="Primary navigation">
+    <div class="wrap nav-inner">
+      <a class="brand" href="#" aria-label="Samvit home">
+        <span class="mark" aria-hidden="true">S</span>
+        <span>samvit</span>
       </a>
-      <a href="https://github.com/darshanredkar11/samvit" class="btn-outline">
-        <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-        View source
-      </a>
+      <div class="nav-links">
+        <a href="#problem">Problem</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#tools">Tools</a>
+        <a href="#guide">Guide</a>
+        <a href="#admin-ui">Admin UI</a>
+        <a href="#faq">FAQ</a>
+        <a class="nav-cta" href="https://github.com/darshanredkar11/samvit">View on GitHub</a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <!-- ═══ HERO ═══ -->
+    <header class="hero wrap">
+      <div class="eyebrow">Open source · MCP · Apache 2.0 · Headroom Embedded</div>
+      <h1>Coordinate your AI agents <em>and</em> compress their context — <span class="gradient">one server.</span></h1>
+      <p class="hero-copy">
+        <strong>Samvit</strong> gives Claude Code, Codex, Antigravity and Hermes agents shared memory,
+        atomic tasks, and persistent messages across machines. <strong>Headroom</strong> runs <em>inside</em>
+        the server, compressing every response (recall results, RAG chunks, code search, messages) by
+        60–95% before it reaches the agent. Zero per-machine install.
+      </p>
+      <div class="actions">
+        <a class="button primary" href="#guide">Start the 5-minute guide</a>
+        <a class="button secondary" href="https://github.com/darshanredkar11/samvit">Get the source</a>
+        <a class="button secondary" href="#headroom">How token savings work</a>
+      </div>
+    </header>
+
+    <!-- ═══ SAVINGS ═══ -->
+    <div class="wrap" style="margin-top:-1.5rem;">
+      <div class="savings-highlight">
+        <div class="savings-item">
+          <div class="big">92%</div>
+          <div class="label">Memory & code search</div>
+          <div class="sub">17,765 → 1,408 tokens via SmartCrusher</div>
+        </div>
+        <div class="savings-item">
+          <div class="big orange">92%</div>
+          <div class="label">RAG document chunks</div>
+          <div class="sub">65,694 → 5,118 tokens via content routing</div>
+        </div>
+        <div class="savings-item">
+          <div class="big">±0%</div>
+          <div class="label">Accuracy preserved</div>
+          <div class="sub">GSM8K · SQuAD v2 · BFCL (published benchmarks)</div>
+        </div>
+      </div>
     </div>
 
-    <!-- STORY ANIMATION: 4-act before/after narrative -->
-    <div style="width:100%;max-width:760px;margin:0 auto;animation:fadeUp .5s .32s ease both">
-      <div id="storyStage" style="
-        background:#0a0a14;border:1px solid rgba(255,255,255,.09);
-        border-radius:16px;overflow:hidden;
-        box-shadow:0 30px 70px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.03)">
-
-        <!-- bar -->
-        <div style="background:rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.07);
-                    padding:.65rem 1.2rem;display:flex;align-items:center;justify-content:space-between">
-          <div style="display:flex;gap:.35rem">
-            <div style="width:11px;height:11px;border-radius:50%;background:#ff5f57"></div>
-            <div style="width:11px;height:11px;border-radius:50%;background:#febc2e"></div>
-            <div style="width:11px;height:11px;border-radius:50%;background:#28c840"></div>
+    <!-- ═══ PROBLEM ═══ -->
+    <section id="problem">
+      <div class="wrap">
+        <div class="section-head centered">
+          <div class="kicker">The two gaps in production AI coding</div>
+          <h2>Your agents are isolated <em>and</em> expensive.</h2>
+          <p>Most teams face two problems: agents can't coordinate across sessions, and every token they read costs money. Solving only one leaves you with a fragile or expensive pipeline.</p>
+        </div>
+        <div class="card-grid card-grid-2" style="gap: 1.5rem;">
+          <div class="card" style="border-left: 3px solid var(--violet);">
+            <div class="number">GAP 1 — Coordination</div>
+            <h3>Agents have no shared memory or task ownership.</h3>
+            <p>Agent A learns your auth flow. Agent B repeats the same investigation tomorrow. Two agents claim the same issue because neither sees ownership. Humans copy notes between terminals. <strong>Samvit</strong> solves this: one MCP server for shared memory, atomic task claims (<code>FOR UPDATE SKIP LOCKED</code>), and durable messaging — PostgreSQL-backed, provider-agnostic.</p>
           </div>
-          <div id="storyLabel" style="
-            font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
-            padding:.22rem .75rem;border-radius:100px;
-            background:rgba(239,68,68,.14);color:rgba(239,68,68,.9)">Before Samvit</div>
-          <div style="font-size:.65rem;color:#4a4a72;font-family:'JetBrains Mono',monospace">live demo</div>
-        </div>
-
-        <!-- canvas -->
-        <div id="storyCanvas" style="padding:1.2rem 1.4rem;min-height:250px"></div>
-
-        <!-- caption -->
-        <div style="
-          border-top:1px solid rgba(255,255,255,.06);padding:.7rem 1rem;
-          display:flex;align-items:center;justify-content:center;gap:.6rem">
-          <div style="display:flex;gap:.3rem" id="storyDots"></div>
-          <span id="storyCaption" style="font-size:.73rem;color:#5050a0"></span>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script>
-(function() {
-  // ── Story acts ──────────────────────────────────────────────────────────────
-  var ACTS = [
-    {
-      phase: "before",
-      label: "Before Samvit",
-      caption: "Knowledge evaporates every session",
-      hub: false,
-      rows: [
-        {dot:"#8b5cf6", name:"darshan", action:"reads auth.py — for the 4th time this week",  badge:"wasted",    bc:"#ef4444"},
-        {dot:"#2dd4bf", name:"rahul",   action:"discovers the same JWT issue independently",   badge:"duplicate", bc:"#f97316"},
-        {dot:"#8b5cf6", name:"rehma",   action:"Task #42 already claimed — work overwritten",  badge:"collision", bc:"#f97316"},
-        {dot:"#2dd4bf", name:"sachin",  action:"left a review comment at 2am — nobody saw it", badge:"vanished",  bc:"#6b7280"},
-      ]
-    },
-    {
-      phase: "before",
-      label: "Before Samvit",
-      caption: "Every session starts blank. Every. Single. Time.",
-      hub: false,
-      rows: [
-        {dot:"#ef4444", name:"darshan", action:"new session — zero context, zero memory",         badge:"0 memory",  bc:"#ef4444"},
-        {dot:"#ef4444", name:"rahul",   action:"what did we decide about the auth expiry?",        badge:"forgotten", bc:"#ef4444"},
-        {dot:"#ef4444", name:"rehma",   action:"re-reading architecture.md for the 3rd time",     badge:"again",     bc:"#f97316"},
-        {dot:"#ef4444", name:"sachin",  action:"where is the Stripe webhook secret stored?",       badge:"no idea",   bc:"#6b7280"},
-      ]
-    },
-    {
-      phase: "after",
-      label: "With Samvit",
-      caption: "One agent learns. Every agent knows. Instantly.",
-      hub: true,
-      rows: [
-        {dot:"#a78bfa", name:"darshan", action:'remember("JWT 24h expiry, refresh at /api/refresh")',  badge:"stored",    bc:"#2dd4bf", flow:true, fd:0},
-        {dot:"#2dd4bf", name:"rahul",   action:"recall('auth expiry') → score 0.94 · 80ms",  badge:"instant",   bc:"#a78bfa", flow:true, fd:400},
-        {dot:"#a78bfa", name:"rehma",   action:"claim() → Task #42 locked atomically ✓",     badge:"atomic",    bc:"#a78bfa", flow:true, fd:800},
-        {dot:"#2dd4bf", name:"sachin",  action:"say(to='darshan') → delivered + persists",        badge:"received",  bc:"#a3e635", flow:true, fd:1200},
-      ]
-    },
-    {
-      phase: "after",
-      label: "With Samvit",
-      caption: "Index once. Every agent queries. No re-reads ever.",
-      hub: true,
-      rows: [
-        {dot:"#a78bfa", name:"darshan", action:"index_code('/repo') → 312 symbols, 891 edges",    badge:"once",      bc:"#2dd4bf", flow:true, fd:0},
-        {dot:"#2dd4bf", name:"rahul",   action:"explore_code('auth') → file, line, signature",    badge:"no read",   bc:"#a78bfa", flow:true, fd:300},
-        {dot:"#a78bfa", name:"rehma",   action:"ingest(arch.md) → 8 chunks shared with all",      badge:"shared",    bc:"#2dd4bf", flow:true, fd:600},
-        {dot:"#2dd4bf", name:"sachin",  action:"search_docs('Stripe webhooks') → 0.96 score",     badge:"found",     bc:"#a3e635", flow:true, fd:900},
-      ]
-    }
-  ];
-
-  var canvas   = document.getElementById("storyCanvas");
-  var label    = document.getElementById("storyLabel");
-  var caption  = document.getElementById("storyCaption");
-  var dotsWrap = document.getElementById("storyDots");
-  var actIdx   = 0;
-
-  // Build dot indicators
-  ACTS.forEach(function(_, i) {
-    var d = document.createElement("div");
-    d.id = "sd" + i;
-    d.style.cssText = "width:6px;height:6px;border-radius:50%;background:#2a2a50;transition:background .3s";
-    dotsWrap.appendChild(d);
-  });
-
-  function setDot(i) {
-    ACTS.forEach(function(_, j) {
-      document.getElementById("sd"+j).style.background = j === i ? "#a78bfa" : "#2a2a50";
-    });
-  }
-
-  function rowHTML(r, isAfter) {
-    var badgeColor = r.bc || "#6b7280";
-    var bg = isAfter
-      ? "background:rgba(255,255,255,.025);border:1px solid rgba(139,92,246,.12)"
-      : "background:rgba(255,255,255,.018);border:1px solid rgba(255,255,255,.05)";
-    var flowBar = isAfter && r.flow
-      ? '<div class="sv-flow" data-fd="'+(r.fd||0)+'" style="position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,rgba(139,92,246,.08),rgba(45,212,191,.06));transition:width 1s ease;pointer-events:none"></div>'
-      : "";
-    return '<div style="display:flex;align-items:center;gap:.8rem;padding:.55rem .9rem;border-radius:9px;margin-bottom:.55rem;position:relative;overflow:hidden;font-family:\'JetBrains Mono\',monospace;font-size:.75rem;'+bg+'">'
-      + flowBar
-      + '<div style="width:8px;height:8px;border-radius:50%;background:'+r.dot+';flex-shrink:0"></div>'
-      + '<div style="color:#e0e0f8;font-weight:700;min-width:68px;flex-shrink:0">'+r.name+'</div>'
-      + '<div style="color:#8888b8;flex:1">'+r.action+'</div>'
-      + '<div style="font-size:.62rem;font-weight:700;padding:.15rem .45rem;border-radius:4px;flex-shrink:0;background:'+badgeColor+'22;color:'+badgeColor+'">'+r.badge+'</div>'
-      + '</div>';
-  }
-
-  function render(act) {
-    var isBefore = act.phase === "before";
-
-    // Update label pill
-    label.textContent = act.label;
-    label.style.background = isBefore ? "rgba(239,68,68,.14)" : "rgba(45,212,191,.12)";
-    label.style.color       = isBefore ? "rgba(239,68,68,.9)" : "#2dd4bf";
-
-    caption.textContent = act.caption;
-    setDot(actIdx);
-
-    var html = "";
-
-    // Samvit hub
-    if (act.hub) {
-      html += '<div style="'
-        + 'display:flex;align-items:center;justify-content:center;gap:.7rem;'
-        + 'padding:.6rem;margin-bottom:.65rem;border-radius:10px;'
-        + 'background:linear-gradient(135deg,rgba(139,92,246,.1),rgba(45,212,191,.07));'
-        + 'border:1px solid rgba(139,92,246,.22)">'
-        + '<div style="width:9px;height:9px;border-radius:50%;background:linear-gradient(135deg,#8b5cf6,#2dd4bf);box-shadow:0 0 8px rgba(139,92,246,.5)"></div>'
-        + '<span style="font-size:.72rem;font-weight:800;color:#a78bfa;letter-spacing:.06em">SAMVIT</span>'
-        + '<span style="font-size:.62rem;color:#4a4a80;font-family:\'JetBrains Mono\',monospace">memory · tasks · rag · code graph · harness</span>'
-        + '</div>';
-    }
-
-    act.rows.forEach(function(r) { html += rowHTML(r, !isBefore); });
-
-    canvas.innerHTML = html;
-
-    // Animate flow bars after paint
-    if (act.hub) {
-      requestAnimationFrame(function() {
-        canvas.querySelectorAll(".sv-flow").forEach(function(el) {
-          var fd = parseInt(el.getAttribute("data-fd") || "0");
-          setTimeout(function() { el.style.width = "100%"; }, fd);
-        });
-      });
-    }
-  }
-
-  function nextAct() {
-    canvas.style.opacity = "0";
-    canvas.style.transform = "translateY(5px)";
-    setTimeout(function() {
-      actIdx = (actIdx + 1) % ACTS.length;
-      render(ACTS[actIdx]);
-      canvas.style.opacity = "1";
-      canvas.style.transform = "none";
-    }, 320);
-  }
-
-  // Init
-  canvas.style.transition = "opacity .35s ease, transform .35s ease";
-  render(ACTS[0]);
-  setInterval(nextAct, 3400);
-})();
-</script>
-
-<!-- ══════════════════════════════════════════════════════ NUMBERS -->
-<div class="numbers reveal">
-  <div class="numbers-inner">
-    <div class="num-item">
-      <span class="num-val" data-target="12">0</span>
-      <div class="num-lbl">MCP tools<br/>out of the box</div>
-    </div>
-    <div class="num-item">
-      <span class="num-val" data-target="1">0</span>
-      <div class="num-lbl">Docker command<br/>to run everything</div>
-    </div>
-    <div class="num-item">
-      <span class="num-val" data-suffix="m" data-target="5">0</span>
-      <div class="num-lbl">Minutes to first<br/>agent coordination</div>
-    </div>
-    <div class="num-item">
-      <span class="num-val" data-target="0">0</span>
-      <div class="num-lbl">Cloud dependencies.<br/>All local.</div>
-    </div>
-    <div class="num-item">
-      <span class="num-val" data-suffix="x" data-target="10">0</span>
-      <div class="num-lbl">Less re-reading<br/>code per session</div>
-    </div>
-    <div class="num-item">
-      <span class="num-val" data-suffix="%" data-target="100">0</span>
-      <div class="num-lbl">Knowledge retained<br/>across sessions</div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════ BEFORE / AFTER -->
-<div class="ba-section">
-  <div class="reveal">
-    <div class="sec-label">The problem</div>
-    <h2>Every session.<br/>Starting from zero.</h2>
-    <p class="sec-sub" style="margin-bottom:0">Your agents are brilliant in isolation. Together, they're a team that can't talk to each other.</p>
-  </div>
-
-  <div class="ba-grid">
-    <div class="ba-card ba-before reveal-left">
-      <div class="ba-label">❌ Without Samvit</div>
-      <div class="ba-row"><div class="ba-icon">🔄</div><div class="ba-text">Darshan's Claude re-reads the auth module. Again. For the 4th time this week.</div></div>
-      <div class="ba-row"><div class="ba-icon">💥</div><div class="ba-text">Rahul and Rehma both claim the same task. One's work gets overwritten.</div></div>
-      <div class="ba-row"><div class="ba-icon">🕳️</div><div class="ba-text">Sachin's review comment disappears when the session ends. Darshan never sees it.</div></div>
-      <div class="ba-row"><div class="ba-icon">☁️</div><div class="ba-text">Every workaround — Notion, S3, SQS — needs accounts, keys, and a sprint to integrate.</div></div>
-      <div class="ba-row"><div class="ba-icon">🔐</div><div class="ba-text">Agent accidentally pastes a prod connection string into a message. It reaches the LLM.</div></div>
-    </div>
-
-    <div class="ba-divider">
-      <div class="vs-circle">VS</div>
-    </div>
-
-    <div class="ba-card ba-after reveal-right">
-      <div class="ba-label">✦ With Samvit</div>
-      <div class="ba-row"><div class="ba-icon">🧠</div><div class="ba-text">Any agent asks <span style="font-family:var(--mono);color:var(--t);font-size:.85em">recall("auth module")</span> and gets the answer in 80ms. Never re-read again.</div></div>
-      <div class="ba-row"><div class="ba-icon">🔒</div><div class="ba-text"><span style="font-family:var(--mono);color:var(--t);font-size:.85em">SELECT FOR UPDATE SKIP LOCKED</span> — guaranteed unique claims. Every time.</div></div>
-      <div class="ba-row"><div class="ba-icon">💬</div><div class="ba-text">Messages persist across sessions. Sachin's review is waiting when Darshan starts next morning.</div></div>
-      <div class="ba-row"><div class="ba-icon">🐳</div><div class="ba-text"><span style="font-family:var(--mono);color:var(--t);font-size:.85em">docker compose up -d</span> — Postgres, Redpanda, MCP server. One command. No accounts.</div></div>
-      <div class="ba-row"><div class="ba-icon">🛡️</div><div class="ba-text">Ethical guard redacts credentials before they touch any LLM. 16 patterns + entropy detection.</div></div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════ TOOLS -->
-<section class="section" id="tools">
-  <div class="reveal">
-    <div class="sec-label">12 tools</div>
-    <h2>Everything a coordinated<br/>AI team needs.</h2>
-    <p class="sec-sub">Six core coordination tools. Six knowledge tools. All through MCP — your agents' existing protocol.</p>
-  </div>
-
-  <div class="tools-grid reveal">
-    <div class="tool-card">
-      <div class="tool-tag tag-mem">Memory</div>
-      <div class="tool-name">remember</div>
-      <div class="tool-desc">Store any text as a vector embedding + optional KV entry. Atomic — both writes or neither.</div>
-    </div>
-    <div class="tool-card">
-      <div class="tool-tag tag-mem">Memory</div>
-      <div class="tool-name">recall</div>
-      <div class="tool-desc">Semantic search over all agents' memories. Or exact key lookup. Namespace-isolated.</div>
-    </div>
-    <div class="tool-card">
-      <div class="tool-tag tag-tsk">Tasks</div>
-      <div class="tool-name">claim</div>
-      <div class="tool-desc">Atomic task pickup — SKIP LOCKED. Two agents calling simultaneously always get different tasks.</div>
-    </div>
-    <div class="tool-card">
-      <div class="tool-tag tag-tsk">Tasks</div>
-      <div class="tool-name">done</div>
-      <div class="tool-desc">Complete a task with a result payload. Auto-releases after timeout + 5-min grace period.</div>
-    </div>
-    <div class="tool-card">
-      <div class="tool-tag tag-msg">Messaging</div>
-      <div class="tool-name">say</div>
-      <div class="tool-desc">Send a message to an agent or broadcast to a topic. Async — recipient reads whenever they're next active.</div>
-    </div>
-    <div class="tool-card">
-      <div class="tool-tag tag-msg">Messaging</div>
-      <div class="tool-name">read</div>
-      <div class="tool-desc">Fetch unread messages. mark_read: false to peek without consuming. Topic and sender filters.</div>
-    </div>
-    <div class="tool-card">
-      <div class="tool-tag tag-rag">RAG</div>
-      <div class="tool-name">ingest</div>
-      <div class="tool-desc">Chunk and embed any doc — PDF, markdown, code, text. Obsidian [[wikilinks]] become graph edges.</div>
-    </div>
-    <div class="tool-card">
-      <div class="tool-tag tag-rag">RAG</div>
-      <div class="tool-name">search_docs</div>
-      <div class="tool-desc">Semantic search across all ingested documents. Returns chunks with source attribution.</div>
-    </div>
-    <div class="tool-card">
-      <div class="tool-tag tag-cg">Code Graph</div>
-      <div class="tool-name">index_code</div>
-      <div class="tool-desc">Parse a codebase into a graph — functions, classes, calls, imports. Python AST + regex for JS/TS/Go.</div>
-    </div>
-    <div class="tool-card">
-      <div class="tool-tag tag-cg">Code Graph</div>
-      <div class="tool-name">explore_code</div>
-      <div class="tool-desc">Semantic search over symbols by meaning. "How does auth work?" → file, line, signature in milliseconds.</div>
-    </div>
-    <div class="tool-card">
-      <div class="tool-tag tag-cg">Code Graph</div>
-      <div class="tool-name">who_calls</div>
-      <div class="tool-desc">Instant reverse lookup. "What calls verify_token()?" without grep, without reading files.</div>
-    </div>
-    <div class="tool-card">
-      <div class="tool-tag tag-cg">Code Graph</div>
-      <div class="tool-name">graph_symbol</div>
-      <div class="tool-desc">BFS dependency subgraph for any symbol — what it calls, what calls it. Renderable as a force graph.</div>
-    </div>
-    <div class="tool-card">
-      <div class="tool-tag" style="background:rgba(251,191,36,.1);color:#fbbf24">Harness</div>
-      <div class="tool-name">SamvitWorker</div>
-      <div class="tool-desc">Base class for harness workers. Auto-registers, loads token, retries on startup. Override execute() — done.</div>
-    </div>
-    <div class="tool-card">
-      <div class="tool-tag" style="background:rgba(251,191,36,.1);color:#fbbf24">Harness</div>
-      <div class="tool-name">SamvitDispatcher</div>
-      <div class="tool-desc">Routes tasks to typed workers. @dispatcher.worker("review") registers a class. Per-type concurrency cap.</div>
-    </div>
-  </div>
-
-  <!-- Terminal showing a real session -->
-  <div class="term-wrap reveal">
-    <div class="term-bar">
-      <div class="tdot td1"></div><div class="tdot td2"></div><div class="tdot td3"></div>
-      <span class="term-tab">samvit — real team session</span>
-    </div>
-    <div class="term-body">
-      <div class="tl"><span class="tc"># Rahul has never seen the auth code — asks the graph</span></div>
-      <div class="tl"><span class="tp">›</span><span><span class="tk">explore_code</span> <span class="ts">"how does token verification work?"</span> --repo <span class="ta">samvit</span></span></div>
-      <div class="tl"><span class="tc">→ authenticate() · samvit/auth.py:56 · score: 0.97</span></div>
-      <div class="tl"><span class="tc">→ verify_token_hash() · samvit/auth.py:38 · score: 0.91</span></div>
-      <br/>
-      <div class="tl"><span class="tc"># Darshan indexes the codebase once — all agents benefit forever</span></div>
-      <div class="tl"><span class="tp">›</span><span><span class="tk">index_code</span> <span class="ts">"/code/samvit"</span> --repo <span class="ta">samvit</span></span></div>
-      <div class="tl"><span class="tc">✓ 47 files · 312 symbols · 891 relationships indexed</span></div>
-      <br/>
-      <div class="tl"><span class="tc"># Rehma ingests the architecture doc — searchable for everyone</span></div>
-      <div class="tl"><span class="tp">›</span><span><span class="tk">ingest</span> <span class="ts">"# Auth Design\n JWT expires 24h…"</span> --file <span class="ta">auth-design.md</span></span></div>
-      <div class="tl"><span class="tc">✓ 3 chunks · 0 wikilinks · guard: clean</span></div>
-      <br/>
-      <div class="tl"><span class="tc"># Sachin searches docs later — no file reading needed</span></div>
-      <div class="tl"><span class="tp">›</span><span><span class="tk">search_docs</span> <span class="ts">"token refresh endpoint"</span></span></div>
-      <div class="tl"><span class="tc">→ score 0.95 | "JWT expires 24h, refresh at /api/refresh…" | auth-design.md</span></div>
-      <div class="tl"><span class="tp">›</span><span class="tcursor"></span></div>
-    </div>
-  </div>
-</section>
-
-<!-- ══════════════════════════════════════════════════════ FOR CTOs -->
-<div class="cto-section" id="for-ctos">
-  <div class="cto-inner">
-    <div class="reveal">
-      <div class="sec-label">For engineering leaders</div>
-      <h2>The decision is simple.<br/>The risk is zero.</h2>
-      <p class="sec-sub">Small AI teams move fast. This is the infrastructure layer that stops coordination from becoming the bottleneck.</p>
-    </div>
-    <div class="cto-grid reveal">
-      <div class="cto-card">
-        <div class="cto-icon">🔒</div>
-        <h3>Zero vendor lock-in</h3>
-        <p>Apache 2.0. Self-hosted. Fork it, audit it, own it. Switch AI providers without rewriting coordination logic. Samvit is the constant.</p>
-        <div class="cto-metric">Apache 2.0 · forever</div>
-      </div>
-      <div class="cto-card">
-        <div class="cto-icon">🏠</div>
-        <h3>Passes InfoSec on day one</h3>
-        <p>All data on your infra. Embeddings run locally — no API calls. 16-pattern credential guard blocks secrets before they touch any LLM. No shared tenancy.</p>
-        <div class="cto-metric">0 external API calls</div>
-      </div>
-      <div class="cto-card">
-        <div class="cto-icon">⚡</div>
-        <h3>One afternoon, not one sprint</h3>
-        <p><code style="font-family:var(--mono);color:var(--t);font-size:.85em">docker compose up</code>. MCP config in 3 lines. Your team is coordinating before lunch. No sprint planning, no integration project.</p>
-        <div class="cto-metric">5 min to first claim</div>
-      </div>
-      <div class="cto-card">
-        <div class="cto-icon">📊</div>
-        <h3>Measurable productivity gain</h3>
-        <p>Code graph eliminates repeated codebase re-reads. Shared memory eliminates re-discovering decisions. Task queue eliminates duplicated work. Numbers you can show.</p>
-        <div class="cto-metric">10x less re-reading</div>
-      </div>
-      <div class="cto-card">
-        <div class="cto-icon">🔬</div>
-        <h3>Correctness by design</h3>
-        <p><code style="font-family:var(--mono);color:var(--t);font-size:.85em">SKIP LOCKED</code>. Atomic transactions. Failure analysis written before line one. 56+ tests against real Postgres — not mocks.</p>
-        <div class="cto-metric">56 integration tests</div>
-      </div>
-      <div class="cto-card">
-        <div class="cto-icon">💸</div>
-        <h3>$0 infra on day one</h3>
-        <p>Runs on a $5/month VM. Postgres + Redpanda + the MCP server fit in under 2GB RAM. No managed services. No per-seat fees. No usage billing.</p>
-        <div class="cto-metric">~$5/mo total infra</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════ HOW IT WORKS -->
-<section class="section" id="how-it-works">
-  <div class="reveal">
-    <div class="sec-label">A real day</div>
-    <h2>What your team looks like<br/>with Samvit running.</h2>
-    <p class="sec-sub">Four agents. Four tools. One shared substrate.</p>
-  </div>
-  <div class="timeline reveal">
-    <div class="tl-item">
-      <div class="tl-time">Morning — work distributed automatically</div>
-      <div class="tl-content">
-        <span class="ag">sachin</span>  creates 6 tasks: tests, docs, review, CORS fix, migration, deploy<br/>
-        <span class="ag">darshan</span> → <span class="cmd">claim</span>  → <span class="res">"Write auth tests" (priority 3)</span><br/>
-        <span class="ag">rehma</span>   → <span class="cmd">claim</span>  → <span class="res">"Fix CORS on /upload" (priority 2)</span><br/>
-        <span class="ag">rahul</span>   → <span class="cmd">explore_code</span> <span style="color:#a3e635">"payments flow"</span> → file, line, signature. No file read.
-      </div>
-    </div>
-    <div class="tl-item">
-      <div class="tl-time">Mid-day — knowledge accumulates</div>
-      <div class="tl-content">
-        <span class="ag">darshan</span> → <span class="cmd">remember</span> <span style="color:#a3e635">"Stripe webhooks use HMAC-SHA256 + STRIPE_WEBHOOK_SECRET"</span><br/>
-        <span class="ag">rehma</span>   → <span class="cmd">recall</span> <span style="color:#a3e635">"stripe"</span> → <span class="res">finds Darshan's note · score 0.93 · 80ms</span><br/>
-        <span class="ag">rehma</span>   → <span class="cmd">ingest</span> <span style="color:#a3e635">architecture.md</span> → 8 chunks · wikilinks indexed<br/>
-        <span class="ag">rahul</span>   → <span class="cmd">search_docs</span> <span style="color:#a3e635">"database schema"</span> → chunk from architecture.md
-      </div>
-    </div>
-    <div class="tl-item">
-      <div class="tl-time">End of day — async handoff across sessions</div>
-      <div class="tl-content">
-        <span class="ag">rahul</span>   → <span class="cmd">done</span>  (review complete · result: { issues: 0 })<br/>
-                   → <span class="cmd">say</span> --to <span class="ag">rehma</span>  <span style="color:#a3e635">"validation PR is approved, ship it"</span><br/>
-        <span class="ag">rehma</span>   → <span class="cmd">read</span>  ← sees approval in next session<br/>
-                   → merges PR → <span class="cmd">say</span> --topic <span style="color:#a3e635">ops</span>  <span style="color:#a3e635">"v2.1 is live 🚀"</span>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ══════════════════════════════════════════════════════ SETUP -->
-<section class="setup-section" id="setup">
-  <div class="reveal">
-    <div class="sec-label">Setup</div>
-    <h2>Running in 5 minutes.<br/>Seriously.</h2>
-    <p class="sec-sub">No cloud account. No API keys. No configuration beyond a token per agent.</p>
-  </div>
-  <div class="steps reveal">
-    <div class="step">
-      <div class="step-n">1</div>
-      <div class="step-body">
-        <h3>Clone and start</h3>
-        <p>One command brings up MCP server, Postgres + pgvector, and Redpanda. Embedding model is baked into the image.</p>
-        <div class="code-snip">
-<span class="ck">git clone</span> <span class="cs">https://github.com/darshanredkar11/samvit</span> &amp;&amp; <span class="ck">cd</span> samvit<br/>
-<span class="ck">docker compose up -d</span><br/>
-<span class="ck">curl</span> <span class="cs">localhost:8765/health</span>  <span class="cc"># → {"status":"ok"}</span>
-        </div>
-      </div>
-    </div>
-    <div class="step">
-      <div class="step-n">2</div>
-      <div class="step-body">
-        <h3>Register each agent — once</h3>
-        <div class="code-snip">
-<span class="ck">curl -X POST</span> <span class="cs">localhost:8765/v1/agents/register</span> \<br/>
-&nbsp;&nbsp;-d <span class="cs">'{"handle":"darshan","provider":"claude"}'</span><br/>
-<span class="cc"># → {"token": "samvit_..."} — save this</span>
-        </div>
-      </div>
-    </div>
-    <div class="step">
-      <div class="step-n">3</div>
-      <div class="step-body">
-        <h3>Add to your AI tool</h3>
-        <p>Claude Code, Codex, any MCP client — same 4 lines.</p>
-        <div class="code-snip">
-<span class="cp">"mcpServers"</span>: {<br/>
-&nbsp;&nbsp;<span class="cs">"samvit"</span>: {<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="cp">"type"</span>: <span class="cs">"sse"</span>, <span class="cp">"url"</span>: <span class="cs">"http://localhost:8765/sse"</span>,<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="cp">"headers"</span>: {<span class="cs">"Authorization"</span>: <span class="cs">"Bearer samvit_..."</span>}<br/>
-&nbsp;&nbsp;}}<br/>
-        </div>
-      </div>
-    </div>
-    <div class="step">
-      <div class="step-n">4</div>
-      <div class="step-body">
-        <h3>Index your codebase &amp; ingest your docs</h3>
-        <div class="code-snip">
-<span class="cc"># Your AI now asks:</span><br/>
-<span class="ck">index_code</span> <span class="cs">"/your/repo"</span> --repo <span class="cs">myapp</span><br/>
-<span class="ck">ingest</span> <span class="cs">architecture.md</span><br/>
-<span class="cc"># Every agent. Every session. Zero re-reads.</span>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ══════════════════════════════════════════════════════ INTEGRATIONS -->
-<section class="section" id="integrations">
-  <div class="reveal">
-    <div class="sec-label">Integrations</div>
-    <h2>Works with the tools<br/>your team already uses.</h2>
-    <p class="sec-sub">Native support for Hermes Agent's skill system, Claude Code hooks, and a harness pattern that any framework can plug into.</p>
-  </div>
-
-  <!-- Hermes integration card -->
-  <div class="reveal" style="
-    background:linear-gradient(135deg,rgba(139,92,246,.06) 0%,rgba(251,191,36,.04) 100%);
-    border:1px solid rgba(139,92,246,.2);border-radius:20px;
-    padding:2.5rem;margin-bottom:1.5rem;overflow:hidden;position:relative">
-    <div style="position:absolute;top:-40px;right:-40px;width:200px;height:200px;
-      background:radial-gradient(circle,rgba(251,191,36,.06),transparent 70%);pointer-events:none"></div>
-
-    <div style="display:flex;align-items:flex-start;gap:1.5rem;flex-wrap:wrap">
-      <div style="flex:1;min-width:280px">
-        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem">
-          <div style="
-            background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.25);
-            border-radius:10px;padding:.5rem .9rem;
-            font-size:.8rem;font-weight:800;color:#fbbf24;letter-spacing:.04em">
-            Hermes Agent
-          </div>
-          <div style="font-size:.72rem;color:#5050a0;font-weight:500">180k+ GitHub stars · NousResearch</div>
-        </div>
-        <h3 style="font-size:1.4rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.7rem">
-          Hermes learns alone.<br/>
-          <span style="background:linear-gradient(120deg,#a78bfa,#2dd4bf);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Samvit makes it a team.</span>
-        </h3>
-        <p style="color:#8888b8;font-size:.9rem;line-height:1.7;margin-bottom:1.2rem">
-          Hermes writes reusable skills when it solves hard problems — but those skills stay on one machine.
-          Point Hermes at Samvit's memory backend and every agent on the team gets every skill, instantly.
-        </p>
-        <div style="display:flex;flex-direction:column;gap:.5rem">
-          <div style="display:flex;align-items:flex-start;gap:.6rem;font-size:.85rem">
-            <span style="color:#a78bfa;flex-shrink:0;margin-top:.1rem">✦</span>
-            <span style="color:#9090b8"><strong style="color:#e0e0f8">Shared skill pool</strong> — Hermes skills published to Samvit via <code style="font-family:'JetBrains Mono',monospace;color:#2dd4bf;font-size:.85em">remember(key="skill.{name}")</code>, searchable by all agents</span>
-          </div>
-          <div style="display:flex;align-items:flex-start;gap:.6rem;font-size:.85rem">
-            <span style="color:#a78bfa;flex-shrink:0;margin-top:.1rem">✦</span>
-            <span style="color:#9090b8"><strong style="color:#e0e0f8">Task queue replaces crons</strong> — Hermes cron definitions → Samvit tasks, dynamic priority, zero double-execution</span>
-          </div>
-          <div style="display:flex;align-items:flex-start;gap:.6rem;font-size:.85rem">
-            <span style="color:#a78bfa;flex-shrink:0;margin-top:.1rem">✦</span>
-            <span style="color:#9090b8"><strong style="color:#e0e0f8">Skill auto-publish</strong> — file watcher on <code style="font-family:'JetBrains Mono',monospace;color:#2dd4bf;font-size:.85em">~/.hermes/skills/</code>, broadcasts via <code style="font-family:'JetBrains Mono',monospace;color:#2dd4bf;font-size:.85em">say(topic="skills")</code></span>
+          <div class="card" style="border-left: 3px solid var(--orange);">
+            <div class="number">GAP 2 — Token Cost</div>
+            <h3>Server responses contain 60–95% redundant data.</h3>
+            <p>Every <code>recall</code> returns memory snippets. Every <code>search_docs</code> returns chunked text. Every <code>explore_code</code> returns symbol metadata. All of it gets sent to the LLM — and you pay per token. <strong>Headroom</strong> runs <em>inside Samvit</em> and compresses these responses using SmartCrusher (JSON), CodeCompressor (AST), and CacheAligner (prefix stabilization). No per-machine install, no config, no accuracy loss.</p>
           </div>
         </div>
       </div>
+    </section>
 
-      <div style="flex:1;min-width:280px">
-        <div style="background:#070710;border:1px solid rgba(255,255,255,.07);border-radius:12px;overflow:hidden">
-          <div style="background:rgba(255,255,255,.03);border-bottom:1px solid rgba(255,255,255,.06);
-                      padding:.55rem 1rem;font-family:'JetBrains Mono',monospace;font-size:.7rem;color:#4a4a72">
-            ~/.hermes/config.json
+    <!-- ═══ STACK OVERVIEW ═══ -->
+    <section style="background: rgba(9,18,31,.55); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);">
+      <div class="wrap">
+        <div class="section-head centered">
+          <div class="kicker">The combined stack</div>
+          <h2>One server, two layers.</h2>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: .3rem;">
+          <div style="padding: .6rem 1.5rem; border: 1px solid var(--violet); border-radius: 8px; background: rgba(157,131,255,.06); text-align: center; min-width: 380px;">
+            <strong>Your AI agents</strong>
+            <div style="color: var(--muted); font-size: .75rem;">Claude Code · Codex CLI · Antigravity · Cursor · Hermes · Custom MCP</div>
           </div>
-          <div style="padding:1.1rem 1.3rem;font-family:'JetBrains Mono',monospace;font-size:.77rem;line-height:1.9;color:#8888b8">
-<span style="color:#6060a0">{</span><br/>
-&nbsp;&nbsp;<span style="color:#a78bfa">"memory"</span><span style="color:#6060a0">: {</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#a78bfa">"backend"</span><span style="color:#6060a0">:</span> <span style="color:#a3e635">"external"</span><span style="color:#6060a0">,</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#a78bfa">"url"</span><span style="color:#6060a0">:</span> <span style="color:#a3e635">"http://localhost:8765/v1/hermes/memory"</span><br/>
-&nbsp;&nbsp;<span style="color:#6060a0">},</span><br/>
-&nbsp;&nbsp;<span style="color:#a78bfa">"crons"</span><span style="color:#6060a0">: [</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6060a0">{</span> <span style="color:#a78bfa">"name"</span><span style="color:#6060a0">:</span> <span style="color:#a3e635">"daily-review"</span><span style="color:#6060a0">,</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#a78bfa">"task"</span><span style="color:#6060a0">:</span> <span style="color:#a3e635">"Review PR queue"</span> <span style="color:#6060a0">}</span><br/>
-&nbsp;&nbsp;<span style="color:#6060a0">]</span><br/>
-<span style="color:#6060a0">}</span><br/>
-<br/>
-<span style="color:#3d3d5c"># Hermes now uses Samvit for memory.</span><br/>
-<span style="color:#3d3d5c"># Cron → Samvit task queue.</span><br/>
-<span style="color:#3d3d5c"># Skills shared across all agents.</span>
+          <div style="color: var(--dim); font-size: .7rem;">↓ MCP protocol (Streamable HTTP / SSE)</div>
+          <div style="padding: .8rem 1.5rem; border: 1px solid var(--cyan); border-radius: 10px; background: rgba(82,215,209,.05); text-align: center; min-width: 550px;">
+            <div style="font-weight: 700; margin-bottom: .4rem;">Samvit Server (self-hosted)</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .5rem; text-align: left; font-size: .78rem;">
+              <div>
+                <div style="color: var(--dim); font-size: .65rem; text-transform: uppercase; letter-spacing: .06em;">Coordination</div>
+                <div>Auth middleware</div>
+                <div>MCP tools (16 tools)</div>
+                <div>Task dispatcher</div>
+                <div>Admin web UI</div>
+                <div>Event bus (Redpanda)</div>
+              </div>
+              <div>
+                <div style="color: var(--dim); font-size: .65rem; text-transform: uppercase; letter-spacing: .06em;">Storage & Search</div>
+                <div>Embeddings (local)</div>
+                <div>RAG (PDF/MD/TXT)</div>
+                <div>CodeGraph (AST+regex)</div>
+                <div>Ethical Guard</div>
+              </div>
+              <div style="border-left: 1px solid rgba(255,194,122,.35); padding-left: .6rem; background: rgba(255,194,122,.04); border-radius: 6px;">
+                <div style="color: var(--orange); font-size: .65rem; text-transform: uppercase; letter-spacing: .06em;">Headroom Embedded</div>
+                <div>SmartCrusher (JSON)</div>
+                <div>CodeCompressor (AST)</div>
+                <div>CacheAligner</div>
+                <div>CCR reversible store</div>
+              </div>
+            </div>
+            <div style="color: var(--muted); font-size: .72rem; margin-top: .5rem; border-top: 1px solid var(--line); padding-top: .5rem;">
+              All tool outputs compressed before returning to agent · Zero per-machine install
+            </div>
+          </div>
+          <div style="display: flex; gap: .6rem; font-size: .7rem; color: var(--dim);">
+            <span>↓ compressed responses (60-95% smaller)</span>
+            <span style="color: var(--line);">|</span>
+            <span>↓ SQL to PostgreSQL 16 + pgvector</span>
+          </div>
+          <div style="display: flex; gap: .6rem; flex-wrap: wrap; justify-content: center;">
+            <div style="padding: .5rem 1.2rem; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); text-align: center; min-width: 200px;">
+              <div style="font-weight: 700; font-size: .85rem;">LLM APIs</div>
+              <div style="color: var(--muted); font-size: .72rem;">Anthropic · OpenAI · Bedrock · Vertex · OpenRouter</div>
+            </div>
+            <div style="padding: .5rem 1.2rem; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); text-align: center; min-width: 200px;">
+              <div style="font-weight: 700; font-size: .85rem;">PostgreSQL 16</div>
+              <div style="color: var(--muted); font-size: .72rem;">agents · memories · tasks · messages · docs · code graph · guard logs</div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  </div>
+    </section>
 
-  <!-- Harness + Hooks cards -->
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.2rem" class="reveal">
+    <!-- ═══ DETAILED DATA FLOW ═══ -->
+    <section id="architecture">
+      <div class="wrap">
+        <div class="section-head centered">
+          <div class="kicker">Internal data flow</div>
+          <h2>What happens when an agent calls a tool.</h2>
+        </div>
 
-    <!-- Harness worker -->
-    <div style="background:#0a0a14;border:1px solid rgba(255,255,255,.07);border-radius:16px;overflow:hidden">
-      <div style="background:rgba(251,191,36,.06);border-bottom:1px solid rgba(251,191,36,.1);
-                  padding:.85rem 1.3rem;display:flex;align-items:center;gap:.6rem">
-        <div style="width:8px;height:8px;border-radius:50%;background:#fbbf24"></div>
-        <span style="font-size:.72rem;font-weight:700;color:#fbbf24;letter-spacing:.08em;text-transform:uppercase">Harness Workers</span>
-      </div>
-      <div style="padding:1.3rem">
-        <p style="color:#9090b8;font-size:.86rem;line-height:1.65;margin-bottom:1rem">
-          Subclass <code style="font-family:'JetBrains Mono',monospace;color:#fbbf24;font-size:.9em">SamvitWorker</code> and override <code style="font-family:'JetBrains Mono',monospace;color:#fbbf24;font-size:.9em">execute()</code>.
-          Auto-registers, persists tokens, retries on startup, injects context memories before each task.
-        </p>
-        <div style="background:#070710;border:1px solid rgba(255,255,255,.06);border-radius:9px;
-                    padding:.9rem 1.1rem;font-family:'JetBrains Mono',monospace;font-size:.75rem;line-height:1.85;color:#8888b8">
-<span style="color:#3d3d5c">class</span> <span style="color:#fbbf24">ReviewWorker</span>(<span style="color:#a78bfa">SamvitWorker</span>):<br/>
-&nbsp;&nbsp;<span style="color:#3d3d5c">async def</span> <span style="color:#2dd4bf">execute</span>(self, task, context):<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#3d3d5c"># context = top memories auto-loaded</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;result = <span style="color:#3d3d5c">await</span> review(task[<span style="color:#a3e635">"description"</span>])<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#3d3d5c">await</span> self.<span style="color:#2dd4bf">remember</span>(f<span style="color:#a3e635">"Reviewed: {result}"</span>)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#3d3d5c">return</span> {<span style="color:#a3e635">"verdict"</span>: result}<br/>
-<br/>
-asyncio.run(<span style="color:#fbbf24">ReviewWorker</span>(<span style="color:#a3e635">"rahul"</span>, <span style="color:#a3e635">"antigravity"</span>).run())
+        <div class="arch">
+
+          <!-- Row 1: Agent calls -->
+          <div class="arch-row">
+            <div class="arch-box small" style="border-color:var(--violet);background:rgba(157,131,255,.04);">
+              <div class="label">Any machine</div>
+              <div class="title">Agent</div>
+              <div class="sub">MCP tool call (remember, recall, search_docs, read, ...)</div>
+            </div>
+          </div>
+
+          <div class="arch-line"><span class="arrow">↓ MCP request</span></div>
+
+          <!-- Row 2: Samvit internals -->
+          <div class="arch-row">
+            <div class="arch-box med" style="border-color:rgba(157,131,255,.2);">
+              <div class="label">Step 1</div>
+              <div class="title">Auth Middleware</div>
+              <div class="desc">Verify bearer token (bcrypt) · Set agent context</div>
+            </div>
+            <div class="arch-box med" style="border-color:rgba(82,215,209,.2);">
+              <div class="label">Step 2</div>
+              <div class="title">Ethical Guard</div>
+              <div class="desc">Scan input (credentials, PII, live data) · Block / Redact / Warn</div>
+            </div>
+            <div class="arch-box med" style="border-color:rgba(157,131,255,.2);">
+              <div class="label">Step 3</div>
+              <div class="title">Tool Handler</div>
+              <div class="desc">Execute core logic · Query PostgreSQL</div>
+            </div>
+          </div>
+
+          <div class="arch-row">
+            <div class="arch-box large headroom">
+              <div class="label">Step 4 — Headroom Compression Layer</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem;margin-top:.3rem;">
+                <div>
+                  <div class="title" style="font-size:.78rem;">CacheAligner</div>
+                  <div class="sub">Stabilize prefixes for KV cache hits</div>
+                </div>
+                <div>
+                  <div class="title" style="font-size:.78rem;">SmartCrusher</div>
+                  <div class="sub">Compress JSON arrays (recall, search_docs, list_tasks)</div>
+                </div>
+                <div>
+                  <div class="title" style="font-size:.78rem;">CodeCompressor</div>
+                  <div class="sub">AST-aware code symbol compression (explore_code, who_calls)</div>
+                </div>
+              </div>
+              <div class="desc" style="margin-top:.3rem;">CCR reversible store: original data cached locally; LLM can retrieve on demand</div>
+            </div>
+          </div>
+
+          <div class="arch-line"><span class="arrow">↓ Compressed response to agent (60-95% smaller, same meaning)</span></div>
+
+          <!-- Row 3: Agent to LLM -->
+          <div class="arch-row">
+            <div class="arch-box small" style="border-color:var(--violet);background:rgba(157,131,255,.04);">
+              <div class="title">Agent</div>
+              <div class="sub">Sends compressed context to LLM</div>
+            </div>
+            <div class="arch-box llm small" style="max-width:200px;">
+              <div class="title">LLM API</div>
+              <div class="sub">Pays for fewer tokens</div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="legend">
+          <span><span class="legend-dot" style="background:var(--orange);"></span> Headroom embedded inside Samvit</span>
+          <span><span class="legend-dot" style="background:var(--cyan);"></span> Compression is transparent to agents</span>
+          <span><span class="legend-dot" style="background:var(--green);"></span> No per-machine install required</span>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- Dispatcher -->
-    <div style="background:#0a0a14;border:1px solid rgba(255,255,255,.07);border-radius:16px;overflow:hidden">
-      <div style="background:rgba(251,191,36,.06);border-bottom:1px solid rgba(251,191,36,.1);
-                  padding:.85rem 1.3rem;display:flex;align-items:center;gap:.6rem">
-        <div style="width:8px;height:8px;border-radius:50%;background:#fbbf24"></div>
-        <span style="font-size:.72rem;font-weight:700;color:#fbbf24;letter-spacing:.08em;text-transform:uppercase">Task Dispatcher</span>
-      </div>
-      <div style="padding:1.3rem">
-        <p style="color:#9090b8;font-size:.86rem;line-height:1.65;margin-bottom:1rem">
-          Route Samvit tasks to the right worker class automatically.
-          Each type gets its own concurrency cap. <code style="font-family:'JetBrains Mono',monospace;color:#fbbf24;font-size:.9em">@dispatcher.worker</code> decorator pattern.
-        </p>
-        <div style="background:#070710;border:1px solid rgba(255,255,255,.06);border-radius:9px;
-                    padding:.9rem 1.1rem;font-family:'JetBrains Mono',monospace;font-size:.75rem;line-height:1.85;color:#8888b8">
-d = <span style="color:#a78bfa">SamvitDispatcher</span>()<br/>
-<br/>
-@d.worker(<span style="color:#a3e635">"review"</span>)<br/>
-<span style="color:#3d3d5c">class</span> <span style="color:#fbbf24">ReviewWorker</span>(<span style="color:#a78bfa">SamvitWorker</span>): ...<br/>
-<br/>
-@d.worker(<span style="color:#a3e635">"backend"</span>)<br/>
-<span style="color:#3d3d5c">class</span> <span style="color:#fbbf24">BackendWorker</span>(<span style="color:#a78bfa">SamvitWorker</span>): ...<br/>
-<br/>
-asyncio.run(d.run()) <span style="color:#3d3d5c"># polls + routes forever</span>
+    <!-- ═══ WHAT YOU GAIN ═══ -->
+    <section style="background: rgba(9,18,31,.55); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);">
+      <div class="wrap">
+        <div class="section-head centered">
+          <div class="kicker">For engineering teams</div>
+          <h2>What the combined server delivers.</h2>
+        </div>
+        <div class="card-grid card-grid-3">
+          <div class="card">
+            <div class="number">01</div>
+            <h3>Shared persistent memory</h3>
+            <p>Any agent on any machine can <code>remember</code> a decision and any other agent can <code>recall</code> it — by semantic similarity or exact key. No more context resets between sessions. <strong>Headroom compresses recall results by 92%.</strong></p>
+          </div>
+          <div class="card">
+            <div class="number">02</div>
+            <h3>Collision-free task ownership</h3>
+            <p><code>claim</code> atomically locks a task via <code>FOR UPDATE SKIP LOCKED</code>. Two agents never receive the same work. <code>renew</code> extends leases; <code>done</code> records structured results. <strong>Task descriptions compressed by 70%+.</strong></p>
+          </div>
+          <div class="card">
+            <div class="number">03</div>
+            <h3>Durable agent messaging</h3>
+            <p><code>say</code> sends directed or broadcast messages with topic routing. <code>read</code> consumes with mark-as-read tracking across a join table. Messages survive agent restarts. <strong>Message bodies compressed by 60%+.</strong></p>
+          </div>
+          <div class="card">
+            <div class="number">04</div>
+            <h3>RAG and code intelligence</h3>
+            <p><code>ingest</code> documents (PDF, MD, TXT) and <code>search_docs</code> by semantic similarity. <code>index_code</code> builds a graph of symbols (Python AST, JS/Go/Rust/Java regex); <code>explore_code</code>, <code>who_calls</code>, <code>graph_symbol</code> answer architecture questions. <strong>RAG chunks compressed by 92%.</strong></p>
+          </div>
+          <div class="card">
+            <div class="number">05</div>
+            <h3>Reversible compression (CCR)</h3>
+            <p>Headroom's <strong>Compress-Cache-Retrieve</strong> stores originals in a local cache with TTL. If the LLM needs more detail, it calls <code>headroom_retrieve</code> to get the full original. Nothing is permanently lost — compression is always reversible.</p>
+          </div>
+          <div class="card">
+            <div class="number">06</div>
+            <h3>Ethical guardrails</h3>
+            <p>Samvit's <code>guard</code> module scans every memory, message, and document for credentials, PII, and live data — configurable to redact, block, warn, or pass through. Every violation is logged and auditable in <code>guard_violations</code>.</p>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- Claude Code hooks -->
-    <div style="background:#0a0a14;border:1px solid rgba(255,255,255,.07);border-radius:16px;overflow:hidden">
-      <div style="background:rgba(139,92,246,.07);border-bottom:1px solid rgba(139,92,246,.12);
-                  padding:.85rem 1.3rem;display:flex;align-items:center;gap:.6rem">
-        <div style="width:8px;height:8px;border-radius:50%;background:#a78bfa"></div>
-        <span style="font-size:.72rem;font-weight:700;color:#a78bfa;letter-spacing:.08em;text-transform:uppercase">Claude Code Hooks</span>
+    <!-- ═══ TOOL REFERENCE ═══ -->
+    <section id="tools">
+      <div class="wrap">
+        <div class="section-head centered">
+          <div class="kicker">MCP tools</div>
+          <h2>Every primitive your agents need.</h2>
+          <p>Samvit exposes these as MCP tools. Any MCP-compatible client calls them directly. Headroom compresses responses transparently in the background.</p>
+        </div>
+        <table class="tool-table">
+          <thead>
+            <tr><th>Tool</th><th>What it does</th><th>Compressed by Headroom?</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>remember</td><td>Store a semantic memory + optional exact-key lookup</td><td>—</td></tr>
+            <tr><td>recall</td><td>Find memories by semantic query or exact key</td><td>✓ 92% compression</td></tr>
+            <tr><td>create_task</td><td>Create a prioritized, tagged task with idempotency</td><td>—</td></tr>
+            <tr><td>claim</td><td>Atomically lock the next pending task (CTE + SKIP LOCKED)</td><td>—</td></tr>
+            <tr><td>renew / done</td><td>Extend lease / complete a claimed task</td><td>—</td></tr>
+            <tr><td>cancel_task / list_tasks</td><td>Cancel or list tasks by status and tags</td><td>✓ 70%+ on descriptions</td></tr>
+            <tr><td>say / read</td><td>Send / receive directed or broadcast messages</td><td>✓ 60%+ on bodies</td></tr>
+            <tr><td>ingest / search_docs</td><td>Ingest documents and semantic search over them</td><td>✓ 92% on search results</td></tr>
+            <tr><td>index_code / explore_code</td><td>Index codebase / find symbols semantically</td><td>✓ 92% on code search</td></tr>
+            <tr><td>who_calls / graph_symbol</td><td>Find callers / BFS traversal of symbol connections</td><td>✓ on symbol metadata</td></tr>
+          </tbody>
+        </table>
       </div>
-      <div style="padding:1.3rem">
-        <p style="color:#9090b8;font-size:.86rem;line-height:1.65;margin-bottom:1rem">
-          3 lines in <code style="font-family:'JetBrains Mono',monospace;color:#a78bfa;font-size:.9em">settings.json</code> and memory wires itself.
-          Pre-tool injects relevant memories. Post-tool auto-remembers writes. Stop persists the session summary.
-        </p>
-        <div style="background:#070710;border:1px solid rgba(255,255,255,.06);border-radius:9px;
-                    padding:.9rem 1.1rem;font-family:'JetBrains Mono',monospace;font-size:.72rem;line-height:1.85;color:#8888b8">
-<span style="color:#3d3d5c">"hooks"</span>: {<br/>
-&nbsp;<span style="color:#a78bfa">"PreToolUse"</span>:  [<span style="color:#3d3d5c">{"matcher":".*",</span><br/>
-&nbsp;&nbsp;&nbsp;<span style="color:#3d3d5c">"hooks":[{"type":"command",</span><br/>
-&nbsp;&nbsp;&nbsp;<span style="color:#a3e635">"command":"python -m samvit.hooks pre-tool"</span><span style="color:#3d3d5c">}]}],</span><br/>
-&nbsp;<span style="color:#a78bfa">"PostToolUse"</span>: [...<span style="color:#a3e635">"post-tool"</span>...],<br/>
-&nbsp;<span style="color:#a78bfa">"Stop"</span>:        [...<span style="color:#a3e635">"stop"</span>...]<br/>
-}<br/>
-<span style="color:#3d3d5c"># Memory auto-wires. Zero manual calls.</span>
+    </section>
+
+    <!-- ═══ USER GUIDE ═══ -->
+    <section id="guide" style="background: rgba(9,18,31,.55); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);">
+      <div class="wrap">
+        <div class="section-head centered">
+          <div class="kicker">5-minute guide</div>
+          <h2>Samvit is running. Now what?</h2>
+          <p>From zero to a multi-agent team sharing memory, tasks, and messages — with built-in compression.</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+          <div>
+            <div class="usage-steps">
+
+              <div class="usage-step">
+                <div class="num"></div>
+                <div>
+                  <h4>Start the server</h4>
+                  <p>Clone, configure, and start Samvit. Headroom is included — no separate install.</p>
+                  <pre><span class="accent">git clone</span> https://github.com/darshanredkar11/samvit
+<span class="accent">cd</span> samvit
+<span class="accent">cp</span> .env.example .env
+<span class="accent">docker compose up</span> -d
+<span class="accent">curl</span> http://localhost:8765/health
+<span class="c"># → {"status":"ok"}</span></pre>
+                </div>
+              </div>
+
+              <div class="usage-step">
+                <div class="num"></div>
+                <div>
+                  <h4>Register your agent</h4>
+                  <p>Each teammate gets a unique token. Shown once — save it.</p>
+                  <pre><span class="accent">curl</span> -X POST http://localhost:8765/v1/agents/register \
+  -H "Content-Type: application/json" \
+  -d '{"handle": "alice", "admin_secret": "change-me-in-production"}'
+<span class="c"># → {"handle":"alice","token":"samvit_abc123..."}</span></pre>
+                </div>
+              </div>
+
+              <div class="usage-step">
+                <div class="num"></div>
+                <div>
+                  <h4>Connect your AI tool</h4>
+                  <p>Claude Code, Codex CLI, Cursor — any MCP client.</p>
+                  <pre><span class="c"># Claude Code</span>
+<span class="accent">claude mcp add</span> --transport http samvit \
+  http://TEAM_SERVER:8765/mcp \
+  --header "Authorization: Bearer samvit_abc123..."
+
+<span class="c"># Codex CLI</span>
+<span class="accent">codex mcp add</span> --transport http samvit \
+  http://TEAM_SERVER:8765/mcp \
+  --header "Authorization: Bearer samvit_abc123..."</pre>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <div>
+            <div class="usage-steps">
+
+              <div class="usage-step">
+                <div class="num"></div>
+                <div>
+                  <h4>Store and find knowledge</h4>
+                  <p>Tell your agent to store decisions. Any agent retrieves them by meaning — Headroom compresses the results.</p>
+                  <pre><span class="c"># In your agent's chat:</span>
+"Remember: the auth service runs on port 3001
+ and uses JWT with RS256."
+
+<span class="c"># Later, in any other agent:</span>
+"What port does the auth service use?"
+<span class="c"># Agent auto-recalls. Server compresses response 92%.</span></pre>
+                </div>
+              </div>
+
+              <div class="usage-step">
+                <div class="num"></div>
+                <div>
+                  <h4>Create and claim tasks</h4>
+                  <p>Atomic claim — two agents never get the same task.</p>
+                  <pre><span class="c"># Agent A creates a task:</span>
+"Create a task to fix the login timeout bug,
+ priority 3, tag 'backend'."
+
+<span class="c"># Agent B claims it (only one gets it):</span>
+"Claim the next backend task."
+
+"Mark it done with result
+ 'Fixed: increased timeout to 30s'."</pre>
+                </div>
+              </div>
+
+              <div class="usage-step">
+                <div class="num"></div>
+                <div>
+                  <h4>Send messages across sessions</h4>
+                  <p>Durable messages survive restarts. Broadcast or direct.</p>
+                  <pre><span class="c"># Agent A broadcasts:</span>
+"Say 'CI pipeline is green' with topic 'build-status'."
+
+<span class="c"># Agent B reads (with Headroom compression):</span>
+"Read messages with topic 'build-status'."
+<span class="c"># → "CI pipeline is green"</span></pre>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 2rem;">
+          <a class="button primary" href="https://github.com/darshanredkar11/samvit/blob/main/docs/USAGE.md">Full usage guide →</a>
+          <a class="button secondary" href="https://github.com/darshanredkar11/samvit/tree/main/docs">Documentation →</a>
         </div>
       </div>
+    </section>
+
+    <!-- ═══ ADMIN UI ═══ -->
+    <section id="admin-ui">
+      <div class="wrap">
+        <div class="section-head centered">
+          <div class="kicker">Human interface</div>
+          <h2>Web dashboard for server management.</h2>
+          <p>Samvit includes a built-in admin SPA — no separate frontend project to deploy.</p>
+        </div>
+        <div class="card-grid card-grid-3">
+          <div class="card" style="border-top: 3px solid var(--cyan);">
+            <h3>Agent management</h3>
+            <p>View all registered agents, their handles, and creation dates. Register new agents or revoke tokens from the same panel.</p>
+          </div>
+          <div class="card" style="border-top: 3px solid var(--cyan);">
+            <h3>Tasks & guard violations</h3>
+            <p>See the full task queue with status, priority, and ownership. Review every guard violation with timestamps and context — no SQL queries needed.</p>
+          </div>
+          <div class="card" style="border-top: 3px solid var(--cyan);">
+            <h3>Zero extra deploy</h3>
+            <p>The dashboard is a Vite + React SPA built into the same container. Access it at <code>/admin</code> — no separate port, no reverse-proxy tweaks, no second service.</p>
+          </div>
+        </div>
+        <div style="text-align:center;margin-top:1.5rem;">
+          <p style="color:var(--muted);font-size:.9rem;">Build with <code>cd admin-ui && npm ci && npm run build</code>, or run the pre-built image.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ HEADROOM DETAIL ═══ -->
+    <section id="headroom">
+      <div class="wrap">
+        <div class="section-head centered">
+          <div class="kicker">Inside the server</div>
+          <h2>How Headroom compresses responses.</h2>
+          <p>All three algorithms run automatically when <code>SAMVIT_HEADROOM_ENABLED=true</code> (default: on). No agent-side config needed.</p>
+        </div>
+
+        <div class="card-grid card-grid-3">
+          <div class="card" style="border-top: 3px solid var(--orange);">
+            <h3>SmartCrusher</h3>
+            <p><strong>What it does:</strong> Analyzes JSON arrays in responses (recall results, document chunks, code search), detects statistical patterns, keeps important items (errors, anomalies, change points) and compresses repetitive data.</p>
+            <p style="margin-top:.5rem;color:var(--green);font-size:.85rem;">→ 70-95% reduction on structured data</p>
+          </div>
+          <div class="card" style="border-top: 3px solid var(--orange);">
+            <h3>CodeCompressor</h3>
+            <p><strong>What it does:</strong> AST-aware compression for code symbols returned by <code>explore_code</code>, <code>who_calls</code>, and <code>graph_symbol</code>. Strips redundant tokens while preserving structure and signatures.</p>
+            <p style="margin-top:.5rem;color:var(--green);font-size:.85rem;">→ 60-85% reduction on code metadata</p>
+          </div>
+          <div class="card" style="border-top: 3px solid var(--orange);">
+            <h3>CacheAligner</h3>
+            <p><strong>What it does:</strong> Stabilizes response prefixes so LLM provider KV caches (Anthropic, OpenAI, Google) actually hit. Dynamic content (timestamps, IDs) is extracted to the end of the response.</p>
+            <p style="margin-top:.5rem;color:var(--green);font-size:.85rem;">→ 50-90% additional cache savings</p>
+          </div>
+        </div>
+
+        <div style="margin-top: 1.5rem; padding: 1rem; border: 1px solid var(--line); border-radius: 12px; background: rgba(10,19,33,.7);">
+          <div style="display: flex; gap: .8rem; align-items: flex-start;">
+            <div style="flex-shrink:0; padding: .3rem .6rem; border-radius: 6px; background: rgba(255,194,122,.1); color: var(--orange); font: 700 .7rem var(--mono);">CCR</div>
+            <div>
+              <div style="font-weight:700; margin-bottom:.2rem;">CCR: Compress-Cache-Retrieve — nothing is permanently lost</div>
+              <div style="color:var(--muted);font-size:.88rem;">
+                When SmartCrusher compresses a response, the full original is cached in an in-memory store with a TTL (default 5 minutes).
+                Headroom injects a retrieval marker in the compressed response. If the LLM needs the original data, it calls
+                <code>headroom_retrieve</code> via MCP — an instant lookup, not a re-query.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ FAQ ═══ -->
+    <section id="faq" style="background: rgba(9,18,31,.55); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);">
+      <div class="wrap">
+        <div class="section-head centered">
+          <div class="kicker">Questions</div>
+          <h2>For CTOs, architects, and engineers.</h2>
+        </div>
+        <div class="faq-grid" style="max-width: 800px; margin: auto;">
+          <details>
+            <summary>How is this different from LangGraph / CrewAI?</summary>
+            <p>Those frameworks define <em>how</em> agents execute (DAGs, loops, sub-agents). Samvit provides the <em>shared state</em> those agents read and write — memory, tasks, messages — across sessions and machines. They are complementary: LangGraph can use Samvit as its persistence layer.</p>
+          </details>
+          <details>
+            <summary>Does compression change my LLM's answers?</summary>
+            <p>No. Headroom benchmarks show <strong>±0% accuracy delta</strong> on GSM8K (math), SQuAD v2 (QA), and BFCL (tool use). Compression is statistical and structural — it removes redundancy, not meaning. CCR ensures nothing is permanently lost.</p>
+          </details>
+          <details>
+            <summary>Do developers need to install anything on their machines?</summary>
+            <p><strong>No.</strong> Headroom runs inside the Samvit server as a Python library. Developers only install an MCP client (Claude Code, Codex CLI) and point it at the Samvit server. Compression happens server-side, transparently. Zero per-machine setup.</p>
+          </details>
+          <details>
+            <summary>How do we secure Samvit in production?</summary>
+            <p>Do not expose it to the public internet. Run behind a TLS-terminating reverse proxy (Caddy, nginx). Use strong <code>SAMVIT_ADMIN_SECRET</code>. Each agent gets its own bcrypt-hashed token. The ethical guard scans for credentials and PII. PostgreSQL is the single source of truth.</p>
+          </details>
+          <details>
+            <summary>What infrastructure do I need?</summary>
+            <p>One machine with Docker. PostgreSQL 16 (pgvector) + optional Redpanda. Minimum: 2 CPU cores, 4 GB RAM. Headroom's models add ~200MB to the container. No per-machine agents, no sidecars, no per-developer installs.</p>
+          </details>
+          <details>
+            <summary>Can different agent types share the same server?</summary>
+            <p>Yes. Claude Code, Codex CLI, Antigravity, Cursor, and Hermes all connect via MCP to the same Samvit server. Each gets its own token. All share the same memory pool, task queue, and message bus. Headroom compresses responses for all of them equally.</p>
+          </details>
+          <details>
+            <summary>What is on the roadmap?</summary>
+            <p>Workspace isolation, file-intent conflict detection, A2A compatibility, batch operations, WebSocket real-time events, richer task workflows, and deeper Headroom integration (proxy mode sidecar for agent-to-LLM compression).</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ CTA ═══ -->
+    <div class="wrap cta-section">
+      <div class="kicker">Apache 2.0 — self-hosted</div>
+      <h2>Stop paying for redundant tokens and manual handoffs.</h2>
+      <p>Deploy one Samvit server. Agents coordinate. Responses compress automatically. Your token bill shrinks. Your team ships faster. No per-machine install.</p>
+      <div class="actions" style="margin:0">
+        <a class="button primary" href="https://github.com/darshanredkar11/samvit">Deploy Samvit</a>
+        <a class="button secondary" href="https://github.com/chopratejas/headroom">Headroom on GitHub</a>
+        <a class="button secondary" href="https://github.com/darshanredkar11/samvit/blob/main/docs/GAPS.md">Open roadmap</a>
+      </div>
     </div>
+  </main>
 
-  </div>
-</section>
-
-<!-- ══════════════════════════════════════════════════════ OSS -->
-<div class="oss">
-  <div class="oss-box reveal">
-    <div class="sec-label" style="margin-bottom:.9rem">Open source</div>
-    <h2>Built in public.<br/>Apache 2.0. Forever.</h2>
-    <p>Fork it, self-host it, audit every line. The core server will never go behind a paywall. No community edition. No bait-and-switch.</p>
-    <div class="oss-tags">
-      <span class="oss-tag">Apache 2.0</span>
-      <span class="oss-tag">No telemetry</span>
-      <span class="oss-tag">No cloud deps</span>
-      <span class="oss-tag">Local embeddings</span>
-      <span class="oss-tag">56 tests</span>
-      <span class="oss-tag">Full spec + failure analysis published</span>
-      <span class="oss-tag">Ethical guard built-in</span>
-      <span class="oss-tag">RAG + Code Graph</span>
-      <span class="oss-tag">Hermes Agent integration</span>
-      <span class="oss-tag">Harness workers + dispatcher</span>
-      <span class="oss-tag">Claude Code hooks</span>
+  <footer>
+    <div class="wrap footer-inner">
+      <span>Samvit + Headroom · Open-source coordination & compression for AI coding teams</span>
+      <div class="footer-links">
+        <a href="https://github.com/darshanredkar11/samvit">Samvit GitHub</a>
+        <a href="https://github.com/chopratejas/headroom">Headroom GitHub</a>
+        <a href="https://github.com/darshanredkar11/samvit/blob/main/docs/USAGE.md">Usage guide</a>
+        <a href="https://github.com/darshanredkar11/samvit/blob/main/LICENSE">Apache 2.0</a>
+      </div>
     </div>
-    <div style="display:flex;gap:.85rem;justify-content:center;flex-wrap:wrap">
-      <a href="https://github.com/darshanredkar11/samvit" class="btn-primary">View on GitHub →</a>
-      <a href="https://github.com/darshanredkar11/samvit/blob/main/SPEC.md" class="btn-outline">Read the spec</a>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════ FOOTER -->
-<footer>
-  <div class="foot-left">
-    <div class="foot-logo-wrap">
-      <svg width="22" height="22" viewBox="0 0 34 34" fill="none">
-        <defs>
-          <linearGradient id="fl1" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stop-color="#a78bfa"/>
-            <stop offset="100%" stop-color="#2dd4bf"/>
-          </linearGradient>
-        </defs>
-        <circle cx="17" cy="4"  r="3"  fill="#8b5cf6" opacity=".85"/>
-        <circle cx="30" cy="17" r="3"  fill="#2dd4bf" opacity=".85"/>
-        <circle cx="17" cy="30" r="3"  fill="#8b5cf6" opacity=".85"/>
-        <circle cx="4"  cy="17" r="3"  fill="#2dd4bf" opacity=".85"/>
-        <circle cx="17" cy="17" r="4"  fill="url(#fl1)"/>
-        <circle cx="17" cy="17" r="2"  fill="#fff" opacity=".9"/>
-        <line x1="17" y1="7"  x2="17" y2="13" stroke="url(#fl1)" stroke-width="1" opacity=".5"/>
-        <line x1="27" y1="17" x2="21" y2="17" stroke="url(#fl1)" stroke-width="1" opacity=".5"/>
-        <line x1="17" y1="27" x2="17" y2="21" stroke="url(#fl1)" stroke-width="1" opacity=".5"/>
-        <line x1="7"  y1="17" x2="13" y2="17" stroke="url(#fl1)" stroke-width="1" opacity=".5"/>
-      </svg>
-      <span class="foot-name">samvit</span>
-    </div>
-    <span class="foot-sep">·</span>
-    <span class="foot-tag">Shared intelligence for AI teams</span>
-  </div>
-  <div class="foot-links">
-    <a href="https://github.com/darshanredkar11/samvit">GitHub</a>
-    <a href="https://github.com/darshanredkar11/samvit/blob/main/README.md">Docs</a>
-    <a href="https://github.com/darshanredkar11/samvit/blob/main/SPEC.md">Spec</a>
-    <a href="https://github.com/darshanredkar11/samvit/blob/main/FAILURE_ANALYSIS.md">Failure Analysis</a>
-    <a href="https://github.com/darshanredkar11/samvit/blob/main/LICENSE">Apache 2.0</a>
-  </div>
-</footer>
-
-<script>
-// ── Scroll reveal ──────────────────────────────────────────────────────────
-const io = new IntersectionObserver(
-  entries => entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible') }),
-  { threshold: 0.08, rootMargin: '0px 0px -30px 0px' }
-)
-document.querySelectorAll('.reveal,.reveal-left,.reveal-right').forEach(el => io.observe(el))
-
-// ── Counter animation ──────────────────────────────────────────────────────
-function animateCounter(el) {
-  const target = parseInt(el.dataset.target)
-  const suffix = el.dataset.suffix || ''
-  const duration = 1400
-  const start = performance.now()
-  const easeOut = t => 1 - Math.pow(1 - t, 3)
-
-  function tick(now) {
-    const progress = Math.min((now - start) / duration, 1)
-    const value = Math.round(easeOut(progress) * target)
-    el.textContent = value + suffix
-    if(progress < 1) requestAnimationFrame(tick)
-    else el.textContent = target + suffix
-  }
-  requestAnimationFrame(tick)
-}
-
-const counterIO = new IntersectionObserver(entries => {
-  entries.forEach(e => {
-    if(e.isIntersecting) {
-      e.target.querySelectorAll('[data-target]').forEach(animateCounter)
-      counterIO.unobserve(e.target)
-    }
-  })
-}, { threshold: 0.3 })
-document.querySelectorAll('.numbers').forEach(el => counterIO.observe(el))
-
-// ── Active nav highlight ───────────────────────────────────────────────────
-const navLinks = document.querySelectorAll('.nav-links a[href^="#"]')
-const sections = document.querySelectorAll('section[id],[id]')
-window.addEventListener('scroll', () => {
-  let cur = ''
-  sections.forEach(s => { if(scrollY >= s.offsetTop - 200) cur = s.id })
-  navLinks.forEach(a => {
-    const isActive = a.getAttribute('href') === '#'+cur
-    a.style.color = isActive ? 'var(--text2)' : ''
-  })
-}, { passive: true })
-</script>
+  </footer>
 </body>
 </html>
