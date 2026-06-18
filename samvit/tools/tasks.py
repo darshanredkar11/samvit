@@ -20,7 +20,7 @@ import logging
 import secrets
 import uuid
 
-from samvit import db, events, guard
+from samvit import db, guard
 
 log = logging.getLogger(__name__)
 

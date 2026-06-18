@@ -13,7 +13,7 @@ import uuid
 from dataclasses import dataclass
 from typing import Any
 
-from samvit import auth, db, events
+from samvit import auth, db
 
 log = logging.getLogger(__name__)
 
@@ -907,8 +907,3 @@ async def trigger_cron_sync(admin_agent: dict) -> dict:
 
 
 # ── Events / Redpanda admin ───────────────────────────────────────────────────
-
-async def events_status(agent: dict) -> dict:
-    """Return event bus telemetry."""
-    _require_role(agent, *READ_ONLY_ROLES | MUTATION_ROLES)
-    return events.status()

@@ -32,7 +32,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from mcp.server.fastmcp import FastMCP, Context
 from pydantic import BaseModel, Field
 
-from samvit import auth, cleanup, db, embeddings, events, rag, codegraph, ratelimit, headroom
+from samvit import auth, cleanup, db, embeddings, rag, codegraph, ratelimit
 from samvit.tools import memory, messaging, tasks
 from samvit.integrations.hermes import SamvitMemoryBackend
 
@@ -69,7 +69,6 @@ async def lifespan(app: FastAPI):
     except Exception:
         log.warning("Embedding model failed to load — semantic search and RAG will return errors",
                      extra={"action": "install_embeddings"})
-    await events.init()
     cleanup_task = asyncio.create_task(cleanup.start())
     ratelimit_cleanup = asyncio.create_task(ratelimit.start_cleanup())
 
@@ -81,7 +80,6 @@ async def lifespan(app: FastAPI):
         log.info("Samvit shutting down…")
         cleanup_task.cancel()
         ratelimit_cleanup.cancel()
-        await events.close()
         await db.close()
 
 
@@ -232,7 +230,6 @@ async def ready():
     return {
         "status": "ready",
         "database": True,
-        "event_bus": events.status(),
     }
 
 
@@ -253,7 +250,6 @@ async def metrics():
         "pending_tasks": counts["pending_tasks"],
         "memories": counts["memories"],
         "messages": counts["messages"],
-        "event_bus": events.status(),
     }
 
 
@@ -385,7 +381,7 @@ async def _call_tool(agent: dict, tool: str, params: dict[str, Any]) -> dict:
         raise HTTPException(status_code=404, detail=f"Unknown tool: {tool}")
     try:
         result = await call()
-        return headroom.compress(tool, result)
+        return result
     except PermissionError as exc:
         log.info("Tool permission denied", extra={"tool": tool, "error": str(exc)})
         raise HTTPException(status_code=403, detail=str(exc))
@@ -628,11 +624,6 @@ async def admin_kv_get(namespace: str, key: str):
 @app.post("/v1/admin/hermes/cron-sync")
 async def admin_cron_sync():
     return await admin_mod.trigger_cron_sync(_agent())
-
-
-@app.get("/v1/admin/events/status")
-async def admin_events_status():
-    return await admin_mod.events_status(_agent())
 
 
 @app.get("/v1/admin/graph")

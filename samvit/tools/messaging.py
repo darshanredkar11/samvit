@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import logging
 
-from samvit import db, events, guard
+from samvit import db, guard
 
 log = logging.getLogger(__name__)
 
