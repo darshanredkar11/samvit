@@ -393,9 +393,9 @@
     <div class="wrap" style="margin-top:-1.5rem;">
       <div class="savings-highlight">
         <div class="savings-item">
-          <div class="big">83%</div>
-          <div class="label">Code reduction with @task decorator</div>
-          <div class="sub">6+ manual calls → 1 decorator</div>
+          <div class="big">0</div>
+          <div class="label">Duplicate tasks across any agent</div>
+          <div class="sub">Atomic locking — one agent claims, others skip</div>
         </div>
         <div class="savings-item">
           <div class="big orange">3x</div>
@@ -657,7 +657,7 @@
                 <div class="num"></div>
                 <div>
                   <h4>Engineers: Point your tool at Samvit (1 min per person)</h4>
-                  <p>One-time setup. Then you can use <code>@task</code> in your agent.</p>
+                  <p>One-time setup. Every agent on the team now shares the same memory, tasks, and code index.</p>
                   <pre><span class="c"># In Claude Code:</span>
 <span class="accent">claude mcp add</span> --transport http samvit \
   http://team-server:8765/mcp \
@@ -677,8 +677,7 @@
 "Fix that bug"
 "Verify the auth we wrote"
 
-<span class="c"># That's it. Your AI writes @task functions.</span>
-<span class="c"># Samvit ensures:</span>
+<span class="c"># Samvit handles it invisibly:</span>
 <span class="c"># ✓ No duplicate work</span>
 <span class="c"># ✓ Decisions carry forward</span>
 <span class="c"># ✓ Full audit trail</span></pre>
@@ -710,21 +709,19 @@
                 <div class="num"></div>
                 <div>
                   <h4>Day 1: "Let's build JWT auth"</h4>
-                  <p>Just talk to Claude Code. You don't write Samvit code — Claude does. Samvit auto-manages everything.</p>
+                  <p>Just talk to Claude Code. Samvit tools fire automatically — you never see them.</p>
                   <pre><span class="c"># Your chat in Claude Code:</span>
-"Implement JWT auth with RS256.
- Use @task so it auto-retries if needed."
+"Implement JWT auth with RS256."
 
-<span class="c"># Claude Code writes and runs:</span>
-<span class="kw">@task</span>
-<span class="kw">async def</span> <span class="fn">implement_jwt</span>():
-    <span class="c"># ... implementation ...</span>
-    <span class="kw">return</span> {<span class="str">"done"</span>: <span class="str">true</span>}
+<span class="c"># Claude Code auto-calls (invisible):</span>
+<span class="c"># create_task("Implement JWT auth")</span>
+<span class="c"># claim()  ← locks it, no other agent can grab it</span>
+<span class="c"># remember("JWT uses RS256", key="auth_spec")</span>
+<span class="c"># done(task_id)</span>
 
-<span class="c"># Samvit auto-handles:</span>
-<span class="c"># ✓ Task created + locked</span>
-<span class="c"># ✓ Retries if it fails</span>
-<span class="c"># ✓ Result stored in audit log</span></pre>
+<span class="c"># ✓ Task locked to this agent</span>
+<span class="c"># ✓ Spec stored for teammates</span>
+<span class="c"># ✓ Result in audit log</span></pre>
                 </div>
               </div>
 
@@ -732,21 +729,17 @@
                 <div class="num"></div>
                 <div>
                   <h4>Day 2: Colleague verifies ("Check that JWT")</h4>
-                  <p>Different engineer, different machine. Same pattern. Samvit connects the work — no manual handoff.</p>
+                  <p>Different engineer, different machine. Samvit connects the work — no manual handoff needed.</p>
                   <pre><span class="c"># Colleague's chat in Cursor:</span>
-"Verify the JWT we built.
- Check against the auth spec."
+"Verify the JWT we built."
 
-<span class="c"># Cursor writes and runs:</span>
-<span class="kw">@task</span>
-<span class="kw">async def</span> <span class="fn">verify_jwt</span>():
-    spec = <span class="fn">await</span> <span class="fn">recall</span>(<span class="str">"JWT auth spec"</span>)
-    <span class="c"># ... verification ...</span>
-    <span class="kw">return</span> {<span class="str">"verified"</span>: <span class="str">true</span>}
+<span class="c"># Cursor auto-calls (invisible):</span>
+<span class="c"># recall("auth_spec")  ← gets Day 1 spec instantly</span>
+<span class="c"># claim()  ← locks verify task</span>
+<span class="c"># done(task_id)</span>
 
-<span class="c"># What happens:</span>
-<span class="c"># ✓ Colleague gets your spec (no manual copying)</span>
-<span class="c"># ✓ Both tasks in audit log (who did what)</span>
+<span class="c"># ✓ Spec from Day 1 — no asking, no copying</span>
+<span class="c"># ✓ Both tasks in audit log</span>
 <span class="c"># ✓ No risk of duplicate work</span></pre>
                 </div>
               </div>
@@ -833,12 +826,8 @@
             <p>Yes. Claude Code, Codex CLI, Antigravity, Cursor, and Hermes all connect via MCP to the same Samvit server. Each gets its own token. All share the same memory pool, task queue, and message bus.</p>
           </details>
           <details>
-            <summary>What is the @samvit.task decorator?</summary>
-            <p>A Python decorator that auto-manages the entire task lifecycle: creation, claiming, execution, retry, and completion. One <code>@task</code> replaces 6+ manual tool calls. Recommended for Python agents (Claude Code, Cursor, LangGraph, CrewAI integration).</p>
-          </details>
-          <details>
-            <summary>Can I use Samvit without Python agents?</summary>
-            <p>Yes. The <code>@task</code> decorator is optional. All agents (shell, JavaScript, Go, Rust) can use manual task tools: <code>create_task</code>, <code>claim</code>, <code>done</code>, <code>renew</code>. The decorator just eliminates boilerplate for Python.</p>
+            <summary>Does Samvit work with any AI client?</summary>
+            <p>Yes. Claude Code, Codex CLI, Cursor, Antigravity — any client that supports MCP connects to the same Samvit server. Each gets its own token. All share the same memory pool, task queue, and code index.</p>
           </details>
           <details>
             <summary>What is on the roadmap?</summary>
