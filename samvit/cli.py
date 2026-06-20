@@ -5,7 +5,10 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import shutil
+import subprocess
 import sys
+from pathlib import Path
 from typing import Any
 
 import httpx
@@ -39,6 +42,16 @@ def _parser() -> argparse.ArgumentParser:
     rotate.add_argument("handle")
     rotate.add_argument("--admin-secret", required=True)
     rotate.add_argument("--url", default="http://127.0.0.1:8765")
+
+    # ── connect ────────────────────────────────────────────────────────────
+    connect = sub.add_parser("connect", help="Configure AI clients to use this Samvit server")
+    connect.add_argument("--url", default="http://localhost:8765", help="Samvit server URL")
+    connect.add_argument("--token", required=True, help="Agent bearer token (from 'samvit register')")
+    connect.add_argument(
+        "--client",
+        metavar="NAME",
+        help="Client(s) to configure: claude, codex, cursor, kiro, opencode, antigravity, or 'all'. Default: auto-detect.",
+    )
 
     # ── doctor ─────────────────────────────────────────────────────────────
     doctor = sub.add_parser("doctor", help="Check a Samvit deployment")
@@ -117,6 +130,135 @@ def _parser() -> argparse.ArgumentParser:
     hermes_sub.add_parser("cron-sync", help="Trigger Hermes cron bridge sync")
 
     return parser
+
+
+# ── samvit connect ──────────────────────────────────────────────────────────
+
+
+def _merge_json(path: Path, keys: list[str], value: dict) -> None:
+    data = json.loads(path.read_text()) if path.exists() else {}
+    node = data
+    for k in keys[:-1]:
+        node = node.setdefault(k, {})
+    node[keys[-1]] = value
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2) + "\n")
+
+
+def _client_claude(url: str, token: str) -> str:
+    mcp_url = f"{url}/mcp"
+    if shutil.which("claude"):
+        r = subprocess.run(
+            ["claude", "mcp", "add", "--transport", "http", "samvit", mcp_url,
+             "--header", f"Authorization: Bearer {token}"],
+            capture_output=True, text=True,
+        )
+        if r.returncode == 0:
+            return "added via `claude mcp add`"
+    cfg = Path.home() / ".claude.json"
+    _merge_json(cfg, ["mcpServers", "samvit"], {
+        "type": "http", "url": mcp_url,
+        "headers": {"Authorization": f"Bearer {token}"},
+    })
+    return str(cfg)
+
+
+def _client_codex(url: str, token: str) -> str:
+    cfg = Path.home() / ".codex" / "config.toml"
+    mcp_url = f"{url}/mcp"
+    existing = cfg.read_text() if cfg.exists() else ""
+    if "samvit" in existing:
+        return f"already in {cfg}"
+    cfg.parent.mkdir(parents=True, exist_ok=True)
+    with cfg.open("a") as f:
+        f.write(
+            f'\n[[mcp_servers]]\nname = "samvit"\ntype = "http"\n'
+            f'url = "{mcp_url}"\n'
+            f'headers = {{ Authorization = "Bearer {token}" }}\n'
+        )
+    return str(cfg)
+
+
+def _client_cursor(url: str, token: str) -> str:
+    cfg = Path.home() / ".cursor" / "mcp.json"
+    _merge_json(cfg, ["mcpServers", "samvit"], {
+        "url": f"{url}/mcp", "headers": {"Authorization": f"Bearer {token}"},
+    })
+    return str(cfg)
+
+
+def _client_kiro(url: str, token: str) -> str:
+    # ponytail: path from kiro.dev/docs/mcp — verify on next Kiro release
+    cfg = Path.home() / ".kiro" / "settings" / "mcp.json"
+    _merge_json(cfg, ["mcpServers", "samvit"], {
+        "url": f"{url}/mcp", "headers": {"Authorization": f"Bearer {token}"},
+    })
+    return str(cfg)
+
+
+def _client_opencode(url: str, token: str) -> str:
+    cfg = Path.home() / ".config" / "opencode" / "config.json"
+    _merge_json(cfg, ["mcp", "samvit"], {
+        "type": "remote", "url": f"{url}/mcp",
+        "headers": {"Authorization": f"Bearer {token}"},
+    })
+    return str(cfg)
+
+
+def _client_antigravity(url: str, token: str) -> str:
+    cfg = Path.home() / ".antigravity" / "mcp.json"
+    _merge_json(cfg, ["mcpServers", "samvit"], {
+        "url": f"{url}/mcp", "headers": {"Authorization": f"Bearer {token}"},
+    })
+    return str(cfg)
+
+
+# (display_name, detect_fn, write_fn)
+_CLIENTS: dict[str, tuple[str, Any, Any]] = {
+    "claude":      ("Claude Code",  lambda: shutil.which("claude") or (Path.home() / ".claude").exists(),                    _client_claude),
+    "codex":       ("Codex CLI",    lambda: shutil.which("codex") or (Path.home() / ".codex").exists(),                      _client_codex),
+    "cursor":      ("Cursor",       lambda: shutil.which("cursor") or (Path.home() / ".cursor").exists(),                    _client_cursor),
+    "kiro":        ("Kiro",         lambda: shutil.which("kiro") or (Path.home() / ".kiro").exists(),                        _client_kiro),
+    "opencode":    ("OpenCode",     lambda: shutil.which("opencode") or (Path.home() / ".config" / "opencode").exists(),     _client_opencode),
+    "antigravity": ("Antigravity",  lambda: shutil.which("antigravity") or (Path.home() / ".antigravity").exists(),          _client_antigravity),
+}
+
+
+def _run_connect(args: argparse.Namespace) -> int:
+    url = args.url.rstrip("/")
+    token = args.token
+
+    if args.client == "all":
+        targets = list(_CLIENTS)
+    elif args.client:
+        targets = [c.strip() for c in args.client.split(",")]
+        unknown = [c for c in targets if c not in _CLIENTS]
+        if unknown:
+            print(f"Unknown: {', '.join(unknown)}. Supported: {', '.join(_CLIENTS)}", file=sys.stderr)
+            return 1
+    else:
+        targets = [k for k, (_, detect, _) in _CLIENTS.items() if detect()]
+        if not targets:
+            print("No known AI clients detected. Use --client NAME or --client all.")
+            print(f"Supported: {', '.join(_CLIENTS)}")
+            return 0
+        print(f"Detected: {', '.join(_CLIENTS[t][0] for t in targets)}")
+
+    print()
+    ok = True
+    for key, (display, _, write) in _CLIENTS.items():
+        if key not in targets:
+            print(f"  - {display:<16} skipped")
+            continue
+        try:
+            result = write(url, token)
+            print(f"  ✓ {display:<16} {result}")
+        except Exception as exc:
+            print(f"  ✗ {display:<16} failed: {exc}")
+            ok = False
+
+    print("\nRestart your clients to pick up the Samvit MCP server.")
+    return 0 if ok else 1
 
 
 # ── HTTP helpers ────────────────────────────────────────────────────────────
@@ -339,6 +481,8 @@ def main() -> None:
         from samvit import db as sdb
         asyncio.run(_run_migrate(sdb))
         return
+    if args.command == "connect":
+        raise SystemExit(_run_connect(args))
     if args.command == "register":
         raise SystemExit(asyncio.run(_register(args)))
     if args.command == "rotate-token":
