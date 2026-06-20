@@ -681,14 +681,17 @@
               <div class="usage-step">
                 <div class="num"></div>
                 <div>
-                  <h4>Engineers: Point your tool at Samvit (1 min per person)</h4>
-                  <p>One-time setup. Every agent on the team now shares the same memory, tasks, and code index.</p>
-                  <pre><span class="c"># In Claude Code:</span>
-<span class="accent">claude mcp add</span> --transport http samvit \
-  http://team-server:8765/mcp \
-  --header "Authorization: Bearer ..."
+                  <h4>Engineers: Connect your tool in one command</h4>
+                  <p>Run this on each engineer's machine. Samvit auto-detects your client and writes the MCP config — no manual JSON editing.</p>
+                  <pre><span class="accent">samvit connect</span> \
+  --url http://team-server:8765 \
+  --token YOUR_TOKEN
 
-<span class="c"># Now you're ready to build.</span></pre>
+<span class="c"># Detected: Claude Code, Cursor</span>
+<span class="c"># ✓ Claude Code  → added via `claude mcp add`</span>
+<span class="c"># ✓ Cursor       → ~/.cursor/mcp.json</span>
+<span class="c"># Restart your client. Done.</span></pre>
+                  <p style="color:var(--muted);font-size:.85rem;margin-top:.6rem;">Works with: Claude Code, Codex CLI, Cursor, Kiro, OpenCode, Antigravity. Target a specific client with <code>--client claude</code> or configure all with <code>--client all</code>.</p>
                 </div>
               </div>
 
