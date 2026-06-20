@@ -383,8 +383,8 @@
         Built-in guard blocks secrets/PII. Admin dashboard with audit logging. Self-hosted. No API keys. No cloud.
       </p>
       <div class="actions">
-        <a class="button primary" href="#guide">How it works (5 min)</a>
-        <a class="button secondary" href="#tools">Core APIs</a>
+        <a class="button primary" href="#demo">Try demo (30 sec)</a>
+        <a class="button secondary" href="#guide">How it works (5 min)</a>
         <a class="button secondary" href="https://github.com/darshanredkar11/samvit">View on GitHub</a>
       </div>
     </header>
@@ -629,6 +629,31 @@
     </section>
 
     <!-- ═══ USER GUIDE ═══ -->
+    <!-- ═══ DEMO ═══ -->
+    <section id="demo">
+      <div class="wrap">
+        <div class="section-head centered">
+          <div class="kicker">Zero setup</div>
+          <h2>Try it locally in 30 seconds</h2>
+          <p>No account. No API key. Runs entirely on your machine. Wipe it clean with one command.</p>
+        </div>
+        <div style="max-width:640px;margin:0 auto;">
+          <pre style="font-size:.95rem;line-height:1.7;"><span class="accent">git clone</span> https://github.com/darshanredkar11/samvit
+<span class="accent">cd</span> samvit
+<span class="accent">docker compose</span> -f docker-compose.demo.yml up --build</pre>
+          <p style="color:var(--muted);font-size:.9rem;margin-top:1rem;">
+            The demo starts with 4 pre-registered agents (Claude Code, Cursor, Codex, Antigravity), 3 shared memories, and 5 tasks — one already claimed. When the seed container finishes, it prints ready-to-paste <code>claude mcp add</code> commands for each agent.
+          </p>
+          <p style="color:var(--muted);font-size:.9rem;">
+            Stop and wipe: <code>docker compose -f docker-compose.demo.yml down -v</code>
+          </p>
+          <p style="color:var(--muted);font-size:.9rem;">
+            Or seed any running server: <code>samvit demo --url http://HOST:8765 --token YOUR_TOKEN</code>
+          </p>
+        </div>
+      </div>
+    </section>
+
     <section id="guide" style="background: rgba(9,18,31,.55); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);">
       <div class="wrap">
         <div class="section-head centered">
