@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0 - 2026-06-20 (In Progress)
+
+- **NEW: @samvit.task decorator** — Autonomous task lifecycle management
+  - Eliminates manual create/claim/done/retry boilerplate
+  - Automatic task creation, claiming, execution, retry, timeout
+  - Zero-config setup: just decorate your async function
+  - Built-in exponential backoff + timeout recovery
+  - Example: 6+ manual calls → 1 decorator
+
 ## 0.2.0 - 2026-06-10
 
 - Added an authenticated HTTP tool bridge for workers, hooks, and integrations.

@@ -49,7 +49,39 @@ claude mcp add --transport http samvit \
 
 The current MCP endpoint is `/mcp`. Legacy SSE clients can use `/legacy/sse`.
 
-## Core Tools
+## Autonomous Task Decorator (Zero-Boilerplate Coordination)
+
+No more manual task calls. The `@samvit.task` decorator auto-manages the entire task lifecycle:
+
+```python
+from samvit import task
+
+@task(max_retries=3, timeout=300)
+async def implement_auth():
+    """Samvit auto-creates, claims, executes, retries, times out, and completes."""
+    await remember("JWT spec", "RS256 algorithm, 1-hour expiration")
+    return "implemented"
+
+# Just call it. No create_task(), claim(), done(), or retry logic needed.
+result = await implement_auth()
+```
+
+**What Samvit handles automatically:**
+- ✅ Task creation (from function name)
+- ✅ Atomic claiming (no double-assignment across agents)
+- ✅ Execution + exception handling
+- ✅ Automatic retry with exponential backoff (respects max_retries)
+- ✅ Timeout detection + auto-release for recovery
+- ✅ Completion + audit logging
+- ✅ Failure recovery (agent crash? task auto-releases after timeout)
+
+**Result:** One decorator replaces 6+ manual tool calls per task.
+
+---
+
+## Core Tools (Manual Mode)
+
+For fine-grained control, use individual tools:
 
 | Area | Tools | Purpose |
 |---|---|---|
@@ -154,11 +186,12 @@ samvit doctor
 - ✅ Workspace isolation (multi-team safe)
 - ✅ Self-hosted deployment (Docker, no dependencies)
 
-**v0.3.0** (Planned):
-- Task dependencies & retries
-- Memory lifecycle & retention policies
-- Workspace-scoped admin roles
-- Agent capability registry
+**v0.3.0** (In Progress):
+- ✅ Autonomous task decorator (`@samvit.task`) — zero-boilerplate task lifecycle
+- ⏳ Task dependencies & ordering
+- ⏳ Memory lifecycle & retention policies
+- ⏳ Workspace-scoped admin roles
+- ⏳ Agent capability registry
 
 See [Specification](SPEC.md) for full feature roadmap.
 
