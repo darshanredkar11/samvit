@@ -861,36 +861,47 @@
               <div class="usage-step">
                 <div class="num"></div>
                 <div>
-                  <h4>Write decorated async functions (recommended)</h4>
-                  <p>For Python agents: use <code>@samvit.task</code> decorator. Samvit auto-manages task creation, claiming, retry, and completion.</p>
-                  <pre><span class="c"># In your agent code:</span>
+                  <h4>Use @task in your agent (Claude Code / Cursor)</h4>
+                  <p>Tell your agent to write a task function. It's just a normal async function with one decorator.</p>
+                  <pre><span class="c"># You in Claude Code chat:</span>
+"Write an async function to implement JWT auth.
+ Use @task decorator so Samvit auto-manages it."
+
+<span class="c"># Claude Code writes:</span>
 <span class="accent">from samvit import task</span>
 
-<span class="kw">@task</span>(max_retries=<span class="str">3</span>, timeout=<span class="str">300</span>)
-<span class="kw">async def</span> <span class="fn">fix_login_timeout</span>():
-    <span class="c"># Your logic</span>
-    <span class="kw">return</span> <span class="str">"Fixed: timeout increased to 30s"</span>
+<span class="kw">@task</span>
+<span class="kw">async def</span> <span class="fn">implement_jwt_auth</span>():
+    <span class="str"># implement logic</span>
+    <span class="kw">return</span> <span class="str">"JWT implemented"</span>
 
-<span class="c"># Just call it. Samvit handles everything.</span>
-<span class="fn">await</span> <span class="fn">fix_login_timeout</span>()</pre>
+<span class="c"># You call it:</span>
+"Run implement_jwt_auth()"</pre>
                 </div>
               </div>
 
               <div class="usage-step">
                 <div class="num"></div>
                 <div>
-                  <h4>Manual task flow (for non-Python or fine-grained control)</h4>
-                  <p>Create tasks manually, claim atomically, mark done when finished.</p>
-                  <pre><span class="c"># Create task:</span>
-"Create a task 'Audit database indexes',
- priority 2, tag 'database'."
+                  <h4>Your colleague (Cursor) uses the same pattern</h4>
+                  <p>Next day, another engineer on a different machine writes their own @task function. Zero coordination overhead.</p>
+                  <pre><span class="c"># Your colleague in Cursor chat:</span>
+"Verify the JWT implementation we did yesterday."
 
-<span class="c"># Claim it (atomic):</span>
-"Claim the next database task."
+<span class="c"># Cursor writes:</span>
+<span class="kw">@task</span>
+<span class="kw">async def</span> <span class="fn">verify_jwt</span>():
+    spec = <span class="fn">await</span> <span class="fn">recall</span>(<span class="str">"JWT requirements"</span>)
+    <span class="c"># verify logic</span>
+    <span class="kw">return</span> <span class="str">"JWT verified"</span>
 
-<span class="c"># Done:</span>
-"Mark the task done with result:
- 'Audited 15 tables, added 3 indexes.'"</pre>
+<span class="c"># Colleague calls it:</span>
+"Run verify_jwt()"
+
+<span class="c"># Samvit guarantees:</span>
+<span class="c"># - Your task ran first (yesterday)</span>
+<span class="c"># - This task gets the decision you remembered</span>
+<span class="c"># - Both are in the audit log</span></pre>
                 </div>
               </div>
 
