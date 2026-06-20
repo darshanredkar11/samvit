@@ -1,0 +1,53 @@
+# samvit demo — ephemeral, pre-seeded, no persistent state.
+# Usage: docker compose -f docker-compose.demo.yml up --build
+# Data is lost when containers stop (no volumes). Safe to restart fresh.
+
+services:
+  samvit:
+    build:
+      context: .
+      target: runtime
+    ports:
+      - "8765:8765"
+    environment:
+      DATABASE_URL: postgresql://samvit:samvit@postgres:5432/samvit
+      SAMVIT_ADMIN_SECRET: demo-admin-secret
+      SAMVIT_BIND_ADDRESS: "0.0.0.0"
+      SAMVIT_GUARD_MODE: warn
+      SAMVIT_ADMIN_DEV_MODE: "true"
+      LOG_LEVEL: WARNING
+    volumes:
+      - ./admin-ui/dist:/app/admin-ui/dist:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8765/ready"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  seed:
+    build:
+      context: .
+      target: runtime
+    environment:
+      DATABASE_URL: postgresql://samvit:samvit@postgres:5432/samvit
+    command: samvit demo --url http://samvit:8765 --public-url http://localhost:8765 --wait 60
+    depends_on:
+      samvit:
+        condition: service_healthy
+    restart: "no"
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: samvit
+      POSTGRES_PASSWORD: samvit
+      POSTGRES_DB: samvit
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U samvit"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # No volume — demo data is ephemeral

@@ -43,6 +43,12 @@ def _parser() -> argparse.ArgumentParser:
     rotate.add_argument("--admin-secret", required=True)
     rotate.add_argument("--url", default="http://127.0.0.1:8765")
 
+    # ── demo ───────────────────────────────────────────────────────────────
+    demo = sub.add_parser("demo", help="Seed a running server with demo data and print connection info")
+    demo.add_argument("--url", default="http://localhost:8765", help="Samvit server URL (used to seed)")
+    demo.add_argument("--public-url", default=None, help="URL shown to users (defaults to --url)")
+    demo.add_argument("--wait", default=30, type=int, help="Seconds to wait for server to be ready")
+
     # ── connect ────────────────────────────────────────────────────────────
     connect = sub.add_parser("connect", help="Configure AI clients to use this Samvit server")
     connect.add_argument("--url", default="http://localhost:8765", help="Samvit server URL")
@@ -130,6 +136,126 @@ def _parser() -> argparse.ArgumentParser:
     hermes_sub.add_parser("cron-sync", help="Trigger Hermes cron bridge sync")
 
     return parser
+
+
+# ── samvit demo ─────────────────────────────────────────────────────────────
+
+_DEMO_AGENTS = [
+    ("alice", "claude-code"),
+    ("bob",   "cursor"),
+    ("carol", "codex"),
+    ("dan",   "antigravity"),
+]
+
+_DEMO_MEMORIES = [
+    ("Auth service uses JWT with RS256. Access tokens expire in 24h, refresh in 30d.", "auth_spec"),
+    ("PostgreSQL 16 + pgvector is the only datastore. No Redis, no Kafka for state.", "db_spec"),
+    ("All agents connect via MCP at /mcp. Legacy SSE available at /legacy/sse.", "mcp_spec"),
+]
+
+_DEMO_TASKS = [
+    ("Implement JWT login endpoint",     ["backend"],  5),
+    ("Write auth integration tests",     ["backend"],  4),
+    ("Build token refresh UI flow",      ["frontend"], 3),
+    ("Add rate-limiting to /v1/agents",  ["backend"],  3),
+    ("Update onboarding docs for v0.3",  ["docs"],     2),
+]
+
+
+async def _demo(args: argparse.Namespace) -> int:
+    import time
+    url = args.url.rstrip("/")
+    public_url = (args.public_url or url).rstrip("/")
+
+    # Wait for server
+    print(f"Waiting for Samvit at {url} …")
+    deadline = time.time() + args.wait
+    async with httpx.AsyncClient(timeout=3) as c:
+        while time.time() < deadline:
+            try:
+                r = await c.get(f"{url}/ready")
+                if r.status_code == 200:
+                    break
+            except Exception:
+                pass
+            await asyncio.sleep(2)
+        else:
+            print(f"Server not ready after {args.wait}s. Is it running?", file=sys.stderr)
+            return 1
+
+    print("Seeding demo workspace…\n")
+
+    # Register agents
+    tokens: dict[str, str] = {}
+    for handle, provider in _DEMO_AGENTS:
+        try:
+            r = await _post(url, "/v1/agents/register", {"handle": handle, "provider": provider})
+            tokens[handle] = r["token"]
+        except SystemExit:
+            # Already registered — rotate to get a fresh token
+            pass
+
+    if not tokens:
+        print("All demo agents already registered. Re-run with a fresh server.", file=sys.stderr)
+        return 1
+
+    alice_tok = tokens.get("alice", "")
+    bob_tok   = tokens.get("bob", "")
+
+    # Store shared memories as alice
+    for content, key in _DEMO_MEMORIES:
+        await _post(url, "/v1/tools/call",
+                    {"tool": "remember", "params": {"content": content, "key": key, "namespace": "global"}},
+                    alice_tok)
+
+    # Create tasks as alice
+    task_ids: list[str] = []
+    for title, tags, priority in _DEMO_TASKS:
+        r = await _post(url, "/v1/tasks",
+                        {"title": title, "tags": tags, "priority": priority},
+                        alice_tok)
+        task_ids.append(r["task_id"])
+
+    # Bob claims the top-priority task
+    claimed = await _post(url, "/v1/tools/call",
+                          {"tool": "claim", "params": {}},
+                          bob_tok)
+    claimed_title = (claimed.get("task") or {}).get("title", "a task")
+
+    # Print summary
+    pad = 8
+    print("✓ Agents registered:")
+    for handle, provider in _DEMO_AGENTS:
+        tok = tokens.get(handle, "(already existed)")
+        print(f"    {handle:<{pad}} ({provider:<14})  {tok}")
+
+    print(f"\n✓ {len(_DEMO_MEMORIES)} shared memories stored (namespace: global)")
+    print(f"✓ {len(_DEMO_TASKS)} tasks created")
+    print(f"✓ bob (Cursor) claimed: \"{claimed_title}\"\n")
+
+    bar = "─" * 54
+    print(bar)
+    print(f"  Samvit demo ready →  {public_url}")
+    print(bar)
+
+    alice = tokens.get("alice", "<token>")
+    print(f"""
+Connect Claude Code (as alice):
+  claude mcp add --transport http samvit \\
+    {public_url}/mcp \\
+    --header "Authorization: Bearer {alice}"
+
+Or one command:
+  samvit connect --url {public_url} --token {alice}
+
+Admin UI: {public_url}/admin
+
+Try asking your client:
+  "Recall the auth spec"
+  "Claim my next backend task"
+  "Remember that staging is at https://staging.myapp.com"
+""")
+    return 0
 
 
 # ── samvit connect ──────────────────────────────────────────────────────────
@@ -481,6 +607,8 @@ def main() -> None:
         from samvit import db as sdb
         asyncio.run(_run_migrate(sdb))
         return
+    if args.command == "demo":
+        raise SystemExit(asyncio.run(_demo(args)))
     if args.command == "connect":
         raise SystemExit(_run_connect(args))
     if args.command == "register":

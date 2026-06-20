@@ -13,8 +13,6 @@ Layout:
 Decision #10: Authorization header is NEVER logged — middleware strips it.
 """
 
-from __future__ import annotations
-
 import asyncio
 import contextvars
 import logging
