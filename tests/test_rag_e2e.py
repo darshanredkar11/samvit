@@ -90,5 +90,5 @@ async def test_rag_and_memory_workflow(agent_rec):
         namespace="global",
     )
 
-    found = await recall(agent_rec, query="data retention policy")
+    found = await recall(agent_rec, query="data retention policy", namespace="global")
     assert len(found["results"]) > 0

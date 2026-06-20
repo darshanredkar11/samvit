@@ -116,7 +116,6 @@ async def test_admin_status(admin_agent, http: AsyncClient):
     assert "tasks" in data
     assert "storage" in data
     assert "guard" in data
-    assert "events" in data
     assert data["agents"]["total"] >= 1
     assert data["tasks"]["pending"] >= 0
 
@@ -679,12 +678,6 @@ async def test_admin_invalid_role_value(admin_agent, http: AsyncClient):
     assert r.status_code == 400
 
 
-@pytest.mark.asyncio
-async def test_events_status(admin_agent, http: AsyncClient):
-    r = await http.get("/v1/admin/events/status", headers=_auth_headers(admin_agent))
-    assert r.status_code == 200
-    data = r.json()
-    assert "connected" in data or "degraded" in data or "published" in data
 
 
 @pytest.mark.asyncio

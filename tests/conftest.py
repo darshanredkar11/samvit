@@ -8,7 +8,7 @@ HTTP endpoints (register, rotate, health, admin reset) are tested via
 ASGI client against FastAPI.
 
 Spin up real infra first:
-    docker compose up -d postgres redpanda
+    docker compose up -d postgres
 Then run:
     pytest
 """
@@ -23,8 +23,8 @@ import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
 
 os.environ.setdefault("DATABASE_URL", "postgresql://samvit:samvit@localhost:5432/samvit")
-os.environ.setdefault("REDPANDA_BROKERS", "localhost:9092")
 os.environ.setdefault("SAMVIT_ADMIN_SECRET", "test-admin-secret")
+os.environ["SAMVIT_ADMIN_DEV_MODE"] = "false"  # .env may set true; tests require real auth
 
 from samvit import db, embeddings
 from samvit.main import app

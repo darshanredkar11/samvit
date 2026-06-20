@@ -561,10 +561,11 @@ async def _persist_graph(
                 await conn.execute(
                     """
                     INSERT INTO code_edges
-                        (repo_id, from_node, to_node, to_name, edge_type, weight)
-                    VALUES ($1, $2, $3, $4, $5::edge_type, $6)
+                        (repo_id, from_node, to_node, to_name, edge_type, weight, workspace_id)
+                    VALUES ($1, $2, $3, $4, $5::edge_type, $6, $7)
                     """,
                     repo_id, from_id, to_id, edge.to_name, edge.edge_type, edge.weight,
+                    agent["workspace_id"],
                 )
 
 

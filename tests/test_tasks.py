@@ -10,7 +10,9 @@ from samvit.tools.tasks import cancel, claim, create, done, list_tasks, renew
 async def _insert_task(title: str, tags: list[str] = None, priority: int = 0) -> str:
     async with db.pool().acquire() as conn:
         tid = await conn.fetchval(
-            "INSERT INTO tasks (title, tags, priority) VALUES ($1, $2, $3) RETURNING id",
+            """INSERT INTO tasks (title, tags, priority, workspace_id)
+               VALUES ($1, $2, $3, (SELECT id FROM workspaces WHERE name = 'default'))
+               RETURNING id""",
             title, tags or [], priority,
         )
     return str(tid)
@@ -32,9 +34,10 @@ async def test_claim_empty_queue_returns_null(agent_rec):
 
 @pytest.mark.asyncio
 async def test_claim_tag_or_filter(agent_rec):
-    """Decision #15: OR filter."""
-    tid = await _insert_task(f"tagged-{uuid.uuid4().hex}", tags=["backend", "auth"])
-    r = await claim(agent_rec, tags=["auth", "frontend"])
+    """Decision #15: OR filter — unique tag ensures isolation from other pending tasks."""
+    unique = f"filter-{uuid.uuid4().hex}"
+    tid = await _insert_task(f"tagged-{uuid.uuid4().hex}", tags=["backend", unique])
+    r = await claim(agent_rec, tags=[unique, "nonexistent"])
     assert r["task"] is not None
     assert r["task"]["id"] == tid
 
@@ -113,10 +116,14 @@ async def test_no_double_claim(two_agent_recs):
     """FOR UPDATE SKIP LOCKED must prevent two agents claiming the same task."""
     a1, a2 = two_agent_recs
     tid = await _insert_task(f"concurrent-{uuid.uuid4().hex}")
-    r1, r2 = await asyncio.gather(
-        claim(a1, task_id=tid),
-        claim(a2, task_id=tid),
-    )
+
+    async def _try(agent):
+        try:
+            return await claim(agent, task_id=tid)
+        except (LookupError, ValueError):
+            return {"task": None}  # loser: task locked or already claimed
+
+    r1, r2 = await asyncio.gather(_try(a1), _try(a2))
     claimed = [r for r in [r1["task"], r2["task"]] if r is not None]
     assert len(claimed) == 1, "Double-claim bug: both agents got the same task"
 

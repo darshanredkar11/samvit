@@ -31,7 +31,7 @@
     "description": "Open-source coordination server for Claude Code, Codex, Antigravity and other AI coding agents. Shared memory, tasks, messaging, code search.",
     "url": "https://darshanredkar11.github.io/samvit/",
     "downloadUrl": "https://github.com/darshanredkar11/samvit",
-    "softwareVersion": "0.2.0",
+    "softwareVersion": "0.3.0",
     "license": "https://www.apache.org/licenses/LICENSE-2.0",
     "isAccessibleForFree": true,
     "codeRepository": "https://github.com/darshanredkar11/samvit",
@@ -648,7 +648,7 @@
             Stop and wipe: <code>docker compose -f docker-compose.demo.yml down -v</code>
           </p>
           <p style="color:var(--muted);font-size:.9rem;">
-            Or seed any running server: <code>samvit demo --url http://HOST:8765 --token YOUR_TOKEN</code>
+            Or seed any running server: <code>samvit demo --url http://HOST:8765</code>
           </p>
         </div>
       </div>
@@ -850,12 +850,8 @@
             <p>One machine with Docker. PostgreSQL 16 (pgvector) for persistence. Minimum: 2 CPU cores, 4 GB RAM. No per-machine agents, no sidecars, no per-developer installs.</p>
           </details>
           <details>
-            <summary>Can different agent types share the same server?</summary>
-            <p>Yes. Claude Code, Codex CLI, Antigravity, Cursor, and Hermes all connect via MCP to the same Samvit server. Each gets its own token. All share the same memory pool, task queue, and message bus.</p>
-          </details>
-          <details>
             <summary>Does Samvit work with any AI client?</summary>
-            <p>Yes. Claude Code, Codex CLI, Cursor, Antigravity — any client that supports MCP connects to the same Samvit server. Each gets its own token. All share the same memory pool, task queue, and code index.</p>
+            <p>Any client that supports MCP connects — Claude Code, Codex CLI, Cursor, Kiro, OpenCode, Antigravity. Each agent gets its own bearer token. All share the same memory pool, task queue, message bus, and code index. <code>samvit connect</code> auto-configures all detected clients in one command.</p>
           </details>
           <details>
             <summary>What is on the roadmap?</summary>
@@ -872,7 +868,7 @@
       <p>Deploy one Samvit server. Agents share memory, coordinate work, and audit everything. Your team ships faster. No per-machine install, no API keys, no cloud dependency.</p>
       <div class="actions" style="margin:0">
         <a class="button primary" href="https://github.com/darshanredkar11/samvit">Deploy Samvit</a>
-        <a class="button secondary" href="https://github.com/darshanredkar11/samvit/blob/main/docs/GAPS.md">Open roadmap</a>
+        <a class="button secondary" href="https://github.com/darshanredkar11/samvit/blob/main/docs/ADR.md">Architecture decisions</a>
       </div>
     </div>
   </main>
