@@ -1,5 +1,2 @@
-# Samvit — provider-agnostic multi-agent coordination layer
-
-from samvit.decorators import task
-
-__all__ = ["task"]
+# Samvit — shared brain for multi-AI teams
+# Coordination server: shared memory, atomic tasks, code graphs, doc sharing

@@ -31,7 +31,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from mcp.server.fastmcp import FastMCP, Context
 from pydantic import BaseModel, Field
 
-from samvit import auth, cleanup, db, embeddings, rag, codegraph, ratelimit, decorators
+from samvit import auth, cleanup, db, embeddings, rag, codegraph, ratelimit
 from samvit.tools import memory, messaging, tasks
 from samvit.integrations.hermes import SamvitMemoryBackend
 
@@ -167,7 +167,6 @@ async def auth_middleware(request: Request, call_next):
         return _error(403, "Agent is suspended")
 
     _current_agent.set(agent)
-    decorators.set_agent_context(agent)
 
     # Admin endpoints: require admin/operator/auditor role
     if request.url.path.startswith("/v1/admin/"):

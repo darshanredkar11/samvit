@@ -1,95 +1,74 @@
 # Samvit
 
-**The shared coordination server for Claude, Codex, Antigravity, and mixed AI teams.**
+**Coordination server for multi-AI teams. Solves: shared memory, atomic tasks, code/doc graphs, no duplication.**
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.12%2B-blue)](pyproject.toml)
 [![MCP](https://img.shields.io/badge/MCP-Streamable%20HTTP-purple)](https://modelcontextprotocol.io)
 
-Samvit lets AI coding tools on different machines share:
+## The Problem
 
-- Persistent semantic and key/value memory
-- An atomic task queue with ownership and renewable leases
-- Directed and broadcast messages across sessions
-- Searchable documents and code knowledge graph (when repository is mounted)
+Multiple AI agents (Claude Code, Codex, Cursor, Antigravity) work on the same project:
+- Agent A learns the auth system. Agent B re-learns it (wasted tokens).
+- Agent A starts "implement auth" task. Agent B accidentally does it too (duplicate work).
+- Agent A finds a bug pattern. Agent B searches the codebase again (wasted context).
 
-Samvit does not replace Claude Code, Antigravity, LangGraph, or CrewAI. It gives
-otherwise isolated agents one neutral place to coordinate.
+## The Solution
 
-## Start Here
+Samvit is a **shared brain** that any AI client can connect to:
 
-For a plain-English team setup, including Claude Code on one machine and
-Antigravity on another, read the **[complete usage guide](docs/USAGE.md)**.
+- **Shared Memory** — Agent A learns something. Agent B asks. Gets the answer instantly.
+- **Atomic Tasks** — Task is claimed by one agent. Others see it's taken. No duplicates.
+- **Code Graph** — Search your codebase by meaning. All agents use the same index.
+- **Doc Sharing** — Store knowledge once. All agents can find it.
+
+Clients (Claude Code, Codex, Cursor, Antigravity) auto-call these when users ask naturally:
+```
+User: "Remember the auth system uses JWT"
+→ Client auto-calls: remember()
+
+User: "Implement the auth endpoint"
+→ Client auto-calls: create_task() + claim() + execute + done()
+
+User: "Find where we validate passwords"
+→ Client auto-calls: search_code()
+```
 
 ## Quick Start
 
 ```bash
 git clone https://github.com/darshanredkar11/samvit.git
 cd samvit
-cp .env.example .env
 docker compose up -d
 curl http://127.0.0.1:8765/ready
 ```
 
-Register an agent:
-
+Register agents:
 ```bash
-docker compose exec samvit samvit register darshan \
-  --provider claude-code \
-  --url http://127.0.0.1:8765
+samvit register alice --provider claude-code
+samvit register bob --provider cursor
 ```
 
-Connect Claude Code:
-
+Connect your client:
 ```bash
 claude mcp add --transport http samvit \
-  http://127.0.0.1:8765/mcp \
-  --header "Authorization: Bearer samvit_YOUR_TOKEN"
+  http://localhost:8765/mcp \
+  --header "Authorization: Bearer samvit_TOKEN"
 ```
 
-The current MCP endpoint is `/mcp`. Legacy SSE clients can use `/legacy/sse`.
+## Core APIs
 
-## Autonomous Task Decorator (Zero-Boilerplate Coordination)
-
-No more manual task calls. The `@samvit.task` decorator auto-manages the entire task lifecycle:
-
-```python
-from samvit import task
-
-@task(max_retries=3, timeout=300)
-async def implement_auth():
-    """Samvit auto-creates, claims, executes, retries, times out, and completes."""
-    await remember("JWT spec", "RS256 algorithm, 1-hour expiration")
-    return "implemented"
-
-# Just call it. No create_task(), claim(), done(), or retry logic needed.
-result = await implement_auth()
-```
-
-**What Samvit handles automatically:**
-- ✅ Task creation (from function name)
-- ✅ Atomic claiming (no double-assignment across agents)
-- ✅ Execution + exception handling
-- ✅ Automatic retry with exponential backoff (respects max_retries)
-- ✅ Timeout detection + auto-release for recovery
-- ✅ Completion + audit logging
-- ✅ Failure recovery (agent crash? task auto-releases after timeout)
-
-**Result:** One decorator replaces 6+ manual tool calls per task.
-
----
-
-## Core Tools (Manual Mode)
-
-For fine-grained control, use individual tools:
-
-| Area | Tools | Purpose |
-|---|---|---|
-| Memory | `remember`, `recall` | Preserve and retrieve team decisions |
-| Tasks | `create_task`, `list_tasks`, `claim`, `renew`, `done`, `cancel_task` | Coordinate work without duplicate assignment |
-| Messaging | `say`, `read` | Leave persistent direct or topic messages |
-| Documents | `ingest`, `search_docs` | Search shared documents by meaning |
-| Code | `index_code`, `explore_code`, `who_calls`, `graph_symbol` | Query a server-mounted repository |
+| Function | Purpose | Example |
+|----------|---------|---------|
+| `remember(content, key?)` | Store a decision/spec for reuse | `remember("JWT uses RS256", key="auth_spec")` |
+| `recall(query or key)` | Retrieve a remembered decision | `recall("auth_spec")` |
+| `create_task(title)` | Start a task | `create_task("Implement auth")` |
+| `claim()` | Atomically lock next task | `claim()` → one agent gets it, others can't |
+| `done(task_id)` | Mark task complete | `done(task_id)` |
+| `index_code(path)` | Index codebase for search | `index_code("/workspace")` |
+| `search_code(query)` | Find code by meaning | `search_code("password validation")` |
+| `ingest(doc)` | Store a document | `ingest(architecture_guide)` |
+| `search_docs(query)` | Find docs by meaning | `search_docs("auth flow")` |
 
 ## Two Machines, One Team
 
@@ -174,26 +153,23 @@ samvit doctor
 - **[Changelog](CHANGELOG.md)** — Release history
 - **[Build Summary](ENTERPRISE_MINIMAL_COMPLETE.md)** — v0.2.0 completion report
 
-## Project Status
+## What Works
 
-**v0.2.0** (Current) — Core coordination workflow is complete and production-ready:
-- ✅ Atomic task queue with no double-assignment
-- ✅ Shared memory (semantic + KV, namespaced)
-- ✅ Messaging (direct + broadcast, topics)
-- ✅ Code knowledge graph (Python/JS/TS parsing, semantic search)
-- ✅ Admin dashboard with RBAC + audit logging
-- ✅ Ethical guard (blocks secrets/PII automatically)
-- ✅ Workspace isolation (multi-team safe)
-- ✅ Self-hosted deployment (Docker, no dependencies)
+✅ Shared memory (remember/recall with semantic search)  
+✅ Atomic task queue (claim/done with no duplicates)  
+✅ Code graphs (index & search by meaning)  
+✅ Document sharing (ingest & semantic search)  
+✅ Multi-workspace isolation (team A can't see team B)  
+✅ Admin dashboard (task management, audit log)  
+✅ Ethical guard (auto-blocks secrets/PII)  
+✅ Self-hosted (Docker, no API keys, no cloud)  
 
-**v0.3.0** (In Progress):
-- ✅ Autonomous task decorator (`@samvit.task`) — zero-boilerplate task lifecycle
-- ⏳ Task dependencies & ordering
-- ⏳ Memory lifecycle & retention policies
-- ⏳ Workspace-scoped admin roles
-- ⏳ Agent capability registry
+## What's Next
 
-See [Specification](SPEC.md) for full feature roadmap.
+- Task ordering/dependencies
+- Memory retention policies  
+- Advanced admin roles
+- Agent capability registry
 
 ## License
 
