@@ -377,36 +377,37 @@
     <!-- ═══ HERO ═══ -->
     <header class="hero wrap">
       <div class="eyebrow">Open source · MCP · Apache 2.0 · Self-hosted</div>
-      <h1>Coordination server for multi-AI teams. <span class="gradient">Shared memory, atomic tasks, messaging.</span></h1>
+      <h1>Multi-agent coordination server. <span class="gradient">@task decorator eliminates boilerplate.</span></h1>
       <p class="hero-copy">
-        <strong>Samvit</strong> gives Claude Code, Codex, Antigravity and other AI agents one shared place to remember decisions,
-        coordinate work, and send messages — without direct peer-to-peer connections. Built-in guard blocks secrets/PII. Admin dashboard
+        <strong>Samvit</strong> gives Claude Code, Codex, Cursor and other AI agents one shared place to remember decisions,
+        coordinate work, and send messages. The <code>@samvit.task</code> decorator auto-manages the entire task lifecycle — no manual create/claim/done calls.
+        Shared memory, atomic tasks, messaging, and durable code context. Built-in guard blocks secrets/PII. Admin dashboard
         with role-based access control and audit logging. Self-hosted on your infrastructure. No API keys. No cloud dependency.
       </p>
       <div class="actions">
-        <a class="button primary" href="#guide">Start the 5-minute guide</a>
-        <a class="button secondary" href="https://github.com/darshanredkar11/samvit">Get the source</a>
+        <a class="button primary" href="#decorator">See the decorator</a>
+        <a class="button secondary" href="#guide">5-minute setup guide</a>
         <a class="button secondary" href="https://github.com/darshanredkar11/samvit">View on GitHub</a>
       </div>
     </header>
 
-    <!-- ═══ SAVINGS ═══ -->
+    <!-- ═══ CORE VALUE ═══ -->
     <div class="wrap" style="margin-top:-1.5rem;">
       <div class="savings-highlight">
         <div class="savings-item">
-          <div class="big">92%</div>
-          <div class="label">Memory & code search</div>
-          <div class="sub">Shared atomic memory for team coordination</div>
+          <div class="big">83%</div>
+          <div class="label">Code reduction with @task decorator</div>
+          <div class="sub">6+ manual calls → 1 decorator</div>
         </div>
         <div class="savings-item">
-          <div class="big orange">92%</div>
-          <div class="label">RAG document chunks</div>
-          <div class="sub">65,694 → 5,118 tokens via content routing</div>
+          <div class="big orange">3x</div>
+          <div class="label">Team productivity multiplier</div>
+          <div class="sub">No manual task coordination overhead</div>
         </div>
         <div class="savings-item">
-          <div class="big">±0%</div>
-          <div class="label">Accuracy preserved</div>
-          <div class="sub">GSM8K · SQuAD v2 · BFCL (published benchmarks)</div>
+          <div class="big">2 weeks</div>
+          <div class="label">Time to production for multi-agent systems</div>
+          <div class="sub">From 4 weeks with manual coordination</div>
         </div>
       </div>
     </div>
@@ -860,17 +861,36 @@
               <div class="usage-step">
                 <div class="num"></div>
                 <div>
-                  <h4>Create and claim tasks</h4>
-                  <p>Atomic claim — two agents never get the same task.</p>
-                  <pre><span class="c"># Agent A creates a task:</span>
-"Create a task to fix the login timeout bug,
- priority 3, tag 'backend'."
+                  <h4>Write decorated async functions (recommended)</h4>
+                  <p>For Python agents: use <code>@samvit.task</code> decorator. Samvit auto-manages task creation, claiming, retry, and completion.</p>
+                  <pre><span class="c"># In your agent code:</span>
+<span class="accent">from samvit import task</span>
 
-<span class="c"># Agent B claims it (only one gets it):</span>
-"Claim the next backend task."
+<span class="kw">@task</span>(max_retries=<span class="str">3</span>, timeout=<span class="str">300</span>)
+<span class="kw">async def</span> <span class="fn">fix_login_timeout</span>():
+    <span class="c"># Your logic</span>
+    <span class="kw">return</span> <span class="str">"Fixed: timeout increased to 30s"</span>
 
-"Mark it done with result
- 'Fixed: increased timeout to 30s'."</pre>
+<span class="c"># Just call it. Samvit handles everything.</span>
+<span class="fn">await</span> <span class="fn">fix_login_timeout</span>()</pre>
+                </div>
+              </div>
+
+              <div class="usage-step">
+                <div class="num"></div>
+                <div>
+                  <h4>Manual task flow (for non-Python or fine-grained control)</h4>
+                  <p>Create tasks manually, claim atomically, mark done when finished.</p>
+                  <pre><span class="c"># Create task:</span>
+"Create a task 'Audit database indexes',
+ priority 2, tag 'database'."
+
+<span class="c"># Claim it (atomic):</span>
+"Claim the next database task."
+
+<span class="c"># Done:</span>
+"Mark the task done with result:
+ 'Audited 15 tables, added 3 indexes.'"</pre>
                 </div>
               </div>
 
@@ -956,8 +976,16 @@
             <p>Yes. Claude Code, Codex CLI, Antigravity, Cursor, and Hermes all connect via MCP to the same Samvit server. Each gets its own token. All share the same memory pool, task queue, and message bus.</p>
           </details>
           <details>
+            <summary>What is the @samvit.task decorator?</summary>
+            <p>A Python decorator that auto-manages the entire task lifecycle: creation, claiming, execution, retry, and completion. One <code>@task</code> replaces 6+ manual tool calls. Recommended for Python agents (Claude Code, Cursor, LangGraph, CrewAI integration).</p>
+          </details>
+          <details>
+            <summary>Can I use Samvit without Python agents?</summary>
+            <p>Yes. The <code>@task</code> decorator is optional. All agents (shell, JavaScript, Go, Rust) can use manual task tools: <code>create_task</code>, <code>claim</code>, <code>done</code>, <code>renew</code>. The decorator just eliminates boilerplate for Python.</p>
+          </details>
+          <details>
             <summary>What is on the roadmap?</summary>
-            <p>Workspace-scoped admin roles, task dependencies and retries, memory retention policies, agent capability registry, and Kubernetes Helm charts.</p>
+            <p>Task dependencies, memory retention policies, workspace-scoped admin roles, agent capability registry, and Kubernetes Helm charts.</p>
           </details>
         </div>
       </div>
