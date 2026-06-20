@@ -34,6 +34,20 @@ User: "Find where we validate passwords"
 → Client auto-calls: search_code()
 ```
 
+## Try the Demo (30 seconds)
+
+No account. No API key. Runs locally.
+
+```bash
+git clone https://github.com/darshanredkar11/samvit.git
+cd samvit
+docker compose -f docker-compose.demo.yml up --build
+```
+
+Starts a pre-seeded workspace: 4 agents, 3 shared memories, 5 tasks. The seed container prints ready-to-paste `claude mcp add` commands when done.
+
+Stop and wipe: `docker compose -f docker-compose.demo.yml down -v`
+
 ## Quick Start
 
 ```bash
