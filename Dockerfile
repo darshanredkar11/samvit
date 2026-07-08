@@ -11,8 +11,8 @@ COPY pyproject.toml README.md LICENSE ./
 COPY samvit/ samvit/
 COPY migrations/ migrations/
 RUN pip install --no-cache-dir .
-
-RUN python -c "from fastembed import TextEmbedding; list(TextEmbedding('BAAI/bge-small-en-v1.5').embed(['warmup']))"
+# Model downloads on first startup to HF_HOME — keeps build memory under 2 GB.
+# On Railway/Render the model is fetched once then cached in the container layer.
 
 FROM node:24-slim AS admin-ui-builder
 WORKDIR /app/admin-ui
