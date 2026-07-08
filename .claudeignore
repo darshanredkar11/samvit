@@ -1,0 +1,26 @@
+# Excludes large files Claude Code doesn't need for normal Python development.
+# .gitignore already covers .venv/ and node_modules/.
+
+# Marketing site — not needed for backend work
+website/
+
+# React SPA source — TypeScript, not Python
+admin-ui/
+
+# Database migrations — schema is readable in db.py
+migrations/
+
+# Archived docs
+docs/archived/
+
+# Large spec files (facts are in CLAUDE.md)
+SPEC.md
+PITCH.md
+
+# Test fixtures and cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Model cache
+.cache/

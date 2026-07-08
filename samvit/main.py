@@ -7,8 +7,9 @@ Layout:
     /v1/agents/register; stores agent in _current_agent contextvar
   - HTTP routes: /health, /v1/agents/register, /v1/agents/rotate,
     /v1/admin/agents/{handle}/reset
-  - MCP tools: remember, recall, claim, done, say, read
-    (mounted at /sse via FastMCP)
+  - MCP tools: remember, recall, forget, claim, create_task, list_tasks, update_task,
+    done, renew, cancel_task, say, read, ingest, search_docs, index_code, explore_code,
+    who_calls, graph_symbol — mounted at /mcp (Streamable HTTP) and /legacy/sse (SSE)
 
 Decision #10: Authorization header is NEVER logged — middleware strips it.
 """

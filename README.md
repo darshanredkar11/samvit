@@ -1,7 +1,10 @@
-# Samvit
+<div align="center">
+  <img src="assets/logo.svg" width="120" height="120" alt="Samvit logo"/>
+  <h1>Samvit</h1>
+  <strong>Self-hosted coordination server for multi-AI teams.</strong><br/>
+  <span>Shared memory, atomic task locking, code search, and document sharing — over MCP. No cloud. No API keys.</span>
+</div>
 
-**Self-hosted coordination server for multi-AI teams.**  
-Shared memory, atomic task locking, code search, and document sharing — over MCP. No cloud. No API keys.
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.12%2B-blue)](pyproject.toml)
@@ -97,12 +100,20 @@ claude mcp add --transport http samvit \
 |------|-------------|
 | `remember(content, key?)` | Store a decision, spec, or fact for the whole team |
 | `recall(query or key)` | Retrieve by semantic search or exact key |
+| `forget(key or id)` | Delete a memory by key (KV) or id (vector) |
 | `create_task(title)` | Add a task to the shared queue |
 | `claim()` | Atomically lock the next task — only one agent gets it |
-| `done(task_id)` | Mark a task complete with optional structured result |
-| `index_code(path)` | Build a semantic index of a codebase via AST |
-| `search_code(query)` | Find code by meaning, not keyword |
-| `ingest(doc)` | Store a document for team-wide search |
+| `done(task_id, claim_token)` | Mark a task complete with optional structured result |
+| `update_task(task_id, ...)` | Update title/description/priority/tags or transition status |
+| `renew(task_id, claim_token)` | Extend the lease on a long-running task |
+| `cancel_task(task_id)` | Cancel a pending task you created |
+| `say(body, to?)` | Send a directed or broadcast message with optional topic |
+| `read(topic?)` | Consume unread messages; `mark_read=false` to peek |
+| `index_code(path)` | Build a semantic code graph via AST (Python) + regex (JS/Go/Rust/Java) |
+| `explore_code(query)` | Find symbols by meaning, not keyword |
+| `who_calls(function)` | Find all callers of a function across the codebase |
+| `graph_symbol(symbol)` | BFS traversal of callers and callees |
+| `ingest(doc)` | Store a document for team-wide semantic search |
 | `search_docs(query)` | Retrieve documents by semantic similarity |
 
 ---

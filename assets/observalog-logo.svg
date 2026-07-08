@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320" width="320" height="320" role="img" aria-label="ObservaLog logo">
+  <title>ObservaLog</title>
+
+  <!-- Background -->
+  <rect width="320" height="320" fill="#16161e" rx="24"/>
+
+  <defs>
+    <filter id="eye-glow" x="-40%" y="-40%" width="280%" height="280%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="line-glow" x="-20%" y="-100%" width="240%" height="500%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <clipPath id="eye-clip">
+      <!-- Eye shape clip so structured lines don't bleed outside -->
+      <path d="M 84,148
+               C 100,100 140,82 160,82
+               C 180,82 220,100 236,148
+               C 220,196 180,214 160,214
+               C 140,214 100,196 84,148 Z"/>
+    </clipPath>
+  </defs>
+
+  <!-- ── Eye outline ──────────────────────────────────────────────────── -->
+  <!-- Top arc: left-point → right-point through top -->
+  <path d="M 84,148 C 100,100 140,82 160,82 C 180,82 220,100 236,148"
+        fill="none" stroke="#c0caf5" stroke-width="1.8" opacity="0.35"/>
+  <!-- Bottom arc: right-point → left-point through bottom -->
+  <path d="M 236,148 C 220,196 180,214 160,214 C 140,214 100,196 84,148"
+        fill="none" stroke="#c0caf5" stroke-width="1.8" opacity="0.35"/>
+
+  <!-- Very subtle eye fill -->
+  <path d="M 84,148
+           C 100,100 140,82 160,82
+           C 180,82 220,100 236,148
+           C 220,196 180,214 160,214
+           C 140,214 100,196 84,148 Z"
+        fill="#1f2335" opacity="0.5"/>
+
+  <!-- ── Wire format lines (clipped inside eye) ──────────────────────── -->
+  <g clip-path="url(#eye-clip)">
+    <!-- Part A: fixed-position header line with tick marks -->
+    <!-- Main line -->
+    <line x1="96" y1="136" x2="224" y2="136"
+          stroke="#9ece6a" stroke-width="1.5" opacity="0.9"
+          filter="url(#line-glow)"/>
+    <!-- Tick marks at fixed intervals (every 18px) — byte boundaries -->
+    <line x1="96"  y1="130" x2="96"  y2="142" stroke="#9ece6a" stroke-width="1.2" opacity="0.7"/>
+    <line x1="114" y1="131" x2="114" y2="141" stroke="#9ece6a" stroke-width="1"   opacity="0.55"/>
+    <line x1="132" y1="131" x2="132" y2="141" stroke="#9ece6a" stroke-width="1"   opacity="0.55"/>
+    <line x1="150" y1="131" x2="150" y2="141" stroke="#9ece6a" stroke-width="1"   opacity="0.55"/>
+    <line x1="168" y1="131" x2="168" y2="141" stroke="#9ece6a" stroke-width="1"   opacity="0.55"/>
+    <line x1="186" y1="131" x2="186" y2="141" stroke="#9ece6a" stroke-width="1"   opacity="0.55"/>
+    <line x1="204" y1="131" x2="204" y2="141" stroke="#9ece6a" stroke-width="1"   opacity="0.55"/>
+    <line x1="224" y1="130" x2="224" y2="142" stroke="#9ece6a" stroke-width="1.2" opacity="0.7"/>
+
+    <!-- Part B: abbreviated JSON line (shorter, offset right) -->
+    <line x1="108" y1="158" x2="213" y2="158"
+          stroke="#9ece6a" stroke-width="1.5" opacity="0.65"
+          filter="url(#line-glow)"/>
+    <!-- Abbreviated key markers (dots) on Part B -->
+    <circle cx="120" cy="158" r="2" fill="#9ece6a" opacity="0.8"/>
+    <circle cx="140" cy="158" r="2" fill="#9ece6a" opacity="0.8"/>
+    <circle cx="160" cy="158" r="2" fill="#9ece6a" opacity="0.8"/>
+    <circle cx="180" cy="158" r="2" fill="#9ece6a" opacity="0.8"/>
+    <circle cx="200" cy="158" r="2" fill="#9ece6a" opacity="0.8"/>
+  </g>
+
+  <!-- Eye corner points (left & right) — accent marks -->
+  <circle cx="84"  cy="148" r="3.5" fill="#9ece6a" opacity="0.7"/>
+  <circle cx="236" cy="148" r="3.5" fill="#9ece6a" opacity="0.7"/>
+
+  <!-- Outer eye glow ring (very subtle) -->
+  <path d="M 84,148
+           C 100,100 140,82 160,82
+           C 180,82 220,100 236,148
+           C 220,196 180,214 160,214
+           C 140,214 100,196 84,148 Z"
+        fill="none" stroke="#9ece6a" stroke-width="0.8"
+        opacity="0.15" filter="url(#eye-glow)"/>
+
+  <!-- Label -->
+  <text x="160" y="290"
+        font-family="ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace"
+        font-size="15" font-weight="500" fill="#c0caf5"
+        text-anchor="middle" letter-spacing="3">observalog</text>
+</svg>

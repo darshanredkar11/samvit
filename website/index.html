@@ -9,7 +9,7 @@
   <meta name="author" content="Samvit">
   <meta name="robots" content="index,follow,max-image-preview:large">
   <link rel="canonical" href="https://darshanredkar11.github.io/samvit/">
-  <meta name="theme-color" content="#07111f">
+  <meta name="theme-color" content="#16161e">
 
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Samvit">
@@ -40,239 +40,422 @@
   </script>
 
   <style>
+    /* ── OMP Titanium-inspired design system ───────────────────────────────
+       Palette sourced from OMP's default titanium / Tokyo Night dark theme.
+       All color usage goes through these tokens — never raw hex in rules.
+    ── */
     :root {
-      --ink: #1a1a1a;
-      --muted: #666666;
-      --dim: #999999;
-      --bg: #ffffff;
-      --panel: #f8f9fb;
-      --panel-2: #f0f2f7;
-      --line: rgba(0, 0, 0, .08);
-      --violet: #5c4ec9;
-      --cyan: #0ea5a5;
-      --green: #059669;
-      --orange: #d97706;
-      --red: #dc2626;
-      --max: 1200px;
-      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      /* ── Backgrounds ── */
+      --bg:        #16161e;   /* OMP statusLineBg — deepest surface      */
+      --surface:   #1f2335;   /* OMP userMessageBg — card / panel        */
+      --surface-2: #24283b;   /* OMP customMessageBg — code / elevated   */
+      --surface-3: #2a2f45;   /* OMP selectedBg — hover / interactive    */
+
+      /* ── Text ── */
+      --ink:   #c0caf5;       /* OMP syntaxVariable — primary text       */
+      --muted: #9aa5ce;       /* OMP syntaxPunctuation — secondary       */
+      --dim:   #565f89;       /* OMP syntaxComment — tertiary / disabled */
+
+      /* ── Borders ── */
+      --line:        rgba(192, 202, 245, .12);
+      --line-strong: rgba(192, 202, 245, .22);
+
+      /* ── Brand accent (primary) — OMP accent blue ── */
+      --accent: #7aa2f7;
+      --violet: #7aa2f7;      /* kept for HTML compatibility             */
+
+      /* ── Accent alphas (avoid hardcoded rgba in rules) ── */
+      --accent-glow-sm:  0 2px  8px rgba(122, 162, 247, .22);
+      --accent-glow-md:  0 4px 16px rgba(122, 162, 247, .28);
+      --accent-glow-lg:  0 6px 24px rgba(122, 162, 247, .38);
+      --accent-fill-xs:  rgba(122, 162, 247, .07);
+      --accent-fill-sm:  rgba(122, 162, 247, .12);
+      --accent-fill-md:  rgba(122, 162, 247, .18);
+
+      /* ── Secondary palette — OMP syntax colors ── */
+      --purple: #bb9af7;      /* OMP syntaxKeyword — lavender            */
+      --cyan:   #2ac3de;      /* OMP syntaxType — bright cyan            */
+      --green:  #9ece6a;      /* OMP success / syntaxString — sage green */
+      --orange: #e0af68;      /* OMP warning / syntaxNumber — amber      */
+      --red:    #f7768e;      /* OMP error — rose                        */
+
+      /* ── Syntax token colors (code blocks) ── */
+      --syn-kw:   #bb9af7;    /* keyword    → lavender                   */
+      --syn-fn:   #7aa2f7;    /* function   → blue                       */
+      --syn-str:  #9ece6a;    /* string     → green                      */
+      --syn-num:  #ff9e64;    /* number     → orange                     */
+      --syn-type: #2ac3de;    /* type       → cyan                       */
+      --syn-cmt:  #565f89;    /* comment    → dim blue                   */
+      --syn-var:  #c0caf5;    /* variable   → text                       */
+      --syn-op:   #89ddff;    /* operator   → light cyan                 */
+      --syn-cmd:  #9ece6a;    /* shell cmd  → green (same as string)     */
+
+      /* ── Layout ── */
+      --max:  1200px;
+      --r-sm: 8px;
+      --r-md: 12px;
+      --r-lg: 16px;
+
+      /* ── Typography ── */
+      --sans: "Inter", ui-sans-serif, system-ui, -apple-system,
+              BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --mono: ui-monospace, "JetBrains Mono", SFMono-Regular,
+              Menlo, Monaco, Consolas, "Liberation Mono", monospace;
     }
 
-    * { box-sizing: border-box; }
+    /* ── Reset ─────────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
     body {
       margin: 0;
-      color: var(--ink);
       background: var(--bg);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      line-height: 1.6;
+      color: var(--ink);
+      font-family: var(--sans);
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
     }
-
     a { color: inherit; }
-    code { font-family: var(--mono); }
+    code { font-family: var(--mono); font-size: .88em; }
+    ::selection { background: var(--accent-fill-md); color: var(--ink); }
 
+    /* ── Layout shell ───────────────────────────────────────────────────── */
     .wrap { width: min(calc(100% - 2rem), var(--max)); margin: auto; }
 
+    /* ── Navigation ────────────────────────────────────────────────────── */
     nav {
       position: sticky; top: 0; z-index: 50;
       border-bottom: 1px solid var(--line);
-      background: rgba(255, 255, 255, .95);
-      backdrop-filter: blur(8px);
-      box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
+      background: rgba(22, 22, 30, .92);
+      backdrop-filter: blur(12px);
     }
     .nav-inner {
-      min-height: 68px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
+      min-height: 64px;
+      display: flex; align-items: center;
+      justify-content: space-between; gap: 1rem;
     }
     .brand {
-      display: flex; align-items: center; gap: .7rem;
-      text-decoration: none; font-weight: 800; letter-spacing: -.03em;
+      display: flex; align-items: center; gap: .65rem;
+      text-decoration: none; font-weight: 700;
+      letter-spacing: -.03em; color: var(--ink);
     }
     .mark {
-      width: 34px; height: 34px; border-radius: 10px;
+      width: 32px; height: 32px; border-radius: var(--r-sm);
       display: grid; place-items: center;
-      background: linear-gradient(135deg, var(--violet), var(--cyan));
-      color: white; font-weight: 950;
-      box-shadow: 0 2px 8px rgba(92, 78, 201, .2);
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      color: #fff; font-weight: 900; font-size: .85rem;
+      box-shadow: var(--accent-glow-sm);
     }
-    .nav-links { display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap; }
-    .nav-links a { color: var(--dim); text-decoration: none; font-size: .9rem; font-weight: 500; }
-    .nav-links a:hover { color: var(--violet); }
-    .nav-cta { border: 1px solid var(--line); border-radius: 9px; padding: .48rem .85rem; background: var(--panel); }
-    .nav-toggle { display: none; background: none; border: none; cursor: pointer; padding: .4rem; color: var(--ink); }
+    .nav-links { display: flex; align-items: center; gap: 1.1rem; flex-wrap: wrap; }
+    .nav-links a {
+      color: var(--muted); text-decoration: none;
+      font-size: .88rem; font-weight: 500; transition: color .15s;
+    }
+    .nav-links a:hover { color: var(--accent); }
+    .nav-cta {
+      border: 1px solid var(--line-strong); border-radius: var(--r-sm);
+      padding: .42rem .8rem; background: var(--surface);
+      color: var(--ink) !important; font-size: .85rem !important;
+    }
+    .nav-cta:hover { border-color: var(--accent) !important; background: var(--surface-2) !important; }
+    .nav-toggle {
+      display: none; background: none; border: none;
+      cursor: pointer; padding: .4rem; color: var(--muted);
+    }
     .nav-toggle svg { display: block; }
     .nav-overlay {
-      display: none;
-      position: fixed; inset: 0; z-index: 100;
-      flex-direction: column; align-items: center; justify-content: center; gap: 1.2rem;
-      background: rgba(255,255,255,.98); backdrop-filter: blur(8px);
-      font-size: 1.2rem; font-weight: 600;
+      display: none; position: fixed; inset: 0; z-index: 100;
+      flex-direction: column; align-items: center;
+      justify-content: center; gap: 1.2rem;
+      background: rgba(22, 22, 30, .97);
+      backdrop-filter: blur(12px);
+      font-size: 1.15rem; font-weight: 600;
     }
-    .nav-overlay a { color: var(--ink); text-decoration: none; }
-    .nav-overlay a:hover { color: var(--violet); }
-    .nav-overlay .nav-cta { font-size: 1rem; }
+    .nav-overlay a { color: var(--muted); text-decoration: none; transition: color .15s; }
+    .nav-overlay a:hover { color: var(--accent); }
+    .nav-overlay .nav-cta { font-size: .95rem !important; }
 
+    /* ── Hero ───────────────────────────────────────────────────────────── */
     .hero { padding: 6rem 0 4rem; text-align: center; }
     .eyebrow {
-      display: inline-flex; gap: .5rem; align-items: center; padding: .35rem .75rem;
-      color: var(--violet); border: 1px solid var(--violet);
-      border-radius: 999px; background: rgba(92, 78, 201, .08);
-      font-size: .78rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+      display: inline-flex; gap: .45rem; align-items: center;
+      padding: .32rem .72rem;
+      color: var(--accent); border: 1px solid rgba(122, 162, 247, .35);
+      border-radius: 999px; background: var(--accent-fill-xs);
+      font-size: .75rem; font-weight: 700;
+      letter-spacing: .06em; text-transform: uppercase;
+      font-family: var(--mono);
     }
     h1 {
-      max-width: 1000px; margin: 1.2rem auto 1rem;
-      font-size: clamp(2.5rem, 7vw, 5.4rem); line-height: 1.02; letter-spacing: -.06em;
+      max-width: 980px; margin: 1.1rem auto .9rem;
+      font-size: clamp(2.4rem, 6.5vw, 5rem);
+      line-height: 1.04; letter-spacing: -.055em;
+      color: var(--ink);
     }
-    .gradient { color: transparent; background: linear-gradient(100deg, var(--violet), var(--cyan)); background-clip: text; }
-    .gradient-orange { color: transparent; background: linear-gradient(100deg, var(--orange), var(--violet)); background-clip: text; }
-    .hero-copy { max-width: 780px; margin: 0 auto; color: var(--muted); font-size: clamp(1rem, 2vw, 1.2rem); }
-    .actions { display: flex; justify-content: center; flex-wrap: wrap; gap: .8rem; margin: 2rem 0; }
+    .gradient {
+      color: transparent;
+      background: linear-gradient(100deg, var(--accent), var(--purple));
+      -webkit-background-clip: text; background-clip: text;
+    }
+    .gradient-orange {
+      color: transparent;
+      background: linear-gradient(100deg, var(--orange), var(--accent));
+      -webkit-background-clip: text; background-clip: text;
+    }
+    .hero-copy {
+      max-width: 760px; margin: 0 auto;
+      color: var(--muted); font-size: clamp(.95rem, 1.8vw, 1.15rem);
+    }
+    .actions {
+      display: flex; justify-content: center;
+      flex-wrap: wrap; gap: .75rem; margin: 1.8rem 0;
+    }
     .button {
-      display: inline-flex; justify-content: center; align-items: center; gap: .45rem;
-      min-height: 46px; padding: .7rem 1.15rem; border-radius: 10px;
-      text-decoration: none; font-weight: 750; border: 1px solid var(--line);
+      display: inline-flex; justify-content: center;
+      align-items: center; gap: .4rem;
+      min-height: 44px; padding: .65rem 1.1rem;
+      border-radius: var(--r-sm);
+      text-decoration: none; font-weight: 600;
+      font-size: .9rem; border: 1px solid var(--line-strong);
+      transition: transform .15s, box-shadow .15s, border-color .15s, background .15s;
     }
-    .button.primary { color: white; border: 0; background: linear-gradient(135deg, var(--violet), var(--cyan)); box-shadow: 0 4px 15px rgba(92, 78, 201, .25); }
-    .button.secondary { background: var(--panel); color: var(--ink); }
-    .button.primary:hover { box-shadow: 0 6px 20px rgba(92, 78, 201, .35); }
-    .button.secondary:hover { background: var(--panel-2); }
-    .button:hover { transform: translateY(-2px); transition: all .2s; }
+    .button.primary {
+      color: #fff; border: 0;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      box-shadow: var(--accent-glow-md);
+    }
+    .button.secondary {
+      background: var(--surface); color: var(--ink);
+    }
+    .button.primary:hover  { box-shadow: var(--accent-glow-lg); transform: translateY(-2px); }
+    .button.secondary:hover { background: var(--surface-2); border-color: var(--accent); transform: translateY(-2px); }
 
+    /* ── Sections ───────────────────────────────────────────────────────── */
     section { padding: 5rem 0; }
     .section-head { max-width: 720px; margin-bottom: 2.5rem; }
     .section-head.centered { margin-left: auto; margin-right: auto; text-align: center; }
-    .kicker { color: var(--violet); font-size: .76rem; text-transform: uppercase; letter-spacing: .11em; font-weight: 800; }
-    .kicker.violet { color: var(--violet); }
-    h2 { margin: .6rem 0 .8rem; font-size: clamp(1.8rem, 4.5vw, 3.2rem); line-height: 1.08; letter-spacing: -.045em; }
-    .section-head p { color: var(--muted); font-size: 1.05rem; }
+    .kicker {
+      color: var(--accent); font-size: .72rem;
+      text-transform: uppercase; letter-spacing: .12em;
+      font-weight: 700; font-family: var(--mono);
+    }
+    .kicker.violet { color: var(--purple); }
+    h2 {
+      margin: .55rem 0 .75rem;
+      font-size: clamp(1.7rem, 4vw, 3rem);
+      line-height: 1.1; letter-spacing: -.04em;
+      color: var(--ink);
+    }
+    .section-head p { color: var(--muted); font-size: 1rem; }
 
+    /* ── Cards ──────────────────────────────────────────────────────────── */
     .card-grid { display: grid; gap: 1rem; }
     .card-grid-3 { grid-template-columns: repeat(3, 1fr); }
     .card-grid-2 { grid-template-columns: repeat(2, 1fr); }
     .card {
-      padding: 1.45rem; border: 1px solid var(--line); border-radius: 14px;
-      background: var(--panel); transition: all .2s;
+      padding: 1.35rem; border: 1px solid var(--line);
+      border-radius: var(--r-md); background: var(--surface);
+      transition: border-color .15s, box-shadow .15s;
     }
-    .card:hover { border-color: var(--violet); box-shadow: 0 4px 12px rgba(92, 78, 201, .1); }
-    .card .number { color: var(--violet); font: 800 .75rem var(--mono); }
-    .card h3 { margin: .7rem 0 .45rem; font-size: 1.08rem; color: var(--ink); }
-    .card p { margin: 0; color: var(--muted); font-size: .92rem; }
-    .card code { color: var(--violet); font-weight: 600; background: rgba(92, 78, 201, .08); padding: .1rem .3rem; border-radius: 3px; }
+    .card:hover {
+      border-color: rgba(122, 162, 247, .4);
+      box-shadow: 0 4px 20px rgba(122, 162, 247, .1);
+    }
+    .card .number { color: var(--accent); font: 700 .72rem var(--mono); }
+    .card h3 { margin: .65rem 0 .4rem; font-size: 1.05rem; color: var(--ink); }
+    .card p  { margin: 0; color: var(--muted); font-size: .9rem; }
+    .card code {
+      color: var(--accent); font-weight: 600;
+      background: var(--accent-fill-xs);
+      padding: .1rem .28rem; border-radius: 4px;
+    }
 
-    /* ── Architecture Diagram ── */
+    /* ── Architecture diagram ───────────────────────────────────────────── */
     .arch {
       display: flex; flex-direction: column; gap: .3rem;
-      font-size: .8rem;
-      overflow-x: auto;
+      font-size: .8rem; overflow-x: auto;
       -webkit-overflow-scrolling: touch;
     }
-    .arch-row { display: flex; align-items: stretch; justify-content: center; gap: .6rem; min-width: min-content; }
+    .arch-row {
+      display: flex; align-items: stretch;
+      justify-content: center; gap: .55rem; min-width: min-content;
+    }
     .arch-box {
-      padding: .75rem .9rem; border: 1px solid var(--line); border-radius: 10px;
-      background: var(--panel); text-align: center; line-height: 1.4; min-width: 100px;
+      padding: .7rem .85rem; border: 1px solid var(--line);
+      border-radius: var(--r-sm); background: var(--surface);
+      text-align: center; line-height: 1.4; min-width: 100px;
     }
     .arch-box.small { flex: 1; }
     .arch-box.med   { flex: 1.8; }
     .arch-box.large { flex: 3; }
-    .arch-box .label { color: var(--dim); font-size: .65rem; text-transform: uppercase; letter-spacing: .07em; }
+    .arch-box .label {
+      color: var(--dim); font-size: .63rem;
+      text-transform: uppercase; letter-spacing: .07em; font-family: var(--mono);
+    }
     .arch-box .title { font-weight: 700; margin: .2rem 0; color: var(--ink); }
     .arch-box .desc  { color: var(--muted); font-size: .72rem; }
     .arch-box .sub   { color: var(--dim); font-size: .65rem; }
-    .arch-box.llm { border-color: var(--cyan); background: rgba(14, 165, 165, .05); }
-    .arch-line { display: flex; align-items: center; justify-content: center; gap: .4rem; padding: .15rem 0; }
+    .arch-box.llm    { border-color: rgba(42, 195, 222, .35); background: rgba(42, 195, 222, .05); }
+    .arch-line {
+      display: flex; align-items: center;
+      justify-content: center; gap: .4rem; padding: .15rem 0;
+    }
     .arch-line .arrow { color: var(--dim); font-size: .7rem; }
 
     .legend {
-      display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap;
-      margin-top: 1.2rem; font-size: .78rem;
+      display: flex; gap: 1.4rem; justify-content: center;
+      flex-wrap: wrap; margin-top: 1.2rem; font-size: .78rem;
+      color: var(--muted);
     }
     .legend-dot {
-      display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: .35rem;
+      display: inline-block; width: 8px; height: 8px;
+      border-radius: 2px; margin-right: .35rem;
     }
 
+    /* ── Stats/savings strip ────────────────────────────────────────────── */
     .savings-highlight {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;
-      margin: 1.5rem 0;
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 1rem; margin: 1.5rem 0;
     }
     .savings-item {
-      padding: 1.2rem; text-align: center; border: 1px solid var(--line); border-radius: 12px;
-      background: var(--panel);
+      padding: 1.15rem; text-align: center;
+      border: 1px solid var(--line); border-radius: var(--r-md);
+      background: var(--surface);
     }
-    .savings-item .big { font-size: 1.8rem; font-weight: 800; color: var(--violet); }
+    .savings-item .big   { font-size: 1.75rem; font-weight: 800; color: var(--accent); }
     .savings-item .big.orange { color: var(--orange); }
     .savings-item .label { color: var(--ink); font-size: .82rem; margin-top: .3rem; font-weight: 600; }
-    .savings-item .sub { color: var(--muted); font-size: .72rem; }
+    .savings-item .sub   { color: var(--muted); font-size: .72rem; }
 
+    /* ── Code blocks ────────────────────────────────────────────────────── */
     code, pre { overflow-wrap: break-word; word-wrap: break-word; }
-    .wrap-example { background: var(--panel-2); border: 1px solid var(--line); border-radius: 12px; padding: 1.2rem; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .wrap-example pre { margin: 0; color: #1a1a1a; font: .8rem/1.75 var(--mono); }
-    .wrap-example .c { color: var(--dim); }
-    .wrap-example .kw { color: var(--violet); font-weight: 600; }
-    .wrap-example .str { color: var(--green); }
-    .wrap-example .fn { color: var(--cyan); }
-    .wrap-example .cmt { color: #999; }
+    .wrap-example {
+      background: var(--surface-2); border: 1px solid var(--line);
+      border-radius: var(--r-md); padding: 1.15rem;
+      overflow-x: auto; -webkit-overflow-scrolling: touch;
+    }
+    .wrap-example pre {
+      margin: 0; color: var(--ink);
+      font: .8rem/1.8 var(--mono);
+    }
+    /* Syntax token classes */
+    .wrap-example .c,
+    .wrap-example .c   { color: var(--muted); }
+    .wrap-example .kw  { color: var(--syn-kw); font-weight: 600; }
+    .wrap-example .str { color: var(--syn-str); }
+    .wrap-example .fn  { color: var(--syn-fn); }
+    .wrap-example .cmt { color: var(--syn-cmt); font-style: italic; }
+    .wrap-example .num { color: var(--syn-num); }
+    .wrap-example .type{ color: var(--syn-type); }
+    .wrap-example .op  { color: var(--syn-op); }
 
+    /* ── Step guide ─────────────────────────────────────────────────────── */
     .usage-steps { counter-reset: step; }
     .usage-step {
       counter-increment: step;
-      display: grid; grid-template-columns: 32px 1fr; gap: .6rem .8rem;
-      padding: .8rem 0; border-bottom: 1px solid var(--line);
-      min-width: 0;
+      display: grid; grid-template-columns: 30px 1fr;
+      gap: .55rem .75rem; padding: .8rem 0;
+      border-bottom: 1px solid var(--line); min-width: 0;
     }
     .usage-step > * { min-width: 0; }
     .usage-step:last-child { border-bottom: 0; }
-    .usage-step .num {
-      display: flex; align-items: flex-start; flex-shrink: 0;
-    }
+    .usage-step .num { display: flex; align-items: flex-start; flex-shrink: 0; }
     .usage-step .num::before {
       content: counter(step);
-      width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%;
-      color: white; background: var(--violet);
-      border: none; font-size: .8rem; font-weight: 700; box-shadow: 0 2px 6px rgba(92, 78, 201, .2); flex-shrink: 0;
+      width: 26px; height: 26px;
+      display: grid; place-items: center; border-radius: 50%;
+      color: #fff; background: var(--accent); flex-shrink: 0;
+      font-size: .75rem; font-weight: 700;
+      box-shadow: var(--accent-glow-sm);
     }
-    .usage-step h4 { margin: 0 0 .3rem; font-size: .95rem; color: var(--ink); }
-    .usage-step p { margin: 0; color: var(--muted); font-size: .88rem; }
+    .usage-step h4 { margin: 0 0 .3rem; font-size: .92rem; color: var(--ink); }
+    .usage-step p  { margin: 0; color: var(--muted); font-size: .86rem; }
     .usage-step pre {
-      margin: .5rem 0 0; padding: .7rem .9rem; overflow-x: auto; border-radius: 8px;
-      background: var(--panel-2); border: 1px solid var(--line); color: var(--ink);
-      font: .78rem/1.65 var(--mono); grid-column: 2; word-wrap: break-word; overflow-wrap: break-word;
+      margin: .45rem 0 0; padding: .65rem .85rem;
+      overflow-x: auto; border-radius: var(--r-sm);
+      background: var(--surface-2); border: 1px solid var(--line);
+      color: var(--ink); font: .76rem/1.65 var(--mono);
+      grid-column: 2; word-wrap: break-word; overflow-wrap: break-word;
     }
-    .usage-step pre .accent { color: var(--green); }
+    .usage-step pre .accent { color: var(--syn-cmd); }
 
-    .tool-table { width: 100%; border-collapse: collapse; font-size: .92rem; overflow-x: auto; }
-    .tool-table th { text-align: left; color: var(--dim); font-size: .72rem; text-transform: uppercase; letter-spacing: .07em; padding: .5rem .6rem; border-bottom: 1px solid var(--line); white-space: nowrap; }
-    .tool-table td { padding: .6rem; border-bottom: 1px solid var(--line); color: var(--muted); }
-    .tool-table td:first-child { color: var(--violet); font-weight: 600; font-family: var(--mono); font-size: .85rem; white-space: nowrap; }
-    .tool-table tr:hover td { color: var(--ink); }
+    /* ── Tool reference table ───────────────────────────────────────────── */
+    .tool-table { width: 100%; border-collapse: collapse; font-size: .9rem; overflow-x: auto; }
+    .tool-table th {
+      text-align: left; color: var(--dim);
+      font-size: .7rem; text-transform: uppercase;
+      letter-spacing: .08em; font-family: var(--mono);
+      padding: .5rem .6rem; border-bottom: 1px solid var(--line-strong);
+      white-space: nowrap;
+    }
+    .tool-table td {
+      padding: .55rem .6rem;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted); vertical-align: top;
+    }
+    .tool-table td:first-child {
+      color: var(--accent); font-weight: 600;
+      font-family: var(--mono); font-size: .83rem; white-space: nowrap;
+    }
+    .tool-table tr:hover td { background: var(--surface); color: var(--ink); }
+    .tool-table td code {
+      color: var(--syn-type); background: var(--accent-fill-xs);
+      padding: .05rem .25rem; border-radius: 3px;
+    }
 
-    .faq-grid { display: grid; gap: .8rem; }
+    /* ── Guide layout ───────────────────────────────────────────────────── */
+    .guide-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 2rem; overflow: hidden;
+    }
+    .guide-grid > * { min-width: 0; overflow: hidden; }
+
+    /* ── FAQ accordion ──────────────────────────────────────────────────── */
+    .faq-grid { display: grid; gap: .7rem; }
     .faq-grid details {
-      padding: .9rem 1rem; border: 1px solid var(--line); border-radius: 10px;
-      background: var(--panel); transition: all .2s;
+      padding: .85rem 1rem; border: 1px solid var(--line);
+      border-radius: var(--r-sm); background: var(--surface);
+      transition: border-color .15s;
     }
-    .faq-grid details[open] { border-color: var(--violet); background: var(--panel-2); }
-    .faq-grid summary { cursor: pointer; font-weight: 700; font-size: .95rem; color: var(--ink); }
-    .faq-grid details p { color: var(--muted); margin: .6rem 0 0; font-size: .9rem; }
+    .faq-grid details[open] { border-color: rgba(122, 162, 247, .4); background: var(--surface-2); }
+    .faq-grid summary {
+      cursor: pointer; font-weight: 700; font-size: .92rem;
+      color: var(--ink); list-style: none;
+    }
+    .faq-grid summary::-webkit-details-marker { display: none; }
+    .faq-grid summary::before {
+      content: '›'; margin-right: .5rem; color: var(--accent);
+      font-weight: 900; display: inline-block; transition: transform .2s;
+    }
+    .faq-grid details[open] summary::before { transform: rotate(90deg); }
+    .faq-grid details p { color: var(--muted); margin: .6rem 0 0; font-size: .88rem; }
 
+    /* ── CTA block ──────────────────────────────────────────────────────── */
     .cta-section {
       margin: 3rem auto 4rem; padding: 3rem 1.5rem; text-align: center;
-      border: 2px solid var(--violet); border-radius: 22px;
-      background: rgba(92, 78, 201, .04);
+      border: 1px solid rgba(122, 162, 247, .3);
+      border-radius: 20px;
+      background: linear-gradient(135deg, rgba(122,162,247,.06), rgba(187,154,247,.06));
     }
     .cta-section h2 { color: var(--ink); }
-    .cta-section p { color: var(--muted); max-width: 600px; margin: .7rem auto 1.5rem; }
+    .cta-section p  { color: var(--muted); max-width: 600px; margin: .7rem auto 1.5rem; }
 
-    footer { border-top: 1px solid var(--line); padding: 2rem 0; color: var(--dim); font-size: .85rem; background: var(--panel); }
+    /* ── Stack overview special grid ─────────────────────────────────────── */
+    .stack-grid > div:nth-child(3) {
+      border-left: 1px solid rgba(187,154,247,.25);
+      padding-left: .6rem;
+    }
+
+    /* ── Footer ─────────────────────────────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--line); padding: 2rem 0;
+      color: var(--dim); font-size: .83rem; background: var(--surface);
+    }
     .footer-inner { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
     .footer-links { display: flex; gap: 1rem; flex-wrap: wrap; }
-    .footer-links a { color: var(--muted); text-decoration: none; transition: color .2s; }
-    .footer-links a:hover { color: var(--violet); }
+    .footer-links a { color: var(--muted); text-decoration: none; transition: color .15s; }
+    .footer-links a:hover { color: var(--accent); }
 
-    .stack-grid > div:nth-child(3) { border-left: 1px solid rgba(255,194,122,.35); padding-left: .6rem; }
-
-    /* Tablet and smaller */
+    /* ── Tablet ─────────────────────────────────────────────────────────── */
     @media (max-width: 860px) {
       .nav-toggle { display: block; }
       .nav-links a:not(.nav-cta) { display: none; }
@@ -285,58 +468,50 @@
       .savings-highlight { grid-template-columns: 1fr; }
       .arch { overflow-x: auto; }
       .arch-row { min-width: 100%; flex-wrap: nowrap; }
-      section { padding: 3rem 0; }
-      h2 { font-size: clamp(1.5rem, 3.5vw, 3rem); }
-    }
-
-    .guide-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; overflow: hidden; }
-    .guide-grid > * { min-width: 0; overflow: hidden; }
-
-    /* Tablet and smaller */
-    @media (max-width: 860px) {
       .guide-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+      section { padding: 3rem 0; }
+      h2 { font-size: clamp(1.45rem, 3.5vw, 2.8rem); }
     }
 
-    /* Mobile */
+    /* ── Mobile ─────────────────────────────────────────────────────────── */
     @media (max-width: 640px) {
       .wrap { width: calc(100% - 1.5rem); }
       .guide-grid { grid-template-columns: 1fr; gap: 1rem; }
       .card-grid-3 { grid-template-columns: 1fr; }
       .card-grid-2 { grid-template-columns: 1fr; }
-      .card { padding: 1.2rem; }
+      .card { padding: 1.1rem; }
       .hero { padding: 3rem 0 2rem; }
-      h1 { font-size: clamp(1.8rem, 5vw, 3rem); margin: 1rem auto .8rem; }
-      .hero-copy { font-size: 1rem; }
-      .actions { gap: .6rem; margin: 1.5rem 0; }
-      .button { min-height: 44px; padding: .6rem 1rem; font-size: .9rem; }
-      .savings-highlight { grid-template-columns: 1fr; gap: .8rem; margin: 1rem 0; }
-      .savings-item { padding: 1rem; }
-      .savings-item .big { font-size: 1.5rem; }
-      .wrap-example { padding: .8rem; }
-      .wrap-example pre { font-size: .7rem; line-height: 1.5; }
-      .tool-table { font-size: .85rem; }
-      .tool-table th, .tool-table td { padding: .4rem; }
-      .usage-step { grid-template-columns: 24px 1fr; gap: .5rem .6rem; padding: .6rem 0; overflow: hidden; }
-      .usage-step .num::before { width: 24px; height: 24px; font-size: .7rem; flex-shrink: 0; }
-      .usage-step pre { font-size: .7rem; padding: .5rem; overflow-x: auto; }
-      .faq-grid { gap: .6rem; }
-      .faq-grid details { padding: .7rem .8rem; }
-      .faq-grid summary { font-size: .9rem; }
-      .cta-section { margin: 2rem auto 2.5rem; padding: 2rem 1.2rem; border-radius: 16px; }
-      .cta-section h2 { font-size: clamp(1.3rem, 4vw, 2.4rem); }
-      .footer-inner { flex-direction: column; gap: .8rem; }
+      h1 { font-size: clamp(1.7rem, 5vw, 2.8rem); margin: .9rem auto .8rem; }
+      .hero-copy { font-size: .95rem; }
+      .actions { gap: .55rem; margin: 1.4rem 0; }
+      .button { min-height: 42px; padding: .55rem .95rem; font-size: .86rem; }
+      .savings-highlight { grid-template-columns: 1fr; gap: .7rem; margin: 1rem 0; }
+      .savings-item { padding: .9rem; }
+      .savings-item .big { font-size: 1.45rem; }
+      .wrap-example { padding: .75rem; }
+      .wrap-example pre { font-size: .72rem; line-height: 1.6; }
+      .tool-table { font-size: .82rem; }
+      .tool-table th, .tool-table td { padding: .38rem; }
+      .usage-step { grid-template-columns: 24px 1fr; gap: .45rem .55rem; padding: .6rem 0; overflow: hidden; }
+      .usage-step .num::before { width: 22px; height: 22px; font-size: .68rem; }
+      .usage-step pre { font-size: .68rem; padding: .45rem; overflow-x: auto; }
+      .faq-grid { gap: .55rem; }
+      .faq-grid details { padding: .65rem .8rem; }
+      .faq-grid summary { font-size: .88rem; }
+      .cta-section { margin: 2rem auto 2.5rem; padding: 1.8rem 1.1rem; border-radius: 14px; }
+      .cta-section h2 { font-size: clamp(1.25rem, 4vw, 2.2rem); }
+      .footer-inner { flex-direction: column; gap: .7rem; }
       section { padding: 2rem 0; }
     }
 
-    /* Small phones */
+    /* ── Small phones ───────────────────────────────────────────────────── */
     @media (max-width: 400px) {
       .wrap { width: calc(100% - 1rem); }
-      h1 { font-size: clamp(1.4rem, 4vw, 2.2rem); }
-      .hero-copy { font-size: .95rem; }
-      .button { min-height: 40px; padding: .5rem .8rem; font-size: .85rem; }
-      .tool-table { font-size: .75rem; }
-      .tool-table th, .tool-table td { padding: .3rem; }
-      .wrap-example pre { font-size: .65rem; }
+      h1 { font-size: clamp(1.35rem, 4.5vw, 2rem); }
+      .button { min-height: 40px; padding: .5rem .8rem; font-size: .83rem; }
+      .tool-table { font-size: .73rem; }
+      .tool-table th, .tool-table td { padding: .28rem; }
+      .wrap-example pre { font-size: .63rem; }
     }
   </style>
 </head>
@@ -344,7 +519,28 @@
   <nav aria-label="Primary navigation">
     <div class="wrap nav-inner">
       <a class="brand" href="#" aria-label="Samvit home">
-        <span class="mark" aria-hidden="true">S</span>
+        <span class="mark" aria-hidden="true" style="background:none;padding:0;box-shadow:none;width:32px;height:32px;">
+          <svg viewBox="0 0 320 320" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="cg" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#7aa2f7"/><stop offset="100%" stop-color="#4a7ae0" stop-opacity="0.7"/></radialGradient>
+              <filter id="ng" x="-80%" y="-80%" width="360%" height="360%"><feGaussianBlur in="SourceGraphic" stdDeviation="10" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            </defs>
+            <line x1="160" y1="66"  x2="160" y2="131" stroke="#bb9af7" stroke-width="5" opacity="0.6"/>
+            <line x1="238" y1="122" x2="177" y2="143" stroke="#bb9af7" stroke-width="5" opacity="0.6"/>
+            <line x1="208" y1="214" x2="170" y2="162" stroke="#bb9af7" stroke-width="5" opacity="0.6"/>
+            <line x1="112" y1="214" x2="150" y2="162" stroke="#bb9af7" stroke-width="5" opacity="0.6"/>
+            <line x1="82"  y1="122" x2="143" y2="143" stroke="#bb9af7" stroke-width="5" opacity="0.6"/>
+            <circle cx="160" cy="148" r="28" fill="url(#cg)" filter="url(#ng)"/>
+            <circle cx="160" cy="148" r="28" fill="#7aa2f7"/>
+            <circle cx="160" cy="148" r="12" fill="none" stroke="#16161e" stroke-width="5"/>
+            <circle cx="160" cy="148" r="5"  fill="#c0caf5"/>
+            <circle cx="160" cy="66"  r="14" fill="#7aa2f7" opacity="0.85" filter="url(#ng)"/>
+            <circle cx="238" cy="122" r="14" fill="#7aa2f7" opacity="0.85" filter="url(#ng)"/>
+            <circle cx="208" cy="214" r="14" fill="#7aa2f7" opacity="0.85" filter="url(#ng)"/>
+            <circle cx="112" cy="214" r="14" fill="#7aa2f7" opacity="0.85" filter="url(#ng)"/>
+            <circle cx="82"  cy="122" r="14" fill="#7aa2f7" opacity="0.85" filter="url(#ng)"/>
+          </svg>
+        </span>
         <span>samvit</span>
       </a>
       <button class="nav-toggle" aria-label="Menu" onclick="document.querySelector('.nav-overlay').classList.toggle('open')">
@@ -355,6 +551,8 @@
         <a href="#architecture">Architecture</a>
         <a href="#tools">Tools</a>
         <a href="#guide">Guide</a>
+        <a href="#connect">Connect</a>
+        <a href="#internals">Internals</a>
         <a href="#admin-ui">Admin UI</a>
         <a href="#faq">FAQ</a>
         <a class="nav-cta" href="https://github.com/darshanredkar11/samvit">View on GitHub</a>
@@ -364,6 +562,8 @@
         <a href="#architecture" onclick="this.closest('.nav-overlay').classList.remove('open')">Architecture</a>
         <a href="#tools" onclick="this.closest('.nav-overlay').classList.remove('open')">Tools</a>
         <a href="#guide" onclick="this.closest('.nav-overlay').classList.remove('open')">Guide</a>
+        <a href="#connect" onclick="this.closest('.nav-overlay').classList.remove('open')">Connect</a>
+        <a href="#internals" onclick="this.closest('.nav-overlay').classList.remove('open')">Internals</a>
         <a href="#admin-ui" onclick="this.closest('.nav-overlay').classList.remove('open')">Admin UI</a>
         <a href="#faq" onclick="this.closest('.nav-overlay').classList.remove('open')">FAQ</a>
         <a class="nav-cta" href="https://github.com/darshanredkar11/samvit" onclick="this.closest('.nav-overlay').classList.remove('open')">View on GitHub</a>
@@ -441,12 +641,12 @@
           <h2>Everything you need. Nothing you don't.</h2>
         </div>
         <div style="display: flex; flex-direction: column; align-items: center; gap: .3rem;">
-          <div style="padding: .6rem 1.5rem; border: 1px solid var(--violet); border-radius: 8px; background: rgba(157,131,255,.06); text-align: center; width: 100%; max-width: 550px;">
+          <div style="padding: .6rem 1.5rem; border: 1px solid var(--violet); border-radius: 8px; background: rgba(122,162,247,.1); text-align: center; width: 100%; max-width: 550px;">
             <strong>Your AI agents</strong>
             <div style="color: var(--muted); font-size: .75rem;">Claude Code · Codex CLI · Antigravity · Cursor · Hermes · Custom MCP</div>
           </div>
           <div style="color: var(--dim); font-size: .7rem;">↓ MCP protocol (Streamable HTTP / SSE)</div>
-          <div style="padding: .8rem 1.5rem; border: 1px solid var(--cyan); border-radius: 10px; background: rgba(82,215,209,.05); text-align: center; width: 100%; max-width: 600px;">
+          <div style="padding: .8rem 1.5rem; border: 1px solid var(--cyan); border-radius: 10px; background: rgba(42,195,222,.08); text-align: center; width: 100%; max-width: 600px;">
             <div style="font-weight: 700; margin-bottom: .4rem;">Samvit Server (self-hosted)</div>
             <div class="stack-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .5rem; text-align: left; font-size: .78rem;">
               <div>
@@ -464,7 +664,7 @@
                 <div>CodeGraph (AST+regex)</div>
                 <div>Ethical Guard</div>
               </div>
-                <div style="background: rgba(255,194,122,.04); border-radius: 6px;">
+                <div style="background: rgba(224,175,104,.08); border-radius: 6px; padding: .25rem .4rem;">
                 <div style="color: var(--orange); font-size: .65rem; text-transform: uppercase; letter-spacing: .06em;">Security & Admin</div>
                 <div>RBAC (4 roles)</div>
                 <div>Audit logging</div>
@@ -478,7 +678,7 @@
           </div>
           <div style="display: flex; gap: .6rem; font-size: .7rem; color: var(--dim);">
             <span>↓ MCP queries & responses</span>
-            <span style="color: var(--line);">|</span>
+            <span style="color: var(--dim);">|</span>
             <span>↓ PostgreSQL 16 + pgvector (persist data)</span>
           </div>
           <div style="display: flex; gap: .6rem; flex-wrap: wrap; justify-content: center;">
@@ -612,18 +812,24 @@
           <thead>
             <tr><th>Tool</th><th>What it does</th><th>Category</th></tr>
           </thead>
-          <tbody>
-            <tr><td>remember</td><td>Store a semantic memory + optional exact-key lookup</td><td>—</td></tr>
-            <tr><td>recall</td><td>Find memories by semantic query or exact key</td><td>Memory</td></tr>
-            <tr><td>create_task</td><td>Create a prioritized, tagged task with idempotency</td><td>—</td></tr>
-            <tr><td>claim</td><td>Atomically lock the next pending task (CTE + SKIP LOCKED)</td><td>—</td></tr>
-            <tr><td>renew / done</td><td>Extend lease / complete a claimed task</td><td>—</td></tr>
-            <tr><td>cancel_task / list_tasks</td><td>Cancel or list tasks by status and tags</td><td>Tasks</td></tr>
-            <tr><td>say / read</td><td>Send / receive directed or broadcast messages</td><td>Messaging</td></tr>
-            <tr><td>ingest / search_docs</td><td>Ingest documents and semantic search over them</td><td>RAG</td></tr>
-            <tr><td>index_code / explore_code</td><td>Index codebase / find symbols semantically</td><td>Code Graph</td></tr>
-            <tr><td>who_calls / graph_symbol</td><td>Find callers / BFS traversal of symbol connections</td><td>Code Graph</td></tr>
-          </tbody>
+            <tr><td>remember</td><td>Store a semantic memory (vector) + optional exact-key lookup</td><td>Memory</td></tr>
+            <tr><td>recall</td><td>Find memories by semantic search or exact key</td><td>Memory</td></tr>
+            <tr><td>forget</td><td>Delete a memory by key (KV) or id (vector) — your namespace only</td><td>Memory</td></tr>
+            <tr><td>create_task</td><td>Create a prioritized, tagged task with optional idempotency key</td><td>Tasks</td></tr>
+            <tr><td>claim</td><td>Atomically lock the next pending task (<code>FOR UPDATE SKIP LOCKED</code>) — one agent wins</td><td>Tasks</td></tr>
+            <tr><td>renew</td><td>Extend the lease on a long-running claimed task</td><td>Tasks</td></tr>
+            <tr><td>done</td><td>Mark a claimed task done or failed; record structured result (up to 1 MB)</td><td>Tasks</td></tr>
+            <tr><td>update_task</td><td>Modify title/description/priority/tags on a pending task, or cancel/fail/complete a claimed one</td><td>Tasks</td></tr>
+            <tr><td>cancel_task</td><td>Cancel a pending task you created</td><td>Tasks</td></tr>
+            <tr><td>list_tasks</td><td>List team tasks filtered by status and tags</td><td>Tasks</td></tr>
+            <tr><td>say</td><td>Send a directed or broadcast message with optional topic</td><td>Messaging</td></tr>
+            <tr><td>read</td><td>Consume unread messages; <code>mark_read=false</code> for peek without consuming</td><td>Messaging</td></tr>
+            <tr><td>ingest</td><td>Chunk, embed, and store a document (PDF, MD, TXT, code) for RAG search</td><td>RAG</td></tr>
+            <tr><td>search_docs</td><td>Semantic search over all ingested documents with source attribution</td><td>RAG</td></tr>
+            <tr><td>index_code</td><td>Parse a codebase into a shared symbol graph (Python AST + regex for JS/Go/Rust/Java)</td><td>Code Graph</td></tr>
+            <tr><td>explore_code</td><td>Find functions/classes by meaning — no file reading required</td><td>Code Graph</td></tr>
+            <tr><td>who_calls</td><td>Find all callers of a function across the indexed codebase</td><td>Code Graph</td></tr>
+            <tr><td>graph_symbol</td><td>BFS traversal of callers and callees for a symbol (dependency subgraph)</td><td>Code Graph</td></tr>
         </table>
       </div>
     </section>
@@ -794,6 +1000,502 @@
           <a class="button primary" href="https://github.com/darshanredkar11/samvit/blob/main/docs/USAGE.md">Full usage guide →</a>
           <a class="button secondary" href="https://github.com/darshanredkar11/samvit/tree/main/docs">Documentation →</a>
         </div>
+      </div>
+    </section>
+
+    <!-- ═══ CONNECT: PER-CLIENT GUIDE ═══ -->
+    <section id="connect">
+      <div class="wrap">
+        <div class="section-head centered">
+          <div class="kicker">Client setup</div>
+          <h2>Connect any AI client to Samvit.</h2>
+          <p>One command handles detection automatically. If you prefer manual config, every client below accepts a standard MCP HTTP server block — replace <code>SAMVIT_HOST</code> and <code>YOUR_TOKEN</code>.</p>
+        </div>
+
+        <!-- Auto-connect -->
+        <div style="margin-bottom:2.5rem;">
+          <h3 style="font-size:1.1rem;margin-bottom:.6rem;">Option A — Auto-detect (recommended)</h3>
+          <p style="color:var(--muted);font-size:.92rem;margin-bottom:.7rem;">Run on the engineer's machine. Samvit detects installed clients and writes the right config file for each one.</p>
+          <div class="wrap-example">
+            <pre><span class="kw">pip install</span> samvit
+<span class="fn">samvit connect</span> --url http://SAMVIT_HOST:8765 --token YOUR_TOKEN
+
+<span class="cmt"># Detected: Claude Code, Cursor</span>
+<span class="cmt"># ✓ Claude Code  → added via `claude mcp add`</span>
+<span class="cmt"># ✓ Cursor       → ~/.cursor/mcp.json</span>
+<span class="cmt"># Restart your client. Done.</span>
+
+<span class="cmt"># Target one specific client:</span>
+<span class="fn">samvit connect</span> --url http://SAMVIT_HOST:8765 --token YOUR_TOKEN --client claude
+<span class="fn">samvit connect</span> --url http://SAMVIT_HOST:8765 --token YOUR_TOKEN --client cursor
+<span class="fn">samvit connect</span> --url http://SAMVIT_HOST:8765 --token YOUR_TOKEN --client codex
+<span class="fn">samvit connect</span> --url http://SAMVIT_HOST:8765 --token YOUR_TOKEN --client kiro
+<span class="fn">samvit connect</span> --url http://SAMVIT_HOST:8765 --token YOUR_TOKEN --client opencode
+<span class="fn">samvit connect</span> --url http://SAMVIT_HOST:8765 --token YOUR_TOKEN --client antigravity</pre>
+          </div>
+        </div>
+
+        <!-- Manual configs -->
+        <h3 style="font-size:1.1rem;margin-bottom:1rem;">Option B — Manual config</h3>
+        <div class="card-grid card-grid-2" style="gap:1.2rem;">
+
+          <!-- Claude Code -->
+          <div class="card">
+            <div class="number" style="font-size:.8rem;font-weight:800;color:var(--violet);margin-bottom:.4rem;">CLAUDE CODE</div>
+            <h3 style="margin-top:0;">CLI (preferred)</h3>
+            <div class="wrap-example" style="margin-bottom:.7rem;">
+              <pre><span class="fn">claude mcp add</span> --transport http samvit \
+  http://SAMVIT_HOST:8765/mcp \
+  --header <span class="str">"Authorization: Bearer YOUR_TOKEN"</span></pre>
+            </div>
+            <p style="color:var(--muted);font-size:.82rem;margin:.4rem 0 .2rem;">Or edit <code>~/.claude.json</code>:</p>
+            <div class="wrap-example">
+              <pre>{
+  <span class="str">"mcpServers"</span>: {
+    <span class="str">"samvit"</span>: {
+      <span class="str">"type"</span>: <span class="str">"http"</span>,
+      <span class="str">"url"</span>: <span class="str">"http://SAMVIT_HOST:8765/mcp"</span>,
+      <span class="str">"headers"</span>: {
+        <span class="str">"Authorization"</span>: <span class="str">"Bearer YOUR_TOKEN"</span>
+      }
+    }
+  }
+}</pre>
+            </div>
+            <p style="color:var(--muted);font-size:.8rem;margin-top:.5rem;">Restart Claude Code after editing. Verify with <code>claude mcp list</code>.</p>
+          </div>
+
+          <!-- Cursor -->
+          <div class="card">
+            <div class="number" style="font-size:.8rem;font-weight:800;color:var(--violet);margin-bottom:.4rem;">CURSOR</div>
+            <h3 style="margin-top:0;">Edit <code>~/.cursor/mcp.json</code></h3>
+            <div class="wrap-example">
+              <pre>{
+  <span class="str">"mcpServers"</span>: {
+    <span class="str">"samvit"</span>: {
+      <span class="str">"url"</span>: <span class="str">"http://SAMVIT_HOST:8765/mcp"</span>,
+      <span class="str">"headers"</span>: {
+        <span class="str">"Authorization"</span>: <span class="str">"Bearer YOUR_TOKEN"</span>
+      }
+    }
+  }
+}</pre>
+            </div>
+            <p style="color:var(--muted);font-size:.8rem;margin-top:.5rem;">Or go to Cursor Settings → MCP → Add Server. File is created if it doesn't exist.</p>
+          </div>
+
+          <!-- Codex CLI -->
+          <div class="card">
+            <div class="number" style="font-size:.8rem;font-weight:800;color:var(--violet);margin-bottom:.4rem;">CODEX CLI</div>
+            <h3 style="margin-top:0;">Edit <code>~/.codex/config.toml</code></h3>
+            <div class="wrap-example">
+              <pre><span class="cmt">[[mcp_servers]]</span>
+<span class="kw">name</span>    = <span class="str">"samvit"</span>
+<span class="kw">type</span>    = <span class="str">"http"</span>
+<span class="kw">url</span>     = <span class="str">"http://SAMVIT_HOST:8765/mcp"</span>
+<span class="kw">headers</span> = { Authorization = <span class="str">"Bearer YOUR_TOKEN"</span> }</pre>
+            </div>
+            <p style="color:var(--muted);font-size:.8rem;margin-top:.5rem;">Create <code>~/.codex/</code> if it doesn't exist. Restart Codex CLI after editing.</p>
+          </div>
+
+          <!-- Kiro -->
+          <div class="card">
+            <div class="number" style="font-size:.8rem;font-weight:800;color:var(--violet);margin-bottom:.4rem;">KIRO</div>
+            <h3 style="margin-top:0;">Edit <code>~/.kiro/settings/mcp.json</code></h3>
+            <div class="wrap-example">
+              <pre>{
+  <span class="str">"mcpServers"</span>: {
+    <span class="str">"samvit"</span>: {
+      <span class="str">"url"</span>: <span class="str">"http://SAMVIT_HOST:8765/mcp"</span>,
+      <span class="str">"headers"</span>: {
+        <span class="str">"Authorization"</span>: <span class="str">"Bearer YOUR_TOKEN"</span>
+      }
+    }
+  }
+}</pre>
+            </div>
+            <p style="color:var(--muted);font-size:.8rem;margin-top:.5rem;">Create <code>~/.kiro/settings/</code> if it doesn't exist. Reload Kiro after saving.</p>
+          </div>
+
+          <!-- OpenCode -->
+          <div class="card">
+            <div class="number" style="font-size:.8rem;font-weight:800;color:var(--violet);margin-bottom:.4rem;">OPENCODE</div>
+            <h3 style="margin-top:0;">Edit <code>~/.config/opencode/config.json</code></h3>
+            <div class="wrap-example">
+              <pre>{
+  <span class="str">"mcp"</span>: {
+    <span class="str">"samvit"</span>: {
+      <span class="str">"type"</span>: <span class="str">"remote"</span>,
+      <span class="str">"url"</span>: <span class="str">"http://SAMVIT_HOST:8765/mcp"</span>,
+      <span class="str">"headers"</span>: {
+        <span class="str">"Authorization"</span>: <span class="str">"Bearer YOUR_TOKEN"</span>
+      }
+    }
+  }
+}</pre>
+            </div>
+            <p style="color:var(--muted);font-size:.8rem;margin-top:.5rem;">OpenCode uses <code>"type": "remote"</code> for HTTP MCP servers. Restart after editing.</p>
+          </div>
+
+          <!-- Antigravity -->
+          <div class="card">
+            <div class="number" style="font-size:.8rem;font-weight:800;color:var(--violet);margin-bottom:.4rem;">ANTIGRAVITY</div>
+            <h3 style="margin-top:0;">Edit <code>~/.antigravity/mcp.json</code></h3>
+            <div class="wrap-example">
+              <pre>{
+  <span class="str">"mcpServers"</span>: {
+    <span class="str">"samvit"</span>: {
+      <span class="str">"url"</span>: <span class="str">"http://SAMVIT_HOST:8765/mcp"</span>,
+      <span class="str">"headers"</span>: {
+        <span class="str">"Authorization"</span>: <span class="str">"Bearer YOUR_TOKEN"</span>
+      }
+    }
+  }
+}</pre>
+            </div>
+            <p style="color:var(--muted);font-size:.8rem;margin-top:.5rem;">Create <code>~/.antigravity/</code> if it doesn't exist. Or use Antigravity's MCP settings UI.</p>
+          </div>
+
+        </div><!-- /card-grid -->
+
+        <!-- Legacy SSE fallback -->
+        <div style="margin-top:1.8rem;padding:1rem 1.2rem;background:var(--panel);border:1px solid var(--line);border-radius:12px;">
+          <strong style="font-size:.9rem;">Legacy SSE transport</strong>
+          <p style="color:var(--muted);font-size:.86rem;margin:.4rem 0 0;">If your client doesn't support Streamable HTTP, use the SSE endpoint instead: <code>http://SAMVIT_HOST:8765/legacy/sse</code>. Replace <code>/mcp</code> with <code>/legacy/sse</code> in any config above and set <code>"transport": "sse"</code> if the client requires it.</p>
+        </div>
+
+        <!-- Verify -->
+        <div style="margin-top:1.5rem;padding:1rem 1.2rem;background:rgba(158,206,106,.07);border:1px solid rgba(158,206,106,.25);border-radius:12px;">
+          <strong style="font-size:.9rem;color:var(--green);">Verify the connection</strong>
+          <p style="color:var(--muted);font-size:.86rem;margin:.4rem 0 0;">In your client, ask: <em>"Recall any team memories."</em> The agent should call <code>recall</code> automatically and return results (or confirm the index is empty). If you see a tool-not-found error, restart your client — MCP config is read at startup.</p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ═══ INTERNALS ═══ -->
+    <section id="internals" style="background:rgba(9,18,31,.55);border-top:1px solid var(--line);border-bottom:1px solid var(--line);">
+      <div class="wrap">
+        <div class="section-head centered">
+          <div class="kicker">For CTOs &amp; core engineers</div>
+          <h2>What Samvit actually implements — and why.</h2>
+          <p>Every design decision is a tradeoff. This section shows the exact algorithm behind each primitive, what guarantees it provides, and what it deliberately does not guarantee. No hand-waving.</p>
+        </div>
+
+        <!-- ── 1. Atomic task claiming ── -->
+        <div style="margin-bottom:3rem;">
+          <h3 style="font-size:1.15rem;letter-spacing:-.02em;margin-bottom:.5rem;">1 — Atomic task claiming: <code>FOR UPDATE SKIP LOCKED</code></h3>
+          <p style="color:var(--muted);font-size:.92rem;margin-bottom:.8rem;">
+            The hardest correctness requirement in a multi-agent task queue is preventing two agents from claiming the same task. Samvit solves it with a single CTE — no Redis, no distributed locks, no application-level retries.
+          </p>
+          <div class="wrap-example">
+            <pre><span class="cmt">-- claim() — the full SQL that runs on every claim() call</span>
+<span class="kw">WITH</span> selected <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> id <span class="kw">FROM</span> tasks
+  <span class="kw">WHERE</span>  status       = <span class="str">'pending'</span>
+    <span class="kw">AND</span>  workspace_id  = <span class="str">$3</span>          <span class="cmt">-- workspace isolation</span>
+    <span class="kw">AND</span>  tags &amp;&amp; <span class="str">$3::text[]</span>          <span class="cmt">-- OR tag filter (optional)</span>
+  <span class="kw">ORDER BY</span> priority <span class="kw">DESC</span>, created_at <span class="kw">ASC</span>
+  <span class="kw">LIMIT</span> 1
+  <span class="kw">FOR UPDATE SKIP LOCKED</span>            <span class="cmt">-- skip any row another txn holds</span>
+),
+updated <span class="kw">AS</span> (
+  <span class="kw">UPDATE</span> tasks
+     <span class="kw">SET</span> status      = <span class="str">'claimed'</span>,
+         claimed_by  = <span class="str">$1</span>,
+         claimed_at  = <span class="fn">now()</span>,
+         claim_token = <span class="str">$2</span>           <span class="cmt">-- 256-bit random, checked on done()</span>
+    <span class="kw">FROM</span> selected
+   <span class="kw">WHERE</span> tasks.id = selected.id
+  <span class="kw">RETURNING</span> tasks.*
+)
+<span class="kw">SELECT</span> u.*, <span class="fn">COALESCE</span>(a.handle, <span class="str">'unknown'</span>) <span class="kw">AS</span> created_by_handle
+  <span class="kw">FROM</span> updated u
+  <span class="kw">LEFT JOIN</span> agents a <span class="kw">ON</span> a.id = u.created_by;</pre>
+          </div>
+          <div class="card-grid card-grid-3" style="margin-top:1rem;gap:.8rem;">
+            <div class="card" style="padding:1rem;">
+              <h3 style="font-size:.9rem;margin:0 0 .4rem;">What it guarantees</h3>
+              <p style="font-size:.82rem;">Exactly one agent wins per task, even under full concurrent load. PostgreSQL holds a row-level lock for the duration of the CTE — the losing agent sees zero rows (SKIP LOCKED skips the locked row entirely) and either claims the next task or gets null.</p>
+            </div>
+            <div class="card" style="padding:1rem;">
+              <h3 style="font-size:.9rem;margin:0 0 .4rem;">Crash recovery</h3>
+              <p style="font-size:.82rem;">Every claimed task has a <code>claim_timeout</code> (default 30 min) + 5 min grace period. The background cleanup loop (runs every 5 min) resets expired claims back to <code>pending</code>. An agent that crashes mid-task releases automatically — no human intervention.</p>
+            </div>
+            <div class="card" style="padding:1rem;">
+              <h3 style="font-size:.9rem;margin:0 0 .4rem;">What it does not guarantee</h3>
+              <p style="font-size:.82rem;">This is a polling model — agents call <code>claim()</code> on their own schedule. There is no push notification when a task becomes available. Recommended polling interval: 2–5 s. For long-lived work, call <code>renew()</code> to extend the lease.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── 2. Dual-store memory ── -->
+        <div style="margin-bottom:3rem;">
+          <h3 style="font-size:1.15rem;letter-spacing:-.02em;margin-bottom:.5rem;">2 — Dual-store memory: vector + KV in one call</h3>
+          <p style="color:var(--muted);font-size:.92rem;margin-bottom:.8rem;">
+            <code>remember(content, key?)</code> always writes a vector embedding into <code>semantic_memory</code>. If <code>key</code> is set, it also upserts into <code>kv_memory</code>. <code>recall()</code> dispatches to the right store depending on which argument you pass.
+          </p>
+          <div class="wrap-example" style="margin-bottom:.8rem;">
+            <pre><span class="cmt">-- recall(query=...) → cosine similarity search</span>
+<span class="kw">SELECT</span> content, <span class="str">1</span> - (embedding <span class="str">&lt;=&gt;</span> <span class="str">$1</span>) <span class="kw">AS</span> score
+  <span class="kw">FROM</span> semantic_memory
+ <span class="kw">WHERE</span> workspace_id = <span class="str">$2</span> <span class="kw">AND</span> namespace = <span class="str">$3</span>
+ <span class="kw">ORDER BY</span> embedding <span class="str">&lt;=&gt;</span> <span class="str">$1</span>   <span class="cmt">-- pgvector IVFFlat ANN index</span>
+ <span class="kw">LIMIT</span> <span class="str">$4</span>;
+
+<span class="cmt">-- recall(key=...) → O(1) exact key lookup</span>
+<span class="kw">SELECT</span> value <span class="kw">FROM</span> kv_memory
+ <span class="kw">WHERE</span> workspace_id = <span class="str">$1</span>
+   <span class="kw">AND</span> namespace     = <span class="str">$2</span>
+   <span class="kw">AND</span> key           = <span class="str">$3</span>;</pre>
+          </div>
+          <div class="card-grid card-grid-2" style="gap:.8rem;">
+            <div class="card" style="padding:1rem;">
+              <h3 style="font-size:.9rem;margin:0 0 .4rem;">Embedding model</h3>
+              <p style="font-size:.82rem;"><code>BAAI/bge-small-en-v1.5</code> — 384-dim, runs locally via fastembed, no external API. Inference runs in the thread pool so it never blocks the async event loop. Content is truncated at 32 KB before embedding (512-token model max). NaN/Inf vectors are rejected before any DB write.</p>
+            </div>
+            <div class="card" style="padding:1rem;">
+              <h3 style="font-size:.9rem;margin:0 0 .4rem;">Namespace isolation</h3>
+              <p style="font-size:.82rem;">Every memory write defaults to the agent's private namespace (their handle). The <code>global</code> namespace is readable and writable by all agents in the same workspace. Attempting to write into another agent's namespace raises <code>PermissionError</code> at the tool layer — not a SQL constraint.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── 3. Message read-once ── -->
+        <div style="margin-bottom:3rem;">
+          <h3 style="font-size:1.15rem;letter-spacing:-.02em;margin-bottom:.5rem;">3 — Message delivery: join-table read tracking</h3>
+          <p style="color:var(--muted);font-size:.92rem;margin-bottom:.8rem;">
+            Messages are stored once in <code>messages</code>. Each agent's read state is tracked in <code>message_reads(message_id, agent_id)</code> — a join table with a unique constraint. This gives exactly-once delivery per agent even under concurrent polls.
+          </p>
+          <div class="wrap-example" style="margin-bottom:.8rem;">
+            <pre><span class="cmt">-- read() — atomically marks messages as read and returns them</span>
+<span class="kw">WITH</span> marked <span class="kw">AS</span> (
+  <span class="kw">INSERT INTO</span> message_reads (message_id, agent_id)
+  <span class="kw">SELECT</span> id, <span class="str">$1</span> <span class="kw">FROM</span> messages
+   <span class="kw">WHERE</span> workspace_id = <span class="str">$2</span>
+     <span class="kw">AND</span> (to_agent = <span class="str">$1</span> <span class="kw">OR</span> to_agent <span class="kw">IS NULL</span>) <span class="cmt">-- directed or broadcast</span>
+     <span class="kw">AND NOT EXISTS</span> (
+       <span class="kw">SELECT</span> <span class="str">1</span> <span class="kw">FROM</span> message_reads mr
+        <span class="kw">WHERE</span> mr.message_id = messages.id <span class="kw">AND</span> mr.agent_id = <span class="str">$1</span>
+     )
+  <span class="kw">ON CONFLICT DO NOTHING</span>         <span class="cmt">-- idempotent under concurrent polls</span>
+  <span class="kw">RETURNING</span> message_id
+)
+<span class="kw">SELECT</span> m.* <span class="kw">FROM</span> messages m
+  <span class="kw">JOIN</span> marked <span class="kw">ON</span> marked.message_id = m.id
+ <span class="kw">ORDER BY</span> m.created_at;
+
+<span class="cmt">-- Peek without consuming: pass mark_read=false → skips the INSERT</span></pre>
+          </div>
+          <p style="color:var(--muted);font-size:.84rem;">Why not a <code>read_by UUID[]</code> array? Array updates require a full row lock and don't compose under concurrent writes — two agents reading simultaneously can race and lose one acknowledgment. The join table + <code>ON CONFLICT DO NOTHING</code> is lock-free and always correct.</p>
+        </div>
+
+        <!-- ── 4. Ethical guard ── -->
+        <div style="margin-bottom:3rem;">
+          <h3 style="font-size:1.15rem;letter-spacing:-.02em;margin-bottom:.5rem;">4 — Ethical guard: regex + Shannon entropy</h3>
+          <p style="color:var(--muted);font-size:.92rem;margin-bottom:.8rem;">
+            Every write (memory, message body, task title/description) passes through the guard before hitting the DB. Two layers run in sequence.
+          </p>
+          <div class="card-grid card-grid-2" style="gap:.8rem;margin-bottom:.8rem;">
+            <div class="card" style="padding:1rem;">
+              <h3 style="font-size:.9rem;margin:0 0 .4rem;">Layer 1 — Named patterns (60+ regexes)</h3>
+              <p style="font-size:.82rem;">JWT tokens, AWS/GCP/Azure keys, GitHub/GitLab tokens, Stripe/Twilio keys, private key PEM blocks, bcrypt/argon2 hashes, connection strings, credit card numbers (Luhn), SSNs, internal IPs, generic <code>password =</code> and <code>secret =</code> assignments. Each pattern carries a category (<code>credential</code>, <code>pii</code>, <code>live_data</code>) and severity.</p>
+            </div>
+            <div class="card" style="padding:1rem;">
+              <h3 style="font-size:.9rem;margin:0 0 .4rem;">Layer 2 — Shannon entropy</h3>
+              <p style="font-size:.82rem;">Strings of ≥ 20 characters from the Base64 alphabet are scored: $H = -\sum p_i \log_2 p_i$. If $H \geq 4.5$ bits/char and the string has ≥ 8 distinct characters, it's flagged as a high-entropy secret — catches API keys and tokens that don't match any named pattern. Prose and UUIDs are below the threshold by design.</p>
+            </div>
+          </div>
+          <div class="wrap-example">
+            <pre><span class="cmt">-- Four modes (SAMVIT_GUARD_MODE env var)</span>
+<span class="kw">redact</span>  <span class="cmt">→ replace match with [REDACTED:category] — default</span>
+<span class="kw">block</span>   <span class="cmt">→ raise GuardError before any DB write — strictest</span>
+<span class="kw">warn</span>    <span class="cmt">→ log violation, store as-is — for auditing without enforcement</span>
+<span class="kw">off</span>     <span class="cmt">→ bypass entirely — for trusted internal pipelines</span>
+
+<span class="cmt">-- Snippets in the audit log: first 6 chars + "…" — never the full secret</span>
+<span class="cmt">-- Violations stored in guard_violations(agent_id, pattern_name, category, direction, tool)</span></pre>
+          </div>
+        </div>
+
+        <!-- ── 5. Code graph ── -->
+        <div style="margin-bottom:3rem;">
+          <h3 style="font-size:1.15rem;letter-spacing:-.02em;margin-bottom:.5rem;">5 — Code graph: AST (Python) + regex fallback (everything else)</h3>
+          <p style="color:var(--muted);font-size:.92rem;margin-bottom:.8rem;">
+            <code>index_code(path)</code> walks the repo (up to 500 files, 512 KB/file), skips binaries via magic-byte detection, and builds a symbol graph in PostgreSQL. Querying is then instant for any agent — no re-reading of files.
+          </p>
+          <div class="card-grid card-grid-2" style="gap:.8rem;margin-bottom:.8rem;">
+            <div class="card" style="padding:1rem;">
+              <h3 style="font-size:.9rem;margin:0 0 .4rem;">Python: full AST</h3>
+              <p style="font-size:.82rem;">Uses <code>ast.parse()</code> — extracts modules, classes, functions, async functions, their parameters, decorators, docstrings, and call edges. Qualified names are computed via scope walking. Import statements are recorded as <code>imports</code> edges. Call sites are resolved to their qualified target where unambiguous.</p>
+            </div>
+            <div class="card" style="padding:1rem;">
+              <h3 style="font-size:.9rem;margin:0 0 .4rem;">JS / TS / Go / Rust / Java: regex</h3>
+              <p style="font-size:.82rem;">A language-specific regex parser extracts function declarations, class definitions, and import statements — no full parse tree. Enough to build the symbol index and call edges for <code>who_calls</code> and <code>graph_symbol</code>. Trade-off: no type information, no macro expansion, no template resolution.</p>
+            </div>
+          </div>
+          <div class="wrap-example">
+            <pre><span class="cmt">-- explore_code("password validation") → vector search on docstrings + signatures</span>
+<span class="kw">SELECT</span> name, file_path, line_start, signature, docstring,
+       <span class="str">1</span> - (embedding <span class="str">&lt;=&gt;</span> <span class="str">$query_vec</span>) <span class="kw">AS</span> score
+  <span class="kw">FROM</span> code_nodes
+ <span class="kw">WHERE</span> workspace_id = <span class="str">$1</span> <span class="kw">AND</span> repo_id = <span class="str">$2</span>
+ <span class="kw">ORDER BY</span> embedding <span class="str">&lt;=&gt;</span> <span class="str">$query_vec</span> <span class="kw">LIMIT</span> <span class="str">$3</span>;
+
+<span class="cmt">-- who_calls("hash_password") → reverse edge lookup</span>
+<span class="kw">SELECT</span> cn.name, cn.file_path, cn.line_start
+  <span class="kw">FROM</span> code_edges ce
+  <span class="kw">JOIN</span> code_nodes cn <span class="kw">ON</span> cn.qualified_name = ce.from_qualified
+ <span class="kw">WHERE</span> ce.to_qualified <span class="kw">ILIKE</span> <span class="str">'%hash_password%'</span>
+   <span class="kw">AND</span> ce.edge_type = <span class="str">'calls'</span>;
+
+<span class="cmt">-- graph_symbol("AuthService", depth=2) → BFS via recursive CTE</span>
+<span class="kw">WITH RECURSIVE</span> bfs <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> ... <span class="kw">FROM</span> code_edges <span class="kw">WHERE</span> to_qualified = <span class="str">$symbol</span>
+  <span class="kw">UNION</span>
+  <span class="kw">SELECT</span> ... <span class="kw">FROM</span> code_edges ce <span class="kw">JOIN</span> bfs b <span class="kw">ON</span> ... <span class="kw">WHERE</span> b.depth &lt; <span class="str">$max_depth</span>
+)</pre>
+          </div>
+        </div>
+
+        <!-- ── 6. Auth + workspace isolation ── -->
+        <div style="margin-bottom:3rem;">
+          <h3 style="font-size:1.15rem;letter-spacing:-.02em;margin-bottom:.5rem;">6 — Auth: bcrypt + SHA-256 index, workspace-scoped queries</h3>
+          <div class="card-grid card-grid-2" style="gap:.8rem;">
+            <div class="card" style="padding:1rem;">
+              <h3 style="font-size:.9rem;margin:0 0 .4rem;">Token model</h3>
+              <p style="font-size:.82rem;">Tokens are <code>samvit_</code>-prefixed, 48-byte URL-safe random strings. On registration, the token is bcrypt-hashed (stored in <code>token_hash</code>) and its SHA-256 hex is indexed (stored in <code>token_sha256</code>). Every request does: SHA-256 lookup → O(log n) index scan → bcrypt verify → agent row. The SHA-256 index makes auth fast; bcrypt makes brute-force infeasible even with DB read access.</p>
+            </div>
+            <div class="card" style="padding:1rem;">
+              <h3 style="font-size:.9rem;margin:0 0 .4rem;">Workspace isolation</h3>
+              <p style="font-size:.82rem;">Every agent belongs to a workspace. Every table (<code>tasks</code>, <code>semantic_memory</code>, <code>kv_memory</code>, <code>messages</code>, <code>code_nodes</code>, <code>code_edges</code>) carries a <code>workspace_id</code> foreign key. The auth middleware sets the workspace on every request; every query appends <code>WHERE workspace_id = $agent.workspace_id</code>. Workspace cross-contamination requires a compromised token.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── 7. Real session commands ── -->
+        <div>
+          <h3 style="font-size:1.15rem;letter-spacing:-.02em;margin-bottom:.5rem;">7 — Real session commands: what to type</h3>
+          <p style="color:var(--muted);font-size:.92rem;margin-bottom:1rem;">
+            Samvit tools fire automatically — you write in plain language and your client calls the right tool. These are the phrases that reliably trigger each primitive across Claude Code, Cursor, Kiro, and Codex. Use them verbatim or adapt them to your style.
+          </p>
+          <div class="card-grid card-grid-2" style="gap:1rem;">
+
+            <div class="card" style="padding:1.1rem;">
+              <h3 style="font-size:.92rem;margin:0 0 .6rem;color:var(--violet);">Memory</h3>
+              <div class="wrap-example" style="margin-bottom:.5rem;">
+                <pre><span class="cmt"># Store a decision for the whole team</span>
+"Remember globally: the auth service runs on
+ port 3001, uses JWT RS256, tokens expire 24h."
+
+<span class="cmt"># Store with an exact key for fast retrieval</span>
+"Remember with key auth.port that it's 3001."
+
+<span class="cmt"># Retrieve by meaning</span>
+"Recall what we decided about auth tokens."
+
+<span class="cmt"># Retrieve by exact key</span>
+"Recall the memory with key auth.port."
+
+<span class="cmt"># Delete a stale memory</span>
+"Forget the memory with key auth.port."</pre>
+              </div>
+            </div>
+
+            <div class="card" style="padding:1.1rem;">
+              <h3 style="font-size:.92rem;margin:0 0 .6rem;color:var(--violet);">Tasks</h3>
+              <div class="wrap-example" style="margin-bottom:.5rem;">
+                <pre><span class="cmt"># Create (priority 1–10; tags route tasks to teams)</span>
+"Create a priority-8 backend task:
+ 'Add idempotency to POST /v1/payments'."
+
+<span class="cmt"># Claim next task (agent locks it atomically)</span>
+"Claim my next backend task."
+
+<span class="cmt"># Renew lease mid-work (keeps the claim alive)</span>
+"Renew my current task lease."
+
+<span class="cmt"># Mark done with a structured result</span>
+"Mark my task done. Result: idempotency
+ added via payment_id dedup key in Postgres."
+
+<span class="cmt"># List what the team is working on</span>
+"List all claimed tasks."
+
+<span class="cmt"># Cancel a task you created</span>
+"Cancel the task 'Add idempotency...'."</pre>
+              </div>
+            </div>
+
+            <div class="card" style="padding:1.1rem;">
+              <h3 style="font-size:.92rem;margin:0 0 .6rem;color:var(--violet);">Messaging</h3>
+              <div class="wrap-example" style="margin-bottom:.5rem;">
+                <pre><span class="cmt"># Directed message (persists across sessions)</span>
+"Tell rahul: 'PR #42 is ready for review.
+ The auth spec is in memory key auth.spec'."
+
+<span class="cmt"># Broadcast with topic</span>
+"Broadcast to topic ci-status:
+ 'Build passed, deploy to staging is green'."
+
+<span class="cmt"># Read your messages</span>
+"Read my unread messages."
+
+<span class="cmt"># Peek without consuming</span>
+"Show my unread messages without marking read."
+
+<span class="cmt"># Topic filter</span>
+"Read messages on topic ci-status."</pre>
+              </div>
+            </div>
+
+            <div class="card" style="padding:1.1rem;">
+              <h3 style="font-size:.92rem;margin:0 0 .6rem;color:var(--violet);">Code graph &amp; docs</h3>
+              <div class="wrap-example" style="margin-bottom:.5rem;">
+                <pre><span class="cmt"># Index codebase once (all agents share the index)</span>
+"Index the codebase at /workspace."
+
+<span class="cmt"># Find code by meaning</span>
+"Where does the codebase validate JWT tokens?"
+
+<span class="cmt"># Find callers</span>
+"What calls the hash_password function?"
+
+<span class="cmt"># Dependency subgraph</span>
+"Show the call graph for AuthService
+ two levels deep."
+
+<span class="cmt"># Ingest a doc for team-wide search</span>
+"Ingest this RFC as 'auth-rfc.md'."
+
+<span class="cmt"># Search ingested docs</span>
+"Search team docs for token refresh flow."</pre>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Operational properties table -->
+          <div style="margin-top:2rem;">
+            <h3 style="font-size:1rem;margin-bottom:.7rem;">Operational properties at a glance</h3>
+            <table class="tool-table">
+              <thead>
+                <tr><th>Property</th><th>Behaviour</th><th>Where it's enforced</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Double-claim prevention</td><td>Impossible — row-level lock held until CTE completes</td><td>PostgreSQL <code>FOR UPDATE SKIP LOCKED</code></td></tr>
+                <tr><td>Abandoned task recovery</td><td>Claim released after <code>claim_timeout</code> + 5 min grace, automatically</td><td><code>cleanup.py</code> loop every 5 min</td></tr>
+                <tr><td>Server restart</td><td>In-flight claimed tasks stay claimed; cleanup releases them on next cycle</td><td>PostgreSQL (durable) + cleanup loop</td></tr>
+                <tr><td>Token brute-force</td><td>bcrypt verify required; SHA-256 index only narrows the candidate row</td><td><code>auth.py</code> — verify runs in thread pool</td></tr>
+                <tr><td>Secret leakage into memory</td><td>Redacted before any DB write in default mode</td><td><code>guard.py</code> — runs before every tool write</td></tr>
+                <tr><td>Cross-workspace data access</td><td>Impossible without a valid token from that workspace</td><td>All queries include <code>workspace_id = $agent.workspace_id</code></td></tr>
+                <tr><td>Rate limit exhaustion</td><td>429 with <code>Retry-After</code> header; in-process sliding window per agent</td><td><code>ratelimit.py</code> — after auth, before tool dispatch</td></tr>
+                <tr><td>Oversized embedding input</td><td>Rejected at 32 KB; model truncates at 512 tokens</td><td><code>embeddings.py</code> — validated before inference</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
       </div>
     </section>
 

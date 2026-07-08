@@ -269,44 +269,31 @@ Without `global`, memory defaults to the caller's private namespace.
 
 ### Task coordination
 
-**Recommended: Use the `@samvit.task` decorator (v0.3.0+)**
-
-For Python agents, the decorator auto-handles task creation, claiming, retry, and completion:
-
-```python
-from samvit import task
-
-@task(max_retries=3, timeout=300)
-async def implement_feature():
-    """Samvit auto-manages: create, claim, execute, retry, done."""
-    await remember("feature_spec", "RFC-001")
-    return "implemented"
-
-result = await implement_feature()  # No manual task calls needed
-```
-
-**Benefits over manual calls:**
-- No create/claim/done boilerplate (80% less code)
-- Automatic retry with exponential backoff
-- Auto-release on timeout (crash recovery)
-- Audit logging + full task history
-
-**Manual approach (if needed for shell/non-Python):**
-
 Create a task:
 ```text
 Create a task tagged backend with priority 5:
 "Add idempotency to the payment callback."
 ```
 
-Claim before beginning work (locks atomically):
+Claim before beginning work (locks atomically — only one agent gets each task):
 ```text
 Claim my next backend task.
 ```
 
-Use `renew` during work exceeding 30 minutes. Mark done when complete:
+Use `renew` during work exceeding 30 minutes to extend the lease. Mark done when complete:
 ```text
 Mark my claimed task done: "Implemented idempotency via webhook replay."
+```
+
+Use `update_task` to modify a task you created (title, description, priority, tags)
+or to cancel it before it's claimed:
+```text
+Cancel the task "Add idempotency to the payment callback."
+```
+
+Use `forget` to delete a stored memory by key or ID:
+```text
+Forget the memory with key "auth_spec".
 ```
 
 ### Team messaging

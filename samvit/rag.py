@@ -87,12 +87,28 @@ def extract_wikilinks(text: str) -> list[str]:
 
 def chunk_text(text: str) -> list[dict]:
     """
-    Split text into overlapping chunks.
+    Split text into overlapping chunks, respecting paragraph boundaries.
+    Falls back to character-based splitting for paragraphs that exceed
+    CHUNK_SIZE_CHARS (e.g. minified code, text with no blank lines).
     Returns list of {content, char_start, char_end, chunk_index}.
     """
     # Split at paragraph boundaries (blank lines or markdown headings)
     paragraphs = re.split(r"\n{2,}|(?=\n#{1,6}\s)", text)
     paragraphs = [p.strip() for p in paragraphs if p.strip()]
+
+    # Sub-split any paragraph that is itself larger than the chunk size
+    split_paras: list[str] = []
+    for para in paragraphs:
+        if len(para) <= CHUNK_SIZE_CHARS:
+            split_paras.append(para)
+        else:
+            # Character-based split with overlap
+            start = 0
+            while start < len(para):
+                end = start + CHUNK_SIZE_CHARS
+                split_paras.append(para[start:end])
+                start += CHUNK_SIZE_CHARS - CHUNK_OVERLAP_CHARS
+    paragraphs = split_paras
 
     chunks: list[dict] = []
     current = ""

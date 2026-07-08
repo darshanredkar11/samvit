@@ -185,22 +185,35 @@ async def _demo(args: argparse.Namespace) -> int:
 
     print("Seeding demo workspace…\n")
 
-    # Register agents
+    # Register agents. If already registered, _post raises SystemExit (409);
+    # catch it per-agent and skip. If alice or bob can't be registered we can't
+    # seed memories/tasks — abort with a clear message instead of proceeding
+    # with an empty token and getting cryptic 401 errors.
     tokens: dict[str, str] = {}
     for handle, provider in _DEMO_AGENTS:
         try:
             r = await _post(url, "/v1/agents/register", {"handle": handle, "provider": provider})
             tokens[handle] = r["token"]
         except SystemExit:
-            # Already registered — rotate to get a fresh token
+            # Already registered — we have no way to recover the token without
+            # admin access, so skip this agent.
             pass
 
     if not tokens:
         print("All demo agents already registered. Re-run with a fresh server.", file=sys.stderr)
         return 1
 
-    alice_tok = tokens.get("alice", "")
-    bob_tok   = tokens.get("bob", "")
+    missing = [h for h in ("alice", "bob") if h not in tokens]
+    if missing:
+        print(
+            f"Demo agents already exist: {', '.join(missing)}. "
+            "Wipe the database or use a fresh server to re-run the demo.",
+            file=sys.stderr,
+        )
+        return 1
+
+    alice_tok = tokens["alice"]
+    bob_tok   = tokens["bob"]
 
     # Store shared memories as alice
     for content, key in _DEMO_MEMORIES:
