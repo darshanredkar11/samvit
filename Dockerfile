@@ -28,8 +28,9 @@ CMD ["pytest", "-q"]
 
 FROM base AS runtime
 COPY --from=admin-ui-builder /app/admin-ui/dist /app/admin-ui/dist
-RUN useradd --create-home --uid 10001 samvit
-RUN chown -R samvit:samvit /opt/huggingface
+RUN useradd --create-home --uid 10001 samvit && \
+    mkdir -p /opt/huggingface && \
+    chown -R samvit:samvit /opt/huggingface
 USER samvit
 
 EXPOSE 8765
