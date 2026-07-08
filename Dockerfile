@@ -14,12 +14,17 @@ RUN pip install --no-cache-dir .
 # Model downloads on first startup to HF_HOME — keeps build memory under 2 GB.
 # On Railway/Render the model is fetched once then cached in the container layer.
 
-FROM node:24-slim AS admin-ui-builder
+FROM node:20-slim AS admin-ui-builder
 WORKDIR /app/admin-ui
 COPY admin-ui/package.json admin-ui/package-lock.json* ./
 RUN npm ci
 COPY admin-ui/ ./
 RUN npm run build
+
+FROM base AS test
+COPY tests/ tests/
+RUN pip install --no-cache-dir ".[dev]"
+CMD ["pytest", "-q"]
 
 FROM base AS runtime
 COPY --from=admin-ui-builder /app/admin-ui/dist /app/admin-ui/dist
@@ -33,8 +38,3 @@ HEALTHCHECK --interval=10s --timeout=5s --retries=5 \
     CMD curl -f http://localhost:8765/health || exit 1
 
 CMD ["samvit", "serve", "--host", "0.0.0.0", "--port", "8765"]
-
-FROM base AS test
-COPY tests/ tests/
-RUN pip install --no-cache-dir ".[dev]"
-CMD ["pytest", "-q"]

@@ -1,6 +1,6 @@
 [build]
 dockerfile = "Dockerfile"
-dockerfileTarget = "runtime"
+buildTarget = "runtime"
 
 [deploy]
 startCommand = "samvit serve --host 0.0.0.0 --port 8765"

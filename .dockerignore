@@ -8,6 +8,5 @@ htmlcov
 dist
 build
 website
-tests
 *.pyc
 .env
